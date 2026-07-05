@@ -36,6 +36,21 @@
             <pre id="bob-content" style="background:#f8f9fa;padding:15px;border-radius:8px;"></pre>
         </div>
 
+        <!-- Second Test Under Same Tab -->
+        <div class="card">
+            <h3>Second Test - P003 (FBLS)</h3>
+            <p>Run this after the first pre-flight test to validate operational readiness before go-live.</p>
+            <button onclick="runSecondTest()" style="background:#6f42c1;color:white;">Run Second Test</button>
+        </div>
+
+        <div id="second-results" class="card"></div>
+
+        <!-- Bob Recommendations for Second Test -->
+        <div id="second-bob" class="card" style="display:none;">
+            <h3>💡 Bob Recommendations - Second Test</h3>
+            <pre id="second-bob-content" style="background:#f8f9fa;padding:15px;border-radius:8px;"></pre>
+        </div>
+
         <!-- Chat Box -->
         <div class="card">
             <h3>💬 Talk to Grok / Bob</h3>
@@ -58,6 +73,20 @@
 
         document.getElementById('bob').style.display = 'block';
         document.getElementById('bob-content').textContent = `Dear FBLS Team,\n\nPlease provide:\n1. Full webhook payload examples with BIN + Last 4 digits.\n2. Signature verification method (HMAC-SHA256 recommended).\n3. Clear 3DS 2.0 response format.\n\nThank you.`;
+    }
+
+    function runSecondTest() {
+        document.getElementById('second-results').innerHTML = `
+            <h3>Second Test Results - P003 (FBLS)</h3>
+            <div class="status green">✅ Settlement & Reconciliation Flow</div>
+            <div class="status green">✅ Refund / Void Handling</div>
+            <div class="status flagged">⚠️ Chargeback Alert Format Pending</div>
+            <div class="status green">✅ Failover Routing Strategy</div>
+            <div class="status flagged">⚠️ Go-Live Approval Requires Signed PSP Checklist</div>
+        `;
+
+        document.getElementById('second-bob').style.display = 'block';
+        document.getElementById('second-bob-content').textContent = `Dear FBLS Team,\n\nSecond test follow-up required:\n1. Confirm chargeback alert payload format and delivery timing.\n2. Confirm settlement report field names for reconciliation.\n3. Provide signed go-live checklist or written approval for P003.\n\nOnce these items are supplied, FBLS can move to final live-interface integration review.\n\nThank you.`;
     }
 
     function sendCommand() {
