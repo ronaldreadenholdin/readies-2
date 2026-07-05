@@ -7,6 +7,15 @@ use Illuminate\Http\Request;
 
 class PspSandboxController extends Controller
 {
+    public function preFlightTest()
+    {
+        $path = base_path('pre-flight-test.html');
+
+        abort_unless(is_file($path), 404);
+
+        return response()->file($path);
+    }
+
     public function index(Request $request, PspTestHarnessService $harness)
     {
         $performHttpChecks = $request->boolean('network', false);
