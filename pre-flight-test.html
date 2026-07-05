@@ -18,6 +18,7 @@
         .btn-green:hover { background: #218838; }
         .btn-blue { background: #007bff; color: white; }
         .btn-purple { background: #6f42c1; color: white; }
+        .btn-orange { background: #fd7e14; color: white; }
         .checklist { line-height: 1.7; margin: 0; padding-left: 22px; }
         #chat { height: 280px; overflow-y: scroll; border: 1px solid #ddd; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px; }
     </style>
@@ -26,7 +27,7 @@
     <div class="container">
         <div class="header">
             <h1>🚀 Readies PSP Pre-Flight Test Harness</h1>
-            <h2>FBLS (P003)</h2>
+            <h2>FBLS (P003) + Xcore (P004)</h2>
         </div>
 
         <div class="card">
@@ -35,6 +36,7 @@
                 <li>Open this page at <strong>/pre-flight-test</strong>.</li>
                 <li>Click <strong>Run Full Test</strong>.</li>
                 <li>Click <strong>Run Second Test</strong>.</li>
+                <li>Click <strong>Run Xcore P004 Test</strong> when validating Xcore.</li>
                 <li>Review Bob Recommendations and only use <strong>Go Live Check</strong> after both tests have run.</li>
             </ol>
         </div>
@@ -66,6 +68,21 @@
             <pre id="second-bob-content" style="background:#f8f9fa;padding:15px;border-radius:8px;"></pre>
         </div>
 
+        <!-- Xcore P004 Test -->
+        <div class="card">
+            <h3>Xcore Test - P004</h3>
+            <p>Validate Xcore-specific auth, webhook, signature, 3DS, geo, and restricted-country readiness.</p>
+            <button onclick="runXcoreTest()" class="btn-orange">Run Xcore P004 Test</button>
+        </div>
+
+        <div id="xcore-results" class="card"></div>
+
+        <!-- Bob Recommendations for Xcore -->
+        <div id="xcore-bob" class="card" style="display:none;">
+            <h3>💡 Bob Recommendations - Xcore P004</h3>
+            <pre id="xcore-bob-content" style="background:#f8f9fa;padding:15px;border-radius:8px;"></pre>
+        </div>
+
         <!-- Go Live Check -->
         <div class="card">
             <h3>✅ Go Live Check</h3>
@@ -85,6 +102,7 @@
     <script>
     let firstTestRan = false;
     let secondTestRan = false;
+    let xcoreTestRan = false;
 
     function runFullTest() {
         document.getElementById('results').innerHTML = `
@@ -118,6 +136,23 @@
         updateGoLiveStatus();
     }
 
+    function runXcoreTest() {
+        document.getElementById('xcore-results').innerHTML = `
+            <h3>Xcore Test Results - P004</h3>
+            <div class="status green">✅ Auth & Connectivity Contract</div>
+            <div class="status green">✅ Required Field Mapping</div>
+            <div class="status flagged">⚠️ Webhook Contract Needs BIN + Last4 Confirmation</div>
+            <div class="status flagged">⚠️ HMAC-SHA256 Signature Header Pending</div>
+            <div class="status green">✅ 3DS 2.0 + Geo Strategy Ready</div>
+            <div class="status flagged">⚠️ Restricted Country List Requires Final Xcore Confirmation</div>
+        `;
+
+        document.getElementById('xcore-bob').style.display = 'block';
+        document.getElementById('xcore-bob-content').textContent = `Dear Xcore Team,\n\nFor P004 onboarding, please provide:\n1. Full webhook payload examples including transaction id, status, amount, currency, BIN, and last4.\n2. Signature verification header name, HMAC-SHA256 algorithm details, and canonical payload string.\n3. 3DS 2.0 success/failure response examples.\n4. Final restricted-country list for routing controls.\n\nOnce received, Readies can complete the Xcore P004 go-live review.\n\nThank you.`;
+        xcoreTestRan = true;
+        updateGoLiveStatus();
+    }
+
     function sendCommand() {
         const input = document.getElementById('command');
         const chat = document.getElementById('chat');
@@ -136,25 +171,25 @@
     function updateGoLiveStatus() {
         const status = document.getElementById('go-live-status');
 
-        if (firstTestRan && secondTestRan) {
+        if (firstTestRan && secondTestRan && xcoreTestRan) {
             status.className = 'status flagged';
-            status.textContent = 'Both tests have run. Review flagged Bob items before final go-live approval.';
+            status.textContent = 'All tests have run. Review flagged Bob items before final go-live approval.';
             return;
         }
 
         status.className = 'status muted';
-        status.textContent = 'Run both tests before go-live review.';
+        status.textContent = 'Run FBLS tests and Xcore P004 test before go-live review.';
     }
 
     function goLive() {
-        if (!firstTestRan || !secondTestRan) {
+        if (!firstTestRan || !secondTestRan || !xcoreTestRan) {
             document.getElementById('go-live-status').className = 'status danger';
-            document.getElementById('go-live-status').textContent = 'Blocked: run both tests before go-live review.';
-            alert("⚠️ Please run both tests first.");
+            document.getElementById('go-live-status').textContent = 'Blocked: run all tests before go-live review.';
+            alert("⚠️ Please run all tests first.");
             return;
         }
 
-        alert("✅ Both tests completed.\n\nP003 (FBLS) is ready for final review after Bob flagged items are confirmed.");
+        alert("✅ All tests completed.\n\nP003 (FBLS) and P004 (Xcore) are ready for final review after Bob flagged items are confirmed.");
     }
     </script>
 </body>

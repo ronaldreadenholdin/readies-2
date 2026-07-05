@@ -2,7 +2,7 @@
 
 ## PSP pre-flight test harness
 
-The standalone FBLS (P003) test page is available in these forms:
+The standalone FBLS (P003) and Xcore (P004) test page is available in these forms:
 
 - Laravel route: `/pre-flight-test`
 - Static hosting route: `/pre-flight-test/`
@@ -24,5 +24,6 @@ Use the page in this order:
 
 1. Click **Run Full Test**.
 2. Click **Run Second Test**.
-3. Review both Bob recommendation sections.
-4. Click **Go Live Check** after both tests have run.
+3. Click **Run Xcore P004 Test**.
+4. Review all Bob recommendation sections.
+5. Click **Go Live Check** after all tests have run.

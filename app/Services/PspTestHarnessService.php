@@ -53,6 +53,44 @@ class PspTestHarnessService
     }
 
     /**
+     * Compatibility entry point for PSP-specific full tests.
+     */
+    public function runFullTest(PspProvider $psp, array $inputData = [])
+    {
+        $data = array_replace_recursive($this->providerData($psp), $inputData);
+        $categories = collect([
+            'auth_connectivity' => $this->testAuthConnectivity($psp, $inputData, $data),
+            'field_mapping' => $this->testFieldMapping($inputData),
+            'webhook_handling' => $this->testWebhookHandling($inputData),
+            'signature_verification' => $this->testSignatureVerification($inputData),
+            '3ds_geo_support' => $this->test3dsGeoSupport($inputData),
+            'restricted_countries' => $this->testRestrictedCountries($inputData),
+        ]);
+
+        if ($this->isXcoreProvider($psp, $data)) {
+            $categories = $categories->merge([
+                'xcore_provider_profile' => $this->testXcoreProviderProfile($psp, $data),
+                'xcore_required_fields' => $this->testXcoreRequiredFields($inputData),
+                'xcore_webhook_contract' => $this->testXcoreWebhookContract($inputData),
+                'xcore_signature_contract' => $this->testXcoreSignatureContract($inputData),
+            ]);
+        }
+
+        $checks = $categories->values();
+        $summary = $this->providerCheckSummary($checks);
+
+        return [
+            'provider' => $this->providerSummary($psp, $data),
+            'status' => $this->worstStatus($checks),
+            'score' => $summary['score'],
+            'summary' => $summary,
+            'categories' => $categories,
+            'checks' => $checks,
+            'generated_at' => now(),
+        ];
+    }
+
+    /**
      * Run the full test suite for one provider model instance.
      */
     public function runProvider($provider, $performHttpChecks = false)
@@ -71,6 +109,10 @@ class PspTestHarnessService
             $this->testIdempotencySupport($data),
             $this->testTransactionPayload($provider, $data),
         ]);
+
+        if ($this->isXcoreProvider($provider, $data)) {
+            $checks = $checks->merge($this->xcoreChecks($provider, $data));
+        }
 
         $summary = $this->providerCheckSummary($checks);
 
@@ -576,6 +618,361 @@ class PspTestHarnessService
         );
     }
 
+    protected function testAuthConnectivity($provider, array $inputData, array $data)
+    {
+        $credentialCheck = $this->testCredentials($data);
+        $endpointCheck = $this->testEndpointConfiguration($data, false);
+        $status = $this->worstStatus(collect([$credentialCheck, $endpointCheck]));
+
+        if ($status === self::STATUS_FAIL) {
+            return $this->check(
+                'Auth & Connectivity',
+                'auth_connectivity',
+                self::STATUS_FAIL,
+                'Provider credentials or endpoint configuration is incomplete.',
+                'Confirm Xcore/P004 sandbox API URL and credentials before running a live connectivity ping.',
+                [
+                    'provider' => $this->providerLabel($provider, $data),
+                    'credential_status' => $credentialCheck['status'],
+                    'endpoint_status' => $endpointCheck['status'],
+                ]
+            );
+        }
+
+        if ($status === self::STATUS_WARN) {
+            return $this->check(
+                'Auth & Connectivity',
+                'auth_connectivity',
+                self::STATUS_WARN,
+                'Provider auth/connectivity is configured with warnings.',
+                'Review credential hygiene and endpoint recommendations before go-live.',
+                [
+                    'provider' => $this->providerLabel($provider, $data),
+                    'credential_status' => $credentialCheck['status'],
+                    'endpoint_status' => $endpointCheck['status'],
+                ]
+            );
+        }
+
+        return $this->check(
+            'Auth & Connectivity',
+            'auth_connectivity',
+            self::STATUS_PASS,
+            'Provider credentials and HTTPS endpoint are ready for sandbox testing.',
+            'No action needed.',
+            ['provider' => $this->providerLabel($provider, $data)]
+        );
+    }
+
+    protected function testFieldMapping(array $inputData)
+    {
+        $missing = $this->missingRequirements($inputData, [
+            'amount' => ['amount', 'transaction_amount'],
+            'currency' => ['currency', 'transaction_currency'],
+            'reference' => ['reference', 'transaction_id', 'order_id', 'merchant_reference'],
+            'customer email' => ['customer_email', 'email'],
+        ]);
+
+        if (count($missing) > 0) {
+            return $this->check(
+                'Field Mapping',
+                'field_mapping',
+                self::STATUS_WARN,
+                'Missing mapped request field(s): '.implode(', ', $missing).'.',
+                'Map the required Readies request fields before submitting P004 test payments.',
+                ['missing' => $missing]
+            );
+        }
+
+        return $this->check(
+            'Field Mapping',
+            'field_mapping',
+            self::STATUS_PASS,
+            'Required request fields are mapped for the PSP payload.',
+            'No action needed.'
+        );
+    }
+
+    protected function testWebhookHandling(array $inputData)
+    {
+        $webhook = $this->firstPresent($inputData, ['webhook_payload', 'callback_payload', 'notification_payload', 'webhook']);
+
+        if (! $this->present($webhook)) {
+            return $this->check(
+                'Webhook Handling',
+                'webhook_handling',
+                self::STATUS_WARN,
+                'No webhook payload sample was provided for validation.',
+                'Add a P004 webhook payload sample, including transaction status, BIN, and last4 fields.'
+            );
+        }
+
+        $payload = is_array($webhook) ? $webhook : $inputData;
+        $missing = $this->missingRequirements($payload, [
+            'transaction id' => ['transaction_id', 'payment_id', 'reference', 'merchant_reference'],
+            'status' => ['status', 'payment_status', 'state'],
+            'BIN' => ['bin', 'card_bin', 'first6'],
+            'last4' => ['last4', 'card_last4', 'last_4'],
+        ]);
+
+        if (count($missing) > 0) {
+            return $this->check(
+                'Webhook Handling',
+                'webhook_handling',
+                self::STATUS_WARN,
+                'Webhook sample is missing: '.implode(', ', $missing).'.',
+                'Request a complete Xcore/P004 webhook example with card BIN and last4 data.',
+                ['missing' => $missing]
+            );
+        }
+
+        return $this->check(
+            'Webhook Handling',
+            'webhook_handling',
+            self::STATUS_PASS,
+            'Webhook sample includes transaction identity, status, BIN, and last4 fields.',
+            'No action needed.'
+        );
+    }
+
+    protected function testSignatureVerification(array $inputData)
+    {
+        $signature = $this->firstPresent($inputData, ['signature', 'x_signature', 'x-signature', 'hmac', 'hash']);
+        $secret = $this->firstPresent($inputData, ['webhook_secret', 'signing_secret', 'secret', 'client_secret']);
+        $algorithm = $this->firstPresent($inputData, ['signature_algorithm', 'hmac_algorithm', 'algorithm']);
+
+        if (! $this->present($signature) || ! $this->present($secret)) {
+            return $this->check(
+                'Signature Verification',
+                'signature_verification',
+                self::STATUS_WARN,
+                'Signature sample or signing secret is missing.',
+                'Confirm the P004 webhook signature header, signing secret, and canonical payload string.'
+            );
+        }
+
+        if ($this->present($algorithm) && stripos((string) $algorithm, 'sha256') === false) {
+            return $this->check(
+                'Signature Verification',
+                'signature_verification',
+                self::STATUS_WARN,
+                'Signature algorithm is present but is not HMAC-SHA256.',
+                'Use HMAC-SHA256 unless Xcore provides a different signed specification.',
+                ['algorithm' => $algorithm]
+            );
+        }
+
+        return $this->check(
+            'Signature Verification',
+            'signature_verification',
+            self::STATUS_PASS,
+            'Signature fields are present for webhook verification.',
+            'Validate the computed HMAC against a real Xcore sample before go-live.',
+            ['algorithm' => $algorithm ?: 'HMAC-SHA256 expected']
+        );
+    }
+
+    protected function test3dsGeoSupport(array $inputData)
+    {
+        $threeDs = $this->firstPresent($inputData, ['three_ds', '3ds', '3ds2', 'three_d_secure', 'requires_3ds']);
+        $country = $this->firstPresent($inputData, ['country', 'billing_country', 'customer_country', 'geo_country']);
+
+        if (! $this->present($threeDs) || ! $this->present($country)) {
+            return $this->check(
+                '3DS & Geo Support',
+                '3ds_geo_support',
+                self::STATUS_WARN,
+                '3DS or country/geo routing data is missing.',
+                'Provide P004 3DS 2.0 response examples and country routing expectations.',
+                ['has_3ds' => $this->present($threeDs), 'has_country' => $this->present($country)]
+            );
+        }
+
+        return $this->check(
+            '3DS & Geo Support',
+            '3ds_geo_support',
+            self::STATUS_PASS,
+            '3DS and country data are available for geo strategy validation.',
+            'No action needed.'
+        );
+    }
+
+    protected function testRestrictedCountries(array $inputData)
+    {
+        $restricted = $this->firstPresent($inputData, ['restricted_countries', 'blocked_countries', 'excluded_countries']);
+
+        if (! $this->present($restricted)) {
+            return $this->check(
+                'Restricted Countries',
+                'restricted_countries',
+                self::STATUS_WARN,
+                'No restricted country list was provided.',
+                'Confirm Xcore/P004 blocked countries before enabling routing.'
+            );
+        }
+
+        $countries = is_array($restricted) ? $restricted : preg_split('/[\s,|]+/', (string) $restricted);
+        $invalid = array_values(array_filter($countries, function ($country) {
+            return ! is_string($country) || ! preg_match('/^[A-Z]{2}$/', strtoupper(trim($country)));
+        }));
+
+        if (count($invalid) > 0) {
+            return $this->check(
+                'Restricted Countries',
+                'restricted_countries',
+                self::STATUS_WARN,
+                'Restricted country list contains invalid country codes.',
+                'Use ISO-3166 alpha-2 country codes such as NL, GB, or US.',
+                ['invalid' => $invalid]
+            );
+        }
+
+        return $this->check(
+            'Restricted Countries',
+            'restricted_countries',
+            self::STATUS_PASS,
+            count($countries).' restricted country code(s) are configured.',
+            'No action needed.',
+            ['countries' => array_map('strtoupper', $countries)]
+        );
+    }
+
+    protected function xcoreChecks($provider, array $data)
+    {
+        return collect([
+            $this->testXcoreProviderProfile($provider, $data),
+            $this->testXcoreRequiredFields($data),
+            $this->testXcoreWebhookContract($data),
+            $this->testXcoreSignatureContract($data),
+        ]);
+    }
+
+    protected function testXcoreProviderProfile($provider, array $data)
+    {
+        $identifier = strtolower(implode(' ', array_filter([
+            $this->providerLabel($provider, $data),
+            $this->firstPresent($data, ['code', 'slug', 'key', 'provider_code', 'provider_id']),
+        ])));
+
+        if (strpos($identifier, 'xcore') === false && strpos($identifier, 'p004') === false) {
+            return $this->check(
+                'Xcore Provider Profile',
+                'xcore_p004',
+                self::STATUS_SKIP,
+                'Provider is not marked as Xcore/P004.',
+                'No Xcore-specific action required.'
+            );
+        }
+
+        return $this->check(
+            'Xcore Provider Profile',
+            'xcore_p004',
+            self::STATUS_PASS,
+            'Provider is identified as Xcore/P004.',
+            'Run the Xcore-specific auth, webhook, signature, and 3DS checks before go-live.',
+            ['identifier' => $identifier]
+        );
+    }
+
+    protected function testXcoreRequiredFields(array $data)
+    {
+        $missing = $this->missingRequirements($data, [
+            'merchant id' => ['merchant_id', 'xcore_merchant_id', 'mid'],
+            'API key' => ['api_key', 'xcore_api_key', 'client_id'],
+            'API secret' => ['api_secret', 'xcore_api_secret', 'client_secret', 'secret'],
+            'base URL' => ['base_url', 'api_url', 'endpoint', 'xcore_endpoint'],
+        ]);
+
+        if (count($missing) > 0) {
+            return $this->check(
+                'Xcore Required Fields',
+                'xcore_p004',
+                self::STATUS_FAIL,
+                'Missing Xcore/P004 configuration field(s): '.implode(', ', $missing).'.',
+                'Add the missing Xcore sandbox credentials and endpoint values.',
+                ['missing' => $missing]
+            );
+        }
+
+        return $this->check(
+            'Xcore Required Fields',
+            'xcore_p004',
+            self::STATUS_PASS,
+            'Xcore/P004 credentials and endpoint fields are present.',
+            'No action needed.'
+        );
+    }
+
+    protected function testXcoreWebhookContract(array $data)
+    {
+        $missing = $this->missingRequirements($data, [
+            'payment id' => ['payment_id', 'transaction_id', 'xcore_payment_id'],
+            'merchant reference' => ['merchant_reference', 'reference', 'order_id'],
+            'status' => ['status', 'payment_status', 'state'],
+            'amount' => ['amount', 'transaction_amount'],
+            'currency' => ['currency', 'transaction_currency'],
+            'BIN' => ['bin', 'card_bin', 'first6'],
+            'last4' => ['last4', 'card_last4', 'last_4'],
+        ]);
+
+        if (count($missing) > 0) {
+            return $this->check(
+                'Xcore Webhook Contract',
+                'xcore_p004',
+                self::STATUS_WARN,
+                'Xcore webhook contract is missing: '.implode(', ', $missing).'.',
+                'Ask Xcore for a full P004 webhook payload including card BIN and last4.',
+                ['missing' => $missing]
+            );
+        }
+
+        return $this->check(
+            'Xcore Webhook Contract',
+            'xcore_p004',
+            self::STATUS_PASS,
+            'Xcore webhook contract contains the required Readies fields.',
+            'No action needed.'
+        );
+    }
+
+    protected function testXcoreSignatureContract(array $data)
+    {
+        $algorithm = $this->firstPresent($data, ['signature_algorithm', 'hmac_algorithm', 'algorithm']);
+        $header = $this->firstPresent($data, ['signature_header', 'xcore_signature_header', 'header']);
+        $secret = $this->firstPresent($data, ['webhook_secret', 'signing_secret', 'xcore_webhook_secret']);
+
+        $missing = [];
+        if (! $this->present($algorithm)) {
+            $missing[] = 'signature algorithm';
+        }
+        if (! $this->present($header)) {
+            $missing[] = 'signature header';
+        }
+        if (! $this->present($secret)) {
+            $missing[] = 'webhook signing secret';
+        }
+
+        if (count($missing) > 0) {
+            return $this->check(
+                'Xcore Signature Contract',
+                'xcore_p004',
+                self::STATUS_WARN,
+                'Xcore signature contract is missing: '.implode(', ', $missing).'.',
+                'Confirm the HMAC-SHA256 signature header, payload string, and signing secret with Xcore.',
+                ['missing' => $missing]
+            );
+        }
+
+        return $this->check(
+            'Xcore Signature Contract',
+            'xcore_p004',
+            self::STATUS_PASS,
+            'Xcore signature verification inputs are present.',
+            'Validate against a real signed webhook sample before go-live.',
+            ['algorithm' => $algorithm, 'header' => $header]
+        );
+    }
+
     protected function providerCheckSummary(Collection $checks)
     {
         $scoredChecks = $checks->reject(function ($check) {
@@ -607,6 +1004,40 @@ class PspTestHarnessService
             'fail' => $checks->where('status', self::STATUS_FAIL)->count(),
             'skip' => $checks->where('status', self::STATUS_SKIP)->count(),
         ];
+    }
+
+    protected function isXcoreProvider($provider, array $data)
+    {
+        $identifier = strtolower(implode(' ', array_filter([
+            $this->providerLabel($provider, $data),
+            $this->firstPresent($data, ['code', 'slug', 'key', 'provider_code', 'provider_id', 'name']),
+        ])));
+
+        return strpos($identifier, 'xcore') !== false || strpos($identifier, 'p004') !== false;
+    }
+
+    protected function missingRequirements(array $data, array $requirements)
+    {
+        $missing = [];
+
+        foreach ($requirements as $label => $keys) {
+            if (! $this->hasAnyPresent($data, $keys)) {
+                $missing[] = $label;
+            }
+        }
+
+        return $missing;
+    }
+
+    protected function hasAnyPresent(array $data, array $keys)
+    {
+        foreach ($keys as $key) {
+            if ($this->present($this->findValue($data, $key))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function providerSummary($provider, array $data)
