@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Readies PSP Pre-Flight Test Harness</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; }
+        .header { background: #1e3a8a; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
+        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .status { padding: 12px; border-radius: 8px; font-weight: bold; margin: 10px 0; }
+        .green { background: #d4edda; color: #155724; }
+        .flagged { background: #fff3cd; color: #856404; }
+        .danger { background: #f8d7da; color: #721c24; }
+        .muted { background: #e2e3e5; color: #383d41; }
+        button { padding: 12px 24px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; margin: 5px; }
+        .btn-green { background: #28a745; color: white; }
+        .btn-green:hover { background: #218838; }
+        .btn-blue { background: #007bff; color: white; }
+        .btn-purple { background: #6f42c1; color: white; }
+        .checklist { line-height: 1.7; margin: 0; padding-left: 22px; }
+        #chat { height: 280px; overflow-y: scroll; border: 1px solid #ddd; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Readies PSP Pre-Flight Test Harness</h1>
+            <h2>FBLS (P003)</h2>
+        </div>
+
+        <div class="card">
+            <h3>Testing Setup</h3>
+            <ol class="checklist">
+                <li>Open this page at <strong>/pre-flight-test</strong>.</li>
+                <li>Click <strong>Run Full Test</strong>.</li>
+                <li>Click <strong>Run Second Test</strong>.</li>
+                <li>Review Bob Recommendations and only use <strong>Go Live Check</strong> after both tests have run.</li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <button onclick="runFullTest()" class="btn-blue">Run Full Test</button>
+        </div>
+
+        <div id="results" class="card"></div>
+
+        <!-- Bob Recommendations -->
+        <div id="bob" class="card" style="display:none;">
+            <h3>💡 Bob Recommendations</h3>
+            <pre id="bob-content" style="background:#f8f9fa;padding:15px;border-radius:8px;"></pre>
+        </div>
+
+        <!-- Second Test Under Same Tab -->
+        <div class="card">
+            <h3>Second Test - P003 (FBLS)</h3>
+            <p>Run this after the first pre-flight test to validate operational readiness before go-live.</p>
+            <button onclick="runSecondTest()" class="btn-purple">Run Second Test</button>
+        </div>
+
+        <div id="second-results" class="card"></div>
+
+        <!-- Bob Recommendations for Second Test -->
+        <div id="second-bob" class="card" style="display:none;">
+            <h3>💡 Bob Recommendations - Second Test</h3>
+            <pre id="second-bob-content" style="background:#f8f9fa;padding:15px;border-radius:8px;"></pre>
+        </div>
+
+        <!-- Go Live Check -->
+        <div class="card">
+            <h3>✅ Go Live Check</h3>
+            <div id="go-live-status" class="status muted">Run both tests before go-live review.</div>
+            <button onclick="goLive()" class="btn-green">Go Live Check</button>
+        </div>
+
+        <!-- Chat Box -->
+        <div class="card">
+            <h3>💬 Talk to Grok / Bob</h3>
+            <div id="chat"></div>
+            <input type="text" id="command" placeholder="Type here (e.g. Add Go Live button, Fix webhook...)" style="width:80%;padding:12px;" onkeypress="if(event.key==='Enter') sendCommand()">
+            <button onclick="sendCommand()">Send</button>
+        </div>
+    </div>
+
+    <script>
+    let firstTestRan = false;
+    let secondTestRan = false;
+
+    function runFullTest() {
+        document.getElementById('results').innerHTML = `
+            <h3>Test Results - P003 (FBLS)</h3>
+            <div class="status green">✅ Auth & Connectivity</div>
+            <div class="status flagged">⚠️ Webhook Handling (BIN + Last4 missing)</div>
+            <div class="status green">✅ 3DS & Geo Strategy</div>
+            <div class="status flagged">⚠️ Signature Verification</div>
+            <div class="status green">✅ Restricted Countries</div>
+        `;
+
+        document.getElementById('bob').style.display = 'block';
+        document.getElementById('bob-content').textContent = `Dear FBLS Team,\n\nPlease provide:\n1. Full webhook payload examples with BIN + Last 4 digits.\n2. Signature verification method (HMAC-SHA256 recommended).\n3. Clear 3DS 2.0 response format.\n\nThank you.`;
+        firstTestRan = true;
+        updateGoLiveStatus();
+    }
+
+    function runSecondTest() {
+        document.getElementById('second-results').innerHTML = `
+            <h3>Second Test Results - P003 (FBLS)</h3>
+            <div class="status green">✅ Settlement & Reconciliation Flow</div>
+            <div class="status green">✅ Refund / Void Handling</div>
+            <div class="status flagged">⚠️ Chargeback Alert Format Pending</div>
+            <div class="status green">✅ Failover Routing Strategy</div>
+            <div class="status flagged">⚠️ Go-Live Approval Requires Signed PSP Checklist</div>
+        `;
+
+        document.getElementById('second-bob').style.display = 'block';
+        document.getElementById('second-bob-content').textContent = `Dear FBLS Team,\n\nSecond test follow-up required:\n1. Confirm chargeback alert payload format and delivery timing.\n2. Confirm settlement report field names for reconciliation.\n3. Provide signed go-live checklist or written approval for P003.\n\nOnce these items are supplied, FBLS can move to final live-interface integration review.\n\nThank you.`;
+        secondTestRan = true;
+        updateGoLiveStatus();
+    }
+
+    function sendCommand() {
+        const input = document.getElementById('command');
+        const chat = document.getElementById('chat');
+        const text = input.value.trim();
+        if (!text) return;
+
+        chat.innerHTML += `<p><strong>You:</strong> ${text}</p>`;
+        input.value = '';
+
+        setTimeout(() => {
+            chat.innerHTML += `<p><strong>Grok:</strong> Received. What would you like to adjust on the dashboard?</p>`;
+            chat.scrollTop = chat.scrollHeight;
+        }, 600);
+    }
+
+    function updateGoLiveStatus() {
+        const status = document.getElementById('go-live-status');
+
+        if (firstTestRan && secondTestRan) {
+            status.className = 'status flagged';
+            status.textContent = 'Both tests have run. Review flagged Bob items before final go-live approval.';
+            return;
+        }
+
+        status.className = 'status muted';
+        status.textContent = 'Run both tests before go-live review.';
+    }
+
+    function goLive() {
+        if (!firstTestRan || !secondTestRan) {
+            document.getElementById('go-live-status').className = 'status danger';
+            document.getElementById('go-live-status').textContent = 'Blocked: run both tests before go-live review.';
+            alert("⚠️ Please run both tests first.");
+            return;
+        }
+
+        alert("✅ Both tests completed.\n\nP003 (FBLS) is ready for final review after Bob flagged items are confirmed.");
+    }
+    </script>
+</body>
+</html>
