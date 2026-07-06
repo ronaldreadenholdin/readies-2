@@ -36,6 +36,8 @@ in the test environment before an identical clone is promoted to the live backen
 ### Update script
 
 - The startup update script is intentionally guarded: it only installs JS deps when a
-  `package.json` exists and Python deps when a `requirements.txt`/`pyproject.toml` exists.
-  This keeps startup a safe no-op while the repo is only static HTML, and starts installing
-  automatically once a manifest is added.
+  `package.json` exists, PHP deps when a `composer.json` exists (and `composer` is on `PATH`),
+  and Python deps when a `requirements.txt`/`pyproject.toml` exists. This keeps startup a safe
+  no-op while the repo is only static HTML, and starts installing automatically once a manifest
+  is added. Note: because PHP/Composer are not preinstalled, the `composer install` branch stays
+  a no-op until you install Composer yourself.
