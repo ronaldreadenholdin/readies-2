@@ -6,18 +6,21 @@
 
 ### Current repository state
 
-- The default branch (`main`) currently contains **only** `README.md`. There is no application code, no dependency manifest (`composer.json`, `package.json`, etc.), no test suite, and no build tooling on `main` yet.
-- Because there is no manifest to install from and no entrypoint, there is nothing to build or run on `main` today. Do not fabricate a run/build step; there is no application to serve until code is added.
+- `main` currently contains only `README.md` and `pre-flight-test.html`. There is **no dependency manifest** (`composer.json`, `package.json`, etc.), no build tooling, and no automated test suite on `main`.
+- The only runnable artifact today is `pre-flight-test.html` — a fully self-contained static "Readies PSP Pre-Flight Test Harness" page. All of its JavaScript logic is mocked/hard-coded, so it needs **no backend, no build step, and no dependencies**.
 
-### Intended stack (from existing work)
+### Running the static harness (dev)
 
-- The in-progress branch `okepaypsp-test-harness-d53e` adds **Laravel (PHP)** fragments: `app/Http/Controllers/PspSandboxController.php`, `app/Services/PspTestHarnessService.php`, `routes/web.php`, and a Blade view `resources/views/psp_sandbox/index.blade.php`. These files assume they are dropped into an existing Laravel host app (they extend `layouts.adminpanel`, reference `App\Models\PspProvider`, and extend the framework `Controller` base class), so the intended stack is Laravel/PHP.
+- Serve the repo root with any static file server, then open the page:
+  - `python3 -m http.server 8000` → http://localhost:8000/pre-flight-test.html
+  - (or `npx serve`, or open the file directly in a browser)
+- Core functionality to exercise: click **Run Full Test** (renders mocked pass/flagged rows + a "Go Live" button), click **Go Live with P003** (success alert), and use the **Talk to Grok / Bob** chat (mocked reply). No network calls occur.
 
-### Toolchain availability
+### Intended (future) stack
 
-- `node` (v22) and `npm` (v10) are preinstalled.
-- **PHP and Composer are NOT installed** in the base image. If/when a Laravel app lands, you must install PHP + Composer yourself before `composer install`, `php artisan serve`, `php artisan test`, etc. will work.
+- Feature branches (e.g. `okepaypsp-test-harness-d53e`) add **Laravel (PHP)** fragments (`PspSandboxController`, `PspTestHarnessService`, `routes/web.php`, Blade views) that assume an existing Laravel host app (they extend `layouts.adminpanel`, reference `App\Models\PspProvider`, and extend the framework `Controller`). Those fragments are **not runnable standalone** from this repo and are not on `main`.
+- **PHP and Composer are NOT installed** in the base image; `node` (v22) and `npm` (v10) are. If/when a Laravel app + `composer.json` lands, install PHP + Composer before `composer install` / `php artisan serve` will work.
 
 ### Update script
 
-- The startup update script is intentionally guarded: it only runs `composer install` when a `composer.json` exists (and Composer is on `PATH`), and only runs `npm install` when a `package.json` exists (and npm is on `PATH`). This keeps startup a safe no-op while the repo is empty and starts installing dependencies automatically once manifests are added.
+- The startup update script is intentionally guarded: it runs `npm install` only if `package.json` exists and `composer install` only if `composer.json` exists (and the tool is on `PATH`). This is a safe no-op today and begins installing dependencies automatically once a manifest is added.
