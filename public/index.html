@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Readies PSP Pre-Flight Test Harness</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Readies PSP Pre-Flight Test Harness</h1>
+      <p>Connect PSPs, run live validation checks, receive webhooks, and review go-live readiness</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="connect">Connect PSP</button>
+      <button class="tab" data-tab="tests">Run Tests</button>
+      <button class="tab" data-tab="webhooks">Webhooks</button>
+      <button class="tab" data-tab="golive">Go Live</button>
+    </div>
+
+    <!-- CONNECT PSP -->
+    <div id="panel-connect" class="panel active">
+      <div class="card">
+        <h3>Add PSP Connection</h3>
+        <p>Start from a template, then enter your sandbox credentials from the PSP.</p>
+        <button class="btn btn-primary" onclick="addFromTemplate('P003')">+ FBLS (P003)</button>
+        <button class="btn btn-orange" onclick="addFromTemplate('P004')">+ Xcore (P004)</button>
+      </div>
+
+      <div class="card">
+        <h3>Configured Providers</h3>
+        <div id="provider-list" class="provider-list">
+          <div class="empty">No PSPs connected yet. Add one above.</div>
+        </div>
+      </div>
+
+      <div id="provider-form-card" class="card" style="display:none;">
+        <h3 id="form-title">Edit PSP Connection</h3>
+        <form id="provider-form" onsubmit="saveProvider(event)">
+          <input type="hidden" id="f-id">
+          <div class="grid-2">
+            <div>
+              <label>Display Name</label>
+              <input id="f-name" required>
+            </div>
+            <div>
+              <label>Provider Code</label>
+              <input id="f-code" required placeholder="P003">
+            </div>
+            <div>
+              <label>Environment</label>
+              <select id="f-environment">
+                <option value="sandbox">Sandbox</option>
+                <option value="staging">Staging</option>
+                <option value="production">Production</option>
+              </select>
+            </div>
+            <div>
+              <label>Currency</label>
+              <input id="f-currency" placeholder="USD" maxlength="3">
+            </div>
+            <div>
+              <label>Merchant ID</label>
+              <input id="f-merchant_id" required>
+            </div>
+            <div>
+              <label>API Key</label>
+              <input id="f-api_key" required>
+            </div>
+            <div>
+              <label>API Secret</label>
+              <input id="f-api_secret" type="password" required>
+            </div>
+            <div>
+              <label>PSP Base URL (sandbox API)</label>
+              <input id="f-base_url" placeholder="https://sandbox.psp.example.com/api" required>
+            </div>
+            <div>
+              <label>Webhook Signing Secret</label>
+              <input id="f-webhook_secret" type="password">
+            </div>
+            <div>
+              <label>Signature Header Name</label>
+              <input id="f-signature_header" placeholder="X-Signature">
+            </div>
+            <div>
+              <label>PSP Callback URL (optional)</label>
+              <input id="f-callback_url" placeholder="URL you register with the PSP">
+            </div>
+            <div>
+              <label>Test Amount</label>
+              <input id="f-test_amount" type="number" step="0.01" value="1">
+            </div>
+            <div>
+              <label>Reference Prefix</label>
+              <input id="f-reference_prefix" value="readies">
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <input type="checkbox" id="f-three_ds" checked>
+            <label for="f-three_ds" style="margin:0">3DS 2.0 supported</label>
+          </div>
+          <div class="toggle-row">
+            <input type="checkbox" id="f-supports_refund">
+            <label for="f-supports_refund" style="margin:0">Supports refunds</label>
+          </div>
+          <div class="toggle-row">
+            <input type="checkbox" id="f-supports_void">
+            <label for="f-supports_void" style="margin:0">Supports void</label>
+          </div>
+          <div class="toggle-row">
+            <input type="checkbox" id="f-go_live_approved">
+            <label for="f-go_live_approved" style="margin:0">Go-live checklist signed</label>
+          </div>
+
+          <label>Restricted Countries (comma-separated ISO codes)</label>
+          <input id="f-restricted_countries" placeholder="IR, KP, SY">
+
+          <div id="harness-webhook-display" style="display:none;">
+            <label>Harness Webhook URL (give this to your PSP)</label>
+            <div class="webhook-url" id="harness-webhook-url"></div>
+          </div>
+
+          <button type="submit" class="btn btn-success">Save Connection</button>
+          <button type="button" class="btn btn-danger" onclick="deleteProvider()">Delete</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- RUN TESTS -->
+    <div id="panel-tests" class="panel">
+      <div class="card">
+        <h3>Run Pre-Flight Tests</h3>
+        <div class="toggle-row">
+          <input type="checkbox" id="live-ping">
+          <label for="live-ping" style="margin:0">Enable live endpoint ping (safe GET to PSP base URL)</label>
+        </div>
+        <div id="test-provider-select"></div>
+        <button class="btn btn-primary" onclick="runTest('full')" id="btn-full-test">Run Full Test</button>
+        <button class="btn btn-purple" onclick="runTest('second')" id="btn-second-test">Run Second Test</button>
+        <button class="btn btn-orange" onclick="runTest('xcore')" id="btn-xcore-test">Run Xcore P004 Test</button>
+        <button class="btn btn-outline" onclick="runTest('connectivity')">Ping Connectivity Only</button>
+      </div>
+
+      <div id="test-results" class="card" style="display:none;">
+        <div class="metric-row" id="test-metrics"></div>
+        <div id="test-checks"></div>
+        <div id="bob-recommendations"></div>
+      </div>
+    </div>
+
+    <!-- WEBHOOKS -->
+    <div id="panel-webhooks" class="panel">
+      <div class="card">
+        <h3>Webhook Receiver</h3>
+        <p>PSPs send payment callbacks to the harness webhook URL. View, simulate, and verify signatures here.</p>
+        <div id="webhook-provider-select"></div>
+        <div id="webhook-url-box" style="display:none;">
+          <label>Webhook URL for selected PSP</label>
+          <div class="webhook-url" id="webhook-url-display"></div>
+        </div>
+        <button class="btn btn-primary" onclick="simulateWebhook()">Simulate Webhook</button>
+        <button class="btn btn-outline" onclick="verifyWebhook()">Verify Latest Signature</button>
+        <button class="btn btn-outline" onclick="refreshWebhooks()">Refresh</button>
+      </div>
+      <div class="card">
+        <h3>Received Webhooks</h3>
+        <div id="webhook-log" class="webhook-log">
+          <div class="empty">No webhooks received yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GO LIVE -->
+    <div id="panel-golive" class="panel">
+      <div class="card">
+        <h3>Go Live Checklist</h3>
+        <p>All test suites must pass (or only have warnings) before production routing.</p>
+        <div id="go-live-status" class="status muted">Connect a PSP and run all test suites first.</div>
+        <button class="btn btn-success" onclick="goLiveCheck()">Go Live Check</button>
+      </div>
+      <div id="go-live-details" class="card" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
