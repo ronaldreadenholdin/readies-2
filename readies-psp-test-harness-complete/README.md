@@ -47,6 +47,14 @@ standalone/
   pre-flight-test.html
 ```
 
+## Which file to open
+
+- Original recovered test: `public/pre-flight-test/index.html`
+- Polished current dashboard: `standalone/pre-flight-test.html`
+- Next PSP starter: use the root repository file `next-psp-start-here.html` or copy it into this package before handoff.
+
+For the next PSP, open the starter file, change the PSP name/code/region/signature header, then click **Run Full Test**.
+
 ## Setup in an existing Laravel project
 
 1. Extract this ZIP.

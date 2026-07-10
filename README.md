@@ -8,6 +8,16 @@ The standalone FBLS (P003) and Xcore (P004) test page is available in these form
 - Static hosting route: `/pre-flight-test/`
 - Static file fallback: `/pre-flight-test.html`
 
+## Starting the next PSP
+
+Use these files:
+
+- Original recovered test: `public/pre-flight-test/index.html`
+- Next PSP starter copy: `next-psp-start-here.html`
+- Polished current dashboard: `pre-flight-test.html`
+
+For the next PSP, open `next-psp-start-here.html`, change the PSP name/code/region, and click **Run Full Test**.
+
 For a quick local static test from this repository:
 
 ```bash
