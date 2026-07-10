@@ -311,6 +311,7 @@
                 <button class="primary" onclick="runFenaTest()">Run OB Fena Test</button>
                 <button class="secondary" onclick="showBobGuidance()">Show Bob Guidance</button>
                 <button class="ghost" onclick="resetBoard()">Reset Board</button>
+                <div id="bobGuidance" class="note" hidden></div>
                 <div id="results" class="checks">
                     <div class="check">
                         <span class="status pending">WAIT</span>
@@ -382,7 +383,11 @@
         }
 
         function showBobGuidance() {
-            addBobMessage("Bob", "Ask Fena for signed webhook examples, refund API documentation, settlement report schema, and confirmation that UK open banking limits match Readies routing rules.");
+            const guidance = "Ask Fena for signed webhook examples, refund API documentation, settlement report schema, and confirmation that UK open banking limits match Readies routing rules.";
+            const panel = document.getElementById("bobGuidance");
+            panel.hidden = false;
+            panel.innerHTML = `<strong>Bob guidance:</strong><br>${guidance}`;
+            addBobMessage("Bob", guidance);
         }
 
         function resetBoard() {
@@ -394,6 +399,7 @@
             `;
             document.getElementById("gate").textContent =
                 "Run the test first. Fena can move forward only after flagged items are resolved or accepted by Readies.";
+            document.getElementById("bobGuidance").hidden = true;
             document.getElementById("chat").innerHTML =
                 "<p><strong>Bob:</strong> Board reset. Start with the OB Fena test again.</p>";
         }
