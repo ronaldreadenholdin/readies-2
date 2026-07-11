@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Readies Next PSP Pre-Flight Starter</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 20px; color: #1f2937; }
+        .container { max-width: 1100px; margin: auto; }
+        .header { background: #1e3a8a; color: white; padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        label { display: block; font-weight: 700; margin-bottom: 6px; }
+        input, textarea, select { width: 100%; box-sizing: border-box; padding: 11px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
+        textarea { min-height: 92px; resize: vertical; }
+        button { padding: 12px 22px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; margin: 5px; font-weight: 700; }
+        .btn-blue { background: #007bff; color: white; }
+        .btn-green { background: #28a745; color: white; }
+        .btn-orange { background: #fd7e14; color: white; }
+        .status { padding: 12px; border-radius: 8px; font-weight: bold; margin: 10px 0; }
+        .green { background: #d4edda; color: #155724; }
+        .flagged { background: #fff3cd; color: #856404; }
+        .danger { background: #f8d7da; color: #721c24; }
+        .muted { background: #e2e3e5; color: #383d41; }
+        .checklist { line-height: 1.7; margin: 0; padding-left: 22px; }
+        pre { white-space: pre-wrap; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; }
+        #chat { height: 240px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px; }
+        @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Readies PSP Pre-Flight Starter</h1>
+            <h2 id="title">Next PSP - P005</h2>
+        </div>
+
+        <div class="card">
+            <h3>Use this file to start the next PSP</h3>
+            <ol class="checklist">
+                <li>Change the PSP code, name, region, and signature header below.</li>
+                <li>Click <strong>Run Full Test</strong>.</li>
+                <li>Review every flagged item and Bob recommendation.</li>
+                <li>Only use <strong>Go Live Check</strong> after all flagged items are resolved or confirmed by the PSP.</li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <h3>Next PSP setup</h3>
+            <div class="grid">
+                <div>
+                    <label for="pspCode">PSP code</label>
+                    <input id="pspCode" value="P005" oninput="refreshTitle()">
+                </div>
+                <div>
+                    <label for="pspName">PSP name</label>
+                    <input id="pspName" value="Next PSP" oninput="refreshTitle()">
+                </div>
+                <div>
+                    <label for="region">Region</label>
+                    <select id="region">
+                        <option>Europe</option>
+                        <option>Global</option>
+                        <option>United States</option>
+                        <option>Asia</option>
+                        <option>Custom</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="signatureHeader">Signature header</label>
+                    <input id="signatureHeader" value="X-PSP-Signature">
+                </div>
+                <div>
+                    <label for="apiEndpoint">Sandbox API endpoint</label>
+                    <input id="apiEndpoint" value="https://sandbox.next-psp.example/payments">
+                </div>
+                <div>
+                    <label for="webhookEndpoint">Webhook endpoint</label>
+                    <input id="webhookEndpoint" value="/webhooks/next-psp">
+                </div>
+            </div>
+            <label for="webhookPayload">Webhook payload fields supplied by PSP</label>
+            <textarea id="webhookPayload">transaction_id, status, amount, currency, bin, last4, masked_pan, payment_error, payment_error_code</textarea>
+            <label for="notes">Special PSP rules</label>
+            <textarea id="notes">Example: Europe requires 3DS. First and last name must be Latin letters with minimum 2 characters. Test cards only work in sandbox.</textarea>
+        </div>
+
+        <div class="card">
+            <button onclick="runFullTest()" class="btn-blue">Run Full Test</button>
+            <button onclick="markAllConfirmed()" class="btn-orange">Mark PSP confirmations received</button>
+        </div>
+
+        <div id="results" class="card">
+            <div class="status muted">Run the full test to see detailed results.</div>
+        </div>
+
+        <div id="bob" class="card" style="display:none;">
+            <h3>Bob Recommendations</h3>
+            <pre id="bob-content"></pre>
+        </div>
+
+        <div class="card">
+            <h3>Go Live Check</h3>
+            <div id="go-live-status" class="status muted">Run the full test before go-live review.</div>
+            <button onclick="goLive()" class="btn-green">Go Live Check</button>
+        </div>
+
+        <div class="card">
+            <h3>Talk to Bob</h3>
+            <div id="chat"></div>
+            <input type="text" id="command" placeholder="Type here, for example: what is missing?" style="width:80%;padding:12px;" onkeypress="if(event.key==='Enter') sendCommand()">
+            <button onclick="sendCommand()" class="btn-blue">Send</button>
+        </div>
+    </div>
+
+    <script>
+    let testRan = false;
+    let pspConfirmed = false;
+
+    function getConfig() {
+        return {
+            code: document.getElementById('pspCode').value.trim() || 'P005',
+            name: document.getElementById('pspName').value.trim() || 'Next PSP',
+            region: document.getElementById('region').value,
+            signatureHeader: document.getElementById('signatureHeader').value.trim(),
+            apiEndpoint: document.getElementById('apiEndpoint').value.trim(),
+            webhookEndpoint: document.getElementById('webhookEndpoint').value.trim(),
+            webhookPayload: document.getElementById('webhookPayload').value.toLowerCase(),
+            notes: document.getElementById('notes').value
+        };
+    }
+
+    function refreshTitle() {
+        const config = getConfig();
+        document.getElementById('title').textContent = `${config.name} - ${config.code}`;
+    }
+
+    function runFullTest() {
+        const config = getConfig();
+        const hasBin = config.webhookPayload.includes('bin') || config.webhookPayload.includes('masked_pan');
+        const hasLast4 = config.webhookPayload.includes('last4') || config.webhookPayload.includes('masked_pan');
+        const hasSignature = config.signatureHeader.length > 0;
+        const needs3ds = config.region.toLowerCase().includes('europe');
+        const checks = [
+            ['Auth & Connectivity Contract', !!config.apiEndpoint, 'Sandbox API endpoint must be known before integration starts.'],
+            ['Required Field Mapping', true, 'Map amount, currency, customer reference, order id, success URL, failure URL, and metadata.'],
+            ['Webhook BIN / Last4 or masked PAN', hasBin && hasLast4, 'PSP must provide BIN + last4 or masked_pan for routing and reconciliation.'],
+            ['HMAC-SHA256 Signature Header', hasSignature, 'PSP must provide signature header, shared secret, algorithm, and canonical payload string.'],
+            ['3DS / Geo Strategy', true, needs3ds ? 'Europe selected: 3DS flow must be confirmed.' : 'Region selected: confirm PSP challenge and fallback rules.'],
+            ['Restricted Countries', pspConfirmed, 'Final restricted-country list must be confirmed by PSP before live.'],
+            ['Production vs Sandbox Rules', pspConfirmed, 'Confirm whether production uses real cards only and test cards only work in sandbox.'],
+            ['Go-Live Approval', pspConfirmed, 'Signed/written PSP approval must be received before live integration.']
+        ];
+
+        testRan = true;
+        const allGreen = checks.every((check) => check[1]);
+        document.getElementById('results').innerHTML = `
+            <h3>Test Results - ${escapeHtml(config.code)} (${escapeHtml(config.name)})</h3>
+            ${checks.map((check) => `<div class="status ${check[1] ? 'green' : 'flagged'}">${check[1] ? '✅' : '⚠️'} ${escapeHtml(check[0])}<br><small>${escapeHtml(check[2])}</small></div>`).join('')}
+        `;
+        document.getElementById('bob').style.display = 'block';
+        document.getElementById('bob-content').textContent = buildBobMessage(config, checks);
+        updateGoLiveStatus(allGreen);
+    }
+
+    function buildBobMessage(config, checks) {
+        const flagged = checks.filter((check) => !check[1]);
+        if (flagged.length === 0) {
+            return `All checks are green for ${config.name} (${config.code}). Ready for final live review.`;
+        }
+
+        return `Dear ${config.name} Team,\n\nFor ${config.code} onboarding, please provide or confirm:\n\n`
+            + flagged.map((check, index) => `${index + 1}. ${check[0]} - ${check[2]}`).join('\n')
+            + `\n\nSpecial notes:\n${config.notes}\n\nOnce received, Readies can complete the ${config.code} go-live review.\n\nThank you.`;
+    }
+
+    function markAllConfirmed() {
+        pspConfirmed = true;
+        if (testRan) {
+            runFullTest();
+        } else {
+            document.getElementById('go-live-status').className = 'status flagged';
+            document.getElementById('go-live-status').textContent = 'PSP confirmations marked. Run the full test now.';
+        }
+    }
+
+    function updateGoLiveStatus(allGreen) {
+        const status = document.getElementById('go-live-status');
+        status.className = allGreen ? 'status green' : 'status flagged';
+        status.textContent = allGreen
+            ? 'All checks green. Ready for final live review.'
+            : 'Blocked: resolve flagged items or record PSP confirmations before go-live.';
+    }
+
+    function goLive() {
+        if (!testRan) {
+            alert('Run the full test first.');
+            return;
+        }
+        const isGreen = document.getElementById('go-live-status').className.includes('green');
+        alert(isGreen ? 'All checks green. Ready for final live review.' : 'Blocked: flagged items still need attention.');
+    }
+
+    function sendCommand() {
+        const input = document.getElementById('command');
+        const chat = document.getElementById('chat');
+        const text = input.value.trim();
+        if (!text) return;
+
+        chat.innerHTML += `<p><strong>You:</strong> ${escapeHtml(text)}</p>`;
+        input.value = '';
+
+        setTimeout(() => {
+            chat.innerHTML += `<p><strong>Bob:</strong> Start by filling the PSP name/code, then run the full test. The flagged items become the PSP request list.</p>`;
+            chat.scrollTop = chat.scrollHeight;
+        }, 400);
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    refreshTitle();
+    </script>
+</body>
+</html>
