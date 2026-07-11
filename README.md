@@ -1,5 +1,26 @@
 # readies-2
 
+## PSP API adaptor interface
+
+Use these files for the real PSP API/adaptor work:
+
+- `app/Contracts/PspAdaptorInterface.php`
+- `app/Services/Psp/PspAdaptorFactory.php`
+- `app/Services/Psp/Adaptors/CashForoOnrampAdaptor.php`
+- `app/Services/Psp/Adaptors/CashForoOpenBankingAdaptor.php`
+- `config/psp_adaptors.php`
+- `docs/psp-adaptor-interface.md`
+- `docs/cashforo-onramp-or001.md`
+- `docs/cashforo-openbanking-ob003.md`
+- `docs/cashforo-api-document-request.md`
+
+The adaptors are separate:
+
+- `OR001` = CashForo Onramp
+- `OB003` = CashForo Open Banking
+
+The adaptor interface is ready, but exact live API mapping still needs the CashForo API documentation: endpoints, auth, request/response schemas, webhook samples, and signature rules.
+
 ## PSP pre-flight test harness
 
 The standalone FBLS (P003) and Xcore (P004) test page is available in these forms:
