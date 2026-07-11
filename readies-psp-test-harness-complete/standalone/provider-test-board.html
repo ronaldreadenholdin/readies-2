@@ -78,13 +78,13 @@
                 </div>
             </div>
             <label for="flamingoNotes">Provider notes / questions</label>
-            <textarea id="flamingoNotes">Public CashForo pages confirm CashForo LTD, Cyprus/EU payment gateway/payment processing, AML/KYC, GDPR, payouts/fees/chargebacks. API endpoints, auth, webhook samples, and signature details are still not public in this workspace.</textarea>
+            <textarea id="flamingoNotes">Readies Onramp model: customer pays by card, receives Readies stablecoin, pays merchant/casino in Readies, and merchant sells Readies back to Readies. Public CashForo pages confirm CashForo LTD, Cyprus/EU payment gateway/payment processing, AML/KYC, GDPR, payouts/fees/chargebacks. API endpoints, auth, webhook samples, and signature details are still not public in this workspace. Legal/compliance must approve merchant category, gaming/casino jurisdictions, stablecoin issuance/redemption, and buyback flow before go-live.</textarea>
         </div>
 
         <div class="grid">
             <div class="card">
                 <h3>Test 1: <span id="connectionOneTitle">Onramp</span> <span id="connectionOneCodeBadge" class="code">OR001</span></h3>
-                <p>Checks onramp payment input, fiat-to-crypto quote, KYC, wallet address, onramp order, webhooks, and crypto delivery status.</p>
+                <p>Checks card payment into Readies stablecoin, customer wallet credit, merchant/casino Readies acceptance, merchant buyback/redemption, compliance gates, webhooks, ledger, and rollback.</p>
                 <button class="btn-onramp" onclick="runOnrampTest()">Run Connection 1 Test</button>
                 <div id="onrampResults"><div class="status muted">Not tested yet.</div></div>
             </div>
@@ -255,30 +255,30 @@
 
     function onrampSpecificChecks(type, publicDocs) {
         return [
-            ['61 Quote creation endpoint', false, 'Need quote endpoint for fiat-to-crypto onramp.'],
-            ['62 Quote expiry behavior', false, 'Need quote expiry seconds and expired quote error.'],
-            ['63 Crypto asset list', false, 'Need supported crypto assets.'],
-            ['64 Blockchain network list', false, 'Need supported networks per crypto asset.'],
-            ['65 Wallet address validation', false, 'Need wallet address validation rules and error response.'],
-            ['66 Network mismatch handling', false, 'Need behavior when wallet network mismatches asset/network.'],
+            ['61 Card-to-Readies quote creation', false, 'Need endpoint/logic that quotes how much Readies stablecoin the customer receives for the card payment amount, including fees and expiry.'],
+            ['62 Readies stablecoin issuance trigger', false, 'Need exact trigger for minting/crediting Readies after card authorization/capture.'],
+            ['63 Stablecoin reserve backing proof', false, 'Need evidence that issued Readies are backed/reserved and reconciled to fiat/card settlement.'],
+            ['64 Customer Readies wallet credit', false, 'Need wallet/account credit event, balance update rules, and failure behavior.'],
+            ['65 Customer wallet ownership and access', false, 'Need proof the customer wallet/account receiving Readies belongs to the paying customer.'],
+            ['66 Merchant/casino acceptance contract', false, 'Need merchant-side contract showing how the merchant/casino accepts Readies as payment.'],
             ['67 KYC required fields', publicDocs, publicDocs ? 'Evidence: CashForo AML policy documents natural-person ID/proof-of-address and legal-entity company/director/shareholder/beneficial-owner KYC baseline; exact API field names still need API docs.' : 'Need KYC fields and levels for onramp.'],
-            ['68 KYC pending lifecycle', false, 'Need KYC pending, approved, rejected examples.'],
-            ['69 Card authorization flow', false, 'Need card authorization and capture flow.'],
-            ['70 3DS challenge handling', false, 'Need 3DS challenge, frictionless, failed, timeout flows.'],
-            ['71 Card decline reasons', false, 'Need decline reason code catalog.'],
-            ['72 Onramp order created webhook', false, 'Need order created webhook sample.'],
-            ['73 Payment received webhook', false, 'Need card paid/payment received webhook sample.'],
-            ['74 Crypto sent webhook', false, 'Need crypto sent / delivered webhook sample.'],
-            ['75 Crypto failed webhook', false, 'Need crypto delivery failed webhook sample.'],
-            ['76 Transaction hash field', false, 'Need blockchain tx hash field and explorer URL behavior.'],
-            ['77 Crypto amount finalization', false, 'Need final delivered crypto amount and fee fields.'],
-            ['78 Minimum and maximum limits', false, 'Need min/max fiat and crypto limits.'],
-            ['79 Refund before crypto sent', false, 'Need refund behavior before crypto delivery.'],
-            ['80 Refund after crypto sent', false, 'Need policy after irreversible crypto delivery.'],
-            ['81 Chargeback handling', false, 'Need chargeback/dispute policy and webhook.'],
-            ['82 Travel rule requirements', false, 'Need travel rule or beneficiary information requirements.'],
-            ['83 Onramp go-live approval', false, 'Need written onramp go-live approval.'],
-            ['84 Onramp rollback plan', false, 'Need rollback/disable plan for onramp.']
+            ['68 Customer KYC lifecycle', false, 'Need KYC pending, approved, rejected, retry, and blocked-user examples before Readies issuance.'],
+            ['69 Card authorization and capture flow', false, 'Need card authorization/capture flow that occurs before Readies are issued.'],
+            ['70 3DS challenge handling', false, 'Need 3DS challenge, frictionless, failed, timeout flows for card-funded Readies purchase.'],
+            ['71 Card decline reason mapping', false, 'Need decline reason code catalog and mapping to no-issuance/no-credit states.'],
+            ['72 Readies issuance webhook', false, 'Need webhook/event sample for Readies issued or customer balance credited.'],
+            ['73 Merchant payment webhook', false, 'Need event sample when customer pays merchant/casino in Readies.'],
+            ['74 Merchant buyback/redemption webhook', false, 'Need event sample when merchant sells Readies back to Readies/Finexebla.'],
+            ['75 Stablecoin burn/debit event', false, 'Need ledger event for Readies redeemed/burned/debited during merchant buyback.'],
+            ['76 Transaction hash or internal ledger id', false, 'Need blockchain tx hash if on-chain, or immutable internal ledger id if off-chain.'],
+            ['77 Final fiat and Readies amount reconciliation', false, 'Need final card amount, fees, Readies issued, merchant payment amount, buyback amount, and spread/fee reconciliation.'],
+            ['78 Customer and merchant limits', false, 'Need min/max card purchase, Readies balance, merchant payment, and merchant redemption limits.'],
+            ['79 Refund before Readies spend', false, 'Need refund behavior before customer spends Readies.'],
+            ['80 Refund after merchant payment', false, 'Need policy when card refund/chargeback happens after customer paid merchant in Readies.'],
+            ['81 Chargeback exposure handling', false, 'Need reserve/recourse policy when card chargeback occurs after stablecoin issuance or merchant buyback.'],
+            ['82 Merchant/casino licensing compliance gate', false, 'Need legal/compliance approval for merchant category, casino/gaming jurisdiction, licensing status, and whether Readies may process the merchant. This cannot be assumed legal from the payment flow.'],
+            ['83 Onramp go-live approval', false, 'Need written approval for the full card -> Readies -> merchant payment -> merchant buyback flow.'],
+            ['84 Onramp rollback and freeze plan', false, 'Need ability to disable card funding, pause Readies issuance, freeze suspicious balances, and stop merchant buyback if issues appear.']
         ];
     }
 

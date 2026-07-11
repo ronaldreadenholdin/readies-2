@@ -160,3 +160,7 @@ Use it by copying these files into the existing Readies Laravel application, or 
 ## CashForo public documentation evidence
 
 Public CashForo pages were checked and summarized in `cashforo-public-docs-evidence.md`. The board marks only those items green that are supported by the public site, AML policy, or terms. API endpoints, authentication, webhook samples, signature details, and schemas remain red until actual API documentation is provided.
+
+## Readies Onramp OR001 model
+
+Onramp OR001 validates the full stablecoin payment loop: card payment -> Readies stablecoin issuance -> customer pays merchant/casino in Readies -> merchant sells Readies back to Readies/Finexebla. The checklist blocks go-live until legal/compliance approves merchant category, gaming/casino jurisdiction/licensing status, stablecoin issuance/redemption, reserves, chargebacks, and merchant buyback obligations.

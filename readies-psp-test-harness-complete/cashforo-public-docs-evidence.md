@@ -57,3 +57,15 @@ These still require API documentation or direct CashForo confirmation:
 - Crypto asset/network list.
 - Wallet validation rules.
 - Open Banking consent/payment initiation/account ownership flow.
+
+## Readies Onramp OR001 business flow to validate
+
+The Onramp test is not a generic crypto-purchase test. It must validate the full Readies payment loop:
+
+1. Customer pays by credit/debit card.
+2. Customer receives Readies stablecoin.
+3. Customer pays merchant/casino in Readies.
+4. Merchant sells Readies back to Readies/Finexebla.
+5. Ledger, reserves, settlement, refunds, chargebacks, and redemptions reconcile end-to-end.
+
+This flow still requires explicit legal/compliance approval. The test must not treat a merchant/casino as approved simply because the flow is crypto-based. The go-live gate should remain blocked until merchant category, jurisdiction, licensing status, stablecoin issuance/redemption, and buyback obligations are approved.
