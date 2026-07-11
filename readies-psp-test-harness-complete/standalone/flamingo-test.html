@@ -43,11 +43,11 @@
             <div class="grid">
                 <div>
                     <label for="onrampCode">Onramp code</label>
-                    <input id="onrampCode" value="FLM-ONRAMP">
+                    <input id="onrampCode" value="OR001">
                 </div>
                 <div>
                     <label for="bankCode">Open Banking code</label>
-                    <input id="bankCode" value="FLM-OB">
+                    <input id="bankCode" value="OB003">
                 </div>
                 <div>
                     <label for="onrampEndpoint">Onramp sandbox endpoint</label>
@@ -72,14 +72,14 @@
 
         <div class="grid">
             <div class="card">
-                <h3>Test 1: Onramp <span class="code">FLM-ONRAMP</span></h3>
+                <h3>Test 1: Onramp <span class="code">OR001</span></h3>
                 <p>Checks onramp payment input, fiat-to-crypto quote, KYC, wallet address, onramp order, webhooks, and crypto delivery status.</p>
                 <button class="btn-onramp" onclick="runOnrampTest()">Run Onramp Test</button>
                 <div id="onrampResults"><div class="status muted">Not tested yet.</div></div>
             </div>
 
             <div class="card">
-                <h3>Test 2: Open Banking <span class="code">FLM-OB</span></h3>
+                <h3>Test 2: Open Banking <span class="code">OB003</span></h3>
                 <p>Checks bank authorization, account ownership, payment initiation, consent status, callbacks, settlement, and reversal/failure handling.</p>
                 <button class="btn-bank" onclick="runBankTest()">Run Open Banking Test</button>
                 <div id="bankResults"><div class="status muted">Not tested yet.</div></div>

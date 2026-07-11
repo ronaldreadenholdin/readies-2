@@ -21,8 +21,8 @@ For the next PSP, open `next-psp-start-here.html`, change the PSP name/code/regi
 
 For Flamingo, open `flamingo-test.html`. It has two separate tests:
 
-1. Onramp: `FLM-ONRAMP`
-2. Open Banking: `FLM-OB`
+1. Onramp: `OR001`
+2. Open Banking: `OB003`
 
 For a quick local static test from this repository:
 
