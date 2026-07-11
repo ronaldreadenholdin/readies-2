@@ -54,18 +54,25 @@ These still require API documentation or direct CashForo confirmation:
 - Webhook event catalog and samples.
 - Webhook signature algorithm/header/canonical payload.
 - Onramp quote endpoint and quote expiry.
-- Crypto asset/network list.
-- Wallet validation rules.
+- Supported stablecoin assets for OR001, especially USDT and USDC.
+- Exchange wallet creation and customer wallet ownership rules.
+- USDT/USDC receipt confirmation.
+- USDT/USDC-to-Readies swap rules and rate source.
+- Merchant Readies payment and merchant buyback/redemption events.
 - Open Banking consent/payment initiation/account ownership flow.
 
 ## Readies Onramp OR001 business flow to validate
 
 The Onramp test is not a generic crypto-purchase test. It must validate the full Readies payment loop:
 
-1. Customer pays by credit/debit card.
-2. Customer receives Readies stablecoin.
-3. Customer pays merchant/casino in Readies.
-4. Merchant sells Readies back to Readies/Finexebla.
-5. Ledger, reserves, settlement, refunds, chargebacks, and redemptions reconcile end-to-end.
+1. Customer pays the licensed onramper by credit/debit card.
+2. Customer officially buys USDT or USDC from the onramper.
+3. The USDT/USDC is sent to a customer wallet created on the Readies/Finexeble exchange.
+4. Finexeble/Readies takes/swaps the USDT/USDC into Readies.
+5. Current business rule: 1 Readies = EUR 0.10, so EUR 100 becomes 1000 Readies after the stablecoin step.
+6. Customer pays the merchant/casino in Readies.
+7. Merchant later sells Readies back to Finexeble/Readies.
+8. Finexeble/Readies deducts commission for handling the payment.
+9. Ledger, custody, reserves, settlement, refunds, chargebacks, redemptions, and commission reconcile end-to-end.
 
-This flow still requires explicit legal/compliance approval. The test must not treat a merchant/casino as approved simply because the flow is crypto-based. The go-live gate should remain blocked until merchant category, jurisdiction, licensing status, stablecoin issuance/redemption, and buyback obligations are approved.
+This flow still requires explicit legal/compliance approval. The test must not treat a merchant/casino as approved simply because the flow is crypto-based. The go-live gate should remain blocked until merchant category, jurisdiction, licensing status, stablecoin purchase/swap/redemption, custody, reserves, chargebacks, commission handling, and merchant buyback obligations are approved.
