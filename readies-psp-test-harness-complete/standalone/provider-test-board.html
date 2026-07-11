@@ -20,10 +20,14 @@
         .btn-onramp { background: #f97316; color: white; }
         .btn-bank { background: #2563eb; color: white; }
         .btn-green { background: #16a34a; color: white; }
+        .btn-grey { background: #475569; color: white; }
         label { display: block; font-weight: 800; margin: 10px 0 6px; }
         input, textarea { width: 100%; box-sizing: border-box; padding: 11px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
         textarea { min-height: 88px; resize: vertical; }
         pre { white-space: pre-wrap; background: #f8fafc; border: 1px solid #e5e7eb; padding: 14px; border-radius: 10px; }
+        .work-box { border: 2px solid #2563eb; }
+        .work-box textarea { min-height: 130px; background: #eff6ff; }
+        .small-note { color: #64748b; font-size: 14px; margin-top: 8px; }
         @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -32,6 +36,20 @@
         <div class="header">
             <h1>Provider Test Board</h1>
             <h2>Reusable board for provider connection 1 + connection 2</h2>
+        </div>
+
+        <div class="card work-box">
+            <h3>Payment Page Work Box</h3>
+            <p>
+                Write notes, missing API details, provider answers, or questions here while you test.
+                This avoids switching pages. The text is saved in this browser.
+            </p>
+            <textarea id="paymentPageWorkBox" placeholder="Write here while testing... Example: CashForo confirmed webhook signature header is X-Cashforo-Signature."></textarea>
+            <button class="btn-green" onclick="saveWorkBox()">Save Box</button>
+            <button class="btn-onramp" onclick="appendWorkBoxToProviderNotes()">Add to Provider Notes</button>
+            <button class="btn-grey" onclick="copyWorkBox()">Copy Text</button>
+            <button class="btn-grey" onclick="clearWorkBox()">Clear</button>
+            <div id="workBoxStatus" class="small-note">Ready.</div>
         </div>
 
         <div class="card">
@@ -119,6 +137,47 @@
 
     function getValue(id) {
         return document.getElementById(id).value.trim();
+    }
+
+    function saveWorkBox() {
+        localStorage.setItem('readiesProviderWorkBox', document.getElementById('paymentPageWorkBox').value);
+        document.getElementById('workBoxStatus').textContent = 'Saved in this browser.';
+    }
+
+    function loadWorkBox() {
+        document.getElementById('paymentPageWorkBox').value = localStorage.getItem('readiesProviderWorkBox') || '';
+    }
+
+    function appendWorkBoxToProviderNotes() {
+        const workText = document.getElementById('paymentPageWorkBox').value.trim();
+        if (!workText) {
+            document.getElementById('workBoxStatus').textContent = 'Nothing to add yet.';
+            return;
+        }
+        const notes = document.getElementById('flamingoNotes');
+        notes.value = `${notes.value.trim()}\n\nPayment page note:\n${workText}`.trim();
+        saveWorkBox();
+        document.getElementById('workBoxStatus').textContent = 'Added to Provider Notes. Run tests again to include it in Bob recommendations.';
+    }
+
+    async function copyWorkBox() {
+        const workText = document.getElementById('paymentPageWorkBox').value;
+        if (!workText.trim()) {
+            document.getElementById('workBoxStatus').textContent = 'Nothing to copy yet.';
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(workText);
+            document.getElementById('workBoxStatus').textContent = 'Copied.';
+        } catch (error) {
+            document.getElementById('workBoxStatus').textContent = 'Copy failed; select the text and copy manually.';
+        }
+    }
+
+    function clearWorkBox() {
+        document.getElementById('paymentPageWorkBox').value = '';
+        localStorage.removeItem('readiesProviderWorkBox');
+        document.getElementById('workBoxStatus').textContent = 'Cleared.';
     }
 
     function providerName() {
@@ -386,6 +445,7 @@
     }
 
     updateBoardLabels();
+    loadWorkBox();
     </script>
 </body>
 </html>

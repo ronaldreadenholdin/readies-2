@@ -164,3 +164,7 @@ Public CashForo pages were checked and summarized in `cashforo-public-docs-evide
 ## Readies Onramp OR001 model
 
 Onramp OR001 validates the full stablecoin payment loop: customer pays licensed onramper by card -> customer officially buys USDT/USDC -> USDT/USDC is sent to a customer wallet on the Readies/Finexeble exchange -> Finexeble/Readies swaps USDT/USDC into Readies at the configured rule (currently 1 Readies = EUR 0.10, so EUR 100 becomes 1000 Readies) -> customer pays merchant/casino in Readies -> merchant sells Readies back to Finexeble/Readies -> commission is deducted for payment handling. The checklist blocks go-live until legal/compliance approves merchant category, gaming/casino jurisdiction/licensing status, stablecoin purchase/swap/redemption, custody, reserves, chargebacks, commission handling, and merchant buyback obligations.
+
+## Payment Page Work Box
+
+`provider-test-board.html` includes a Payment Page Work Box at the top of the board. Use it to write notes, provider answers, API details, or questions while testing without switching pages. The box saves locally in the browser and can append text into Provider Notes for Bob recommendations.
