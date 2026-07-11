@@ -56,7 +56,7 @@ standalone/
 
 For the next PSP, open the starter file, change the PSP name/code/region/signature header, then click **Run Full Test**.
 
-For any provider, open `standalone/provider-test-board.html`. It has two configurable connection tests. Each connection runs an 84-point checklist. Current Flamingo values are:
+For any provider, open `standalone/provider-test-board.html`. It has two configurable connection tests. Each connection runs an 84-point checklist. Current CashForo values are:
 
 1. Connection 1 / Onramp: `OR001`
 2. Connection 2 / Open Banking: `OB003`
@@ -156,3 +156,7 @@ routes/web.php
 
 This package is intended as a complete handoff folder. It is not a full Laravel framework installation with `artisan` and `vendor/`.
 Use it by copying these files into the existing Readies Laravel application, or keep using the static HTML preview until the Laravel app is ready.
+
+## CashForo public documentation evidence
+
+Public CashForo pages were checked and summarized in `cashforo-public-docs-evidence.md`. The board marks only those items green that are supported by the public site, AML policy, or terms. API endpoints, authentication, webhook samples, signature details, and schemas remain red until actual API documentation is provided.

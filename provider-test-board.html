@@ -42,7 +42,7 @@
             <div class="grid">
                 <div>
                     <label for="providerName">Provider name</label>
-                    <input id="providerName" value="Flamingo" oninput="updateBoardLabels()">
+                    <input id="providerName" value="CashForo" oninput="updateBoardLabels()">
                 </div>
                 <div>
                     <label for="connectionOneType">Connection 1 type</label>
@@ -62,23 +62,23 @@
                 </div>
                 <div>
                     <label for="onrampEndpoint">Connection 1 sandbox endpoint</label>
-                    <input id="onrampEndpoint" value="https://sandbox.flamingo.example/onramp">
+                    <input id="onrampEndpoint" value="">
                 </div>
                 <div>
                     <label for="bankEndpoint">Connection 2 sandbox endpoint</label>
-                    <input id="bankEndpoint" value="https://sandbox.flamingo.example/open-banking">
+                    <input id="bankEndpoint" value="">
                 </div>
                 <div>
                     <label for="onrampSignature">Connection 1 webhook signature header</label>
-                    <input id="onrampSignature" value="X-Flamingo-Signature">
+                    <input id="onrampSignature" value="">
                 </div>
                 <div>
                     <label for="bankSignature">Connection 2 webhook signature header</label>
-                    <input id="bankSignature" value="X-Flamingo-Bank-Signature">
+                    <input id="bankSignature" value="">
                 </div>
             </div>
             <label for="flamingoNotes">Provider notes / questions</label>
-            <textarea id="flamingoNotes">Confirm KYC requirements, crypto asset list, wallet address validation, open banking account ownership, webhook signing method, settlement timing, refund/reversal flow, and production go-live approval.</textarea>
+            <textarea id="flamingoNotes">Public CashForo pages confirm CashForo LTD, Cyprus/EU payment gateway/payment processing, AML/KYC, GDPR, payouts/fees/chargebacks. API endpoints, auth, webhook samples, and signature details are still not public in this workspace.</textarea>
         </div>
 
         <div class="grid">
@@ -170,15 +170,20 @@
         const type = config.type;
         const endpointConfigured = !!getValue(config.endpointId);
         const signatureConfigured = !!getValue(config.signatureId);
-        const typeChecks = config.profile === 'onramp' ? onrampSpecificChecks(type) : openBankingSpecificChecks(type);
-        const sharedChecks = sharedProviderChecks(type, endpointConfigured, signatureConfigured);
+        const publicDocs = hasCashForoPublicDocs();
+        const typeChecks = config.profile === 'onramp' ? onrampSpecificChecks(type, publicDocs) : openBankingSpecificChecks(type, publicDocs);
+        const sharedChecks = sharedProviderChecks(type, endpointConfigured, signatureConfigured, publicDocs);
         return sharedChecks.concat(typeChecks).slice(0, 84);
     }
 
-    function sharedProviderChecks(type, endpointConfigured, signatureConfigured) {
+    function hasCashForoPublicDocs() {
+        return providerName().toLowerCase().replace(/\s+/g, '').includes('cashforo');
+    }
+
+    function sharedProviderChecks(type, endpointConfigured, signatureConfigured, publicDocs) {
         return [
-            ['01 Provider profile identified', true, `${type} provider name, code, and connection type are captured.`],
-            ['02 Connection ownership confirmed', false, `Confirm who owns ${type}: PSP, aggregator, bank, processor, or internal adaptor.`],
+            ['01 Provider profile identified', true, publicDocs ? `Evidence: cashforo.com identifies CashForo as a payment management/payment gateway platform.` : `${type} provider name, code, and connection type are captured.`],
+            ['02 Connection ownership confirmed', publicDocs, publicDocs ? `Evidence: public terms identify CashForo LTD as the company providing payment gateway/payment processing services from Cyprus.` : `Confirm who owns ${type}: PSP, aggregator, bank, processor, or internal adaptor.`],
             ['03 Existing adaptor decision recorded', false, `Decide whether ${type} uses an existing adaptor or needs a dedicated adaptor.`],
             ['04 Sandbox endpoint configured', endpointConfigured, `Sandbox endpoint for ${type} must be confirmed.`],
             ['05 Production endpoint documented', false, `Need production endpoint and activation timing for ${type}.`],
@@ -233,22 +238,22 @@
             ['48 Cancelled/expired mapping', false, `Need cancelled/expired status mapping for ${type}.`],
             ['49 Refund/reversal mapping', false, `Need refund/reversal/chargeback mapping for ${type}.`],
 
-            ['50 Settlement timing documented', false, `Need settlement timing and cut-off rules for ${type}.`],
+            ['50 Settlement timing documented', false, publicDocs ? `Public terms mention payouts and payout frequency depending on risk/jurisdiction/banking, but exact settlement timing/cut-off rules still need API/merchant docs for ${type}.` : `Need settlement timing and cut-off rules for ${type}.`],
             ['51 Settlement report format', false, `Need settlement report sample and delivery method for ${type}.`],
             ['52 Reconciliation identifiers', false, `Need transaction, provider, settlement, and order ids for ${type}.`],
-            ['53 Fees documented', false, `Need fee fields, fee currency, and who pays fees for ${type}.`],
+            ['53 Fees documented', false, publicDocs ? `Public terms say fees are defined in merchant agreement/pricing schedule, but API fee fields and fee currency still need documentation for ${type}.` : `Need fee fields, fee currency, and who pays fees for ${type}.`],
             ['54 FX handling documented', false, `Need FX source, rate timestamp, and spread rules for ${type}.`],
             ['55 Partial settlement behavior', false, `Need partial settlement behavior for ${type}, if possible.`],
             ['56 Ledger write contract', false, `Need ledger fields Readies stores for ${type}.`],
 
             ['57 Risk country rules', false, `Need allowed, blocked, and restricted countries for ${type}.`],
             ['58 Customer data requirements', false, `Need required customer identity fields for ${type}.`],
-            ['59 PII handling policy', false, `Need PII storage, masking, and deletion expectations for ${type}.`],
-            ['60 Sanctions/AML expectation', false, `Need sanctions/AML screening ownership for ${type}.`]
+            ['59 PII handling policy', publicDocs, publicDocs ? `Evidence: CashForo terms state GDPR applies; merchant is Data Controller and CashForo acts as Data Processor.` : `Need PII storage, masking, and deletion expectations for ${type}.`],
+            ['60 Sanctions/AML expectation', publicDocs, publicDocs ? `Evidence: CashForo AML policy documents KYC, sanctions/PEP screening, enhanced due diligence, source of funds/source of wealth, and suspicious activity reporting.` : `Need sanctions/AML screening ownership for ${type}.`]
         ];
     }
 
-    function onrampSpecificChecks(type) {
+    function onrampSpecificChecks(type, publicDocs) {
         return [
             ['61 Quote creation endpoint', false, 'Need quote endpoint for fiat-to-crypto onramp.'],
             ['62 Quote expiry behavior', false, 'Need quote expiry seconds and expired quote error.'],
@@ -256,7 +261,7 @@
             ['64 Blockchain network list', false, 'Need supported networks per crypto asset.'],
             ['65 Wallet address validation', false, 'Need wallet address validation rules and error response.'],
             ['66 Network mismatch handling', false, 'Need behavior when wallet network mismatches asset/network.'],
-            ['67 KYC required fields', false, 'Need KYC fields and levels for onramp.'],
+            ['67 KYC required fields', publicDocs, publicDocs ? 'Evidence: CashForo AML policy documents natural-person ID/proof-of-address and legal-entity company/director/shareholder/beneficial-owner KYC baseline; exact API field names still need API docs.' : 'Need KYC fields and levels for onramp.'],
             ['68 KYC pending lifecycle', false, 'Need KYC pending, approved, rejected examples.'],
             ['69 Card authorization flow', false, 'Need card authorization and capture flow.'],
             ['70 3DS challenge handling', false, 'Need 3DS challenge, frictionless, failed, timeout flows.'],
@@ -277,7 +282,7 @@
         ];
     }
 
-    function openBankingSpecificChecks(type) {
+    function openBankingSpecificChecks(type, publicDocs) {
         return [
             ['61 Bank list endpoint', false, 'Need supported bank list endpoint and country coverage.'],
             ['62 Bank consent start', false, 'Need consent start request and redirect/embedded flow.'],

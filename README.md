@@ -19,7 +19,7 @@ Use these files:
 
 For the next PSP, open `next-psp-start-here.html`, change the PSP name/code/region, and click **Run Full Test**.
 
-For any provider, open `provider-test-board.html`. It has two configurable connection tests. Each connection runs an 84-point checklist. Current Flamingo values are:
+For any provider, open `provider-test-board.html`. It has two configurable connection tests. Each connection runs an 84-point checklist. Current CashForo values are:
 
 1. Connection 1 / Onramp: `OR001`
 2. Connection 2 / Open Banking: `OB003`
@@ -43,3 +43,7 @@ Use the page in this order:
 3. Click **Run Xcore P004 Test**.
 4. Review all Bob recommendation sections.
 5. Click **Go Live Check** after all tests have run.
+
+## CashForo public documentation evidence
+
+Public CashForo pages were checked and summarized in `cashforo-public-docs-evidence.md`. The board marks only those items green that are supported by the public site, AML policy, or terms. API endpoints, authentication, webhook samples, signature details, and schemas remain red until actual API documentation is provided.
