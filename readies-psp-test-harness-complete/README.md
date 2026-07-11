@@ -51,15 +51,15 @@ standalone/
 
 - Original recovered test: `public/pre-flight-test/index.html`
 - Polished current dashboard: `standalone/pre-flight-test.html`
-- Flamingo dual-solution test: `standalone/flamingo-test.html`
+- Reusable provider test board: `standalone/provider-test-board.html`
 - Next PSP starter: use the root repository file `next-psp-start-here.html` or copy it into this package before handoff.
 
 For the next PSP, open the starter file, change the PSP name/code/region/signature header, then click **Run Full Test**.
 
-For Flamingo, open `standalone/flamingo-test.html`. It has two separate test paths:
+For any provider, open `standalone/provider-test-board.html`. It has two configurable connection tests. Current Flamingo values are:
 
-1. Onramp: `OR001`
-2. Open Banking: `OB003`
+1. Connection 1 / Onramp: `OR001`
+2. Connection 2 / Open Banking: `OB003`
 
 ## Setup in an existing Laravel project
 

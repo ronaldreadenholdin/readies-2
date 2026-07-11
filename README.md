@@ -14,15 +14,15 @@ Use these files:
 
 - Original recovered test: `public/pre-flight-test/index.html`
 - Next PSP starter copy: `next-psp-start-here.html`
-- Flamingo dual-solution test: `flamingo-test.html`
+- Reusable provider test board: `provider-test-board.html`
 - Polished current dashboard: `pre-flight-test.html`
 
 For the next PSP, open `next-psp-start-here.html`, change the PSP name/code/region, and click **Run Full Test**.
 
-For Flamingo, open `flamingo-test.html`. It has two separate tests:
+For any provider, open `provider-test-board.html`. It has two configurable connection tests. Current Flamingo values are:
 
-1. Onramp: `OR001`
-2. Open Banking: `OB003`
+1. Connection 1 / Onramp: `OR001`
+2. Connection 2 / Open Banking: `OB003`
 
 For a quick local static test from this repository:
 

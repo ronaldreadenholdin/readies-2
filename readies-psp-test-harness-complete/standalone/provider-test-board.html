@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Readies Flamingo PSP Pre-Flight Test</title>
+    <title>Readies Provider Test Board</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; margin: 0; padding: 20px; color: #1f2937; }
         .container { max-width: 1180px; margin: auto; }
@@ -30,71 +30,82 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Flamingo PSP Pre-Flight Test</h1>
-            <h2>Two products: Onramp + Open Banking</h2>
+            <h1>Provider Test Board</h1>
+            <h2>Reusable board for provider connection 1 + connection 2</h2>
         </div>
 
         <div class="card">
-            <h3>Flamingo setup</h3>
+            <h3>Provider setup</h3>
             <p>
-                Flamingo must be tested as two separate provider solutions because onramp and open banking
-                have different risk, API, webhook, settlement, and go-live requirements.
+                Use this same board for each provider. Configure the provider name and two connection/adaptor types, then test each connection separately because they can have different risk, API, webhook, settlement, and go-live requirements.
             </p>
             <div class="grid">
                 <div>
-                    <label for="onrampCode">Onramp code</label>
-                    <input id="onrampCode" value="OR001">
+                    <label for="providerName">Provider name</label>
+                    <input id="providerName" value="Flamingo" oninput="updateBoardLabels()">
                 </div>
                 <div>
-                    <label for="bankCode">Open Banking code</label>
-                    <input id="bankCode" value="OB003">
+                    <label for="connectionOneType">Connection 1 type</label>
+                    <input id="connectionOneType" value="Onramp" oninput="updateBoardLabels()">
                 </div>
                 <div>
-                    <label for="onrampEndpoint">Onramp sandbox endpoint</label>
+                    <label for="connectionTwoType">Connection 2 type</label>
+                    <input id="connectionTwoType" value="Open Banking" oninput="updateBoardLabels()">
+                </div>
+                <div>
+                    <label for="onrampCode">Connection 1 code</label>
+                    <input id="onrampCode" value="OR001" oninput="updateBoardLabels()">
+                </div>
+                <div>
+                    <label for="bankCode">Connection 2 code</label>
+                    <input id="bankCode" value="OB003" oninput="updateBoardLabels()">
+                </div>
+                <div>
+                    <label for="onrampEndpoint">Connection 1 sandbox endpoint</label>
                     <input id="onrampEndpoint" value="https://sandbox.flamingo.example/onramp">
                 </div>
                 <div>
-                    <label for="bankEndpoint">Open Banking sandbox endpoint</label>
+                    <label for="bankEndpoint">Connection 2 sandbox endpoint</label>
                     <input id="bankEndpoint" value="https://sandbox.flamingo.example/open-banking">
                 </div>
                 <div>
-                    <label for="onrampSignature">Onramp webhook signature header</label>
+                    <label for="onrampSignature">Connection 1 webhook signature header</label>
                     <input id="onrampSignature" value="X-Flamingo-Signature">
                 </div>
                 <div>
-                    <label for="bankSignature">Open Banking webhook signature header</label>
+                    <label for="bankSignature">Connection 2 webhook signature header</label>
                     <input id="bankSignature" value="X-Flamingo-Bank-Signature">
                 </div>
             </div>
-            <label for="flamingoNotes">Known Flamingo notes / questions</label>
+            <label for="flamingoNotes">Provider notes / questions</label>
             <textarea id="flamingoNotes">Confirm KYC requirements, crypto asset list, wallet address validation, open banking account ownership, webhook signing method, settlement timing, refund/reversal flow, and production go-live approval.</textarea>
         </div>
 
         <div class="grid">
             <div class="card">
-                <h3>Test 1: Onramp <span class="code">OR001</span></h3>
+                <h3>Test 1: <span id="connectionOneTitle">Onramp</span> <span id="connectionOneCodeBadge" class="code">OR001</span></h3>
                 <p>Checks onramp payment input, fiat-to-crypto quote, KYC, wallet address, onramp order, webhooks, and crypto delivery status.</p>
-                <button class="btn-onramp" onclick="runOnrampTest()">Run Onramp Test</button>
+                <button class="btn-onramp" onclick="runOnrampTest()">Run Connection 1 Test</button>
                 <div id="onrampResults"><div class="status muted">Not tested yet.</div></div>
             </div>
 
             <div class="card">
-                <h3>Test 2: Open Banking <span class="code">OB003</span></h3>
+                <h3>Test 2: <span id="connectionTwoTitle">Open Banking</span> <span id="connectionTwoCodeBadge" class="code">OB003</span></h3>
                 <p>Checks bank authorization, account ownership, payment initiation, consent status, callbacks, settlement, and reversal/failure handling.</p>
-                <button class="btn-bank" onclick="runBankTest()">Run Open Banking Test</button>
+                <button class="btn-bank" onclick="runBankTest()">Run Connection 2 Test</button>
                 <div id="bankResults"><div class="status muted">Not tested yet.</div></div>
             </div>
         </div>
 
         <div class="card">
             <h3>Bob recommendations</h3>
-            <pre id="bob">Run both Flamingo tests. Bob will create two separate request lists: one for onramp and one for open banking.</pre>
+            <pre id="bob">Run both provider tests. Bob will create two separate request lists: one for connection 1 and one for connection 2.</pre>
         </div>
 
         <div class="card">
             <h3>Go Live Gate</h3>
-            <div id="goLiveStatus" class="status muted">Run both Flamingo tests before go-live review.</div>
-            <button class="btn-green" onclick="markPspConfirmed()">Mark Flamingo confirmations received</button>
+            <div id="goLiveStatus" class="status muted">Run both provider tests before go-live review.</div>
+            <button class="btn-green" onclick="markPspConfirmed()">Mark provider confirmations received</button>
             <button class="btn-green" onclick="goLive()">Go Live Check</button>
         </div>
     </div>
@@ -110,19 +121,38 @@
         return document.getElementById(id).value.trim();
     }
 
+    function providerName() {
+        return getValue('providerName') || 'Provider';
+    }
+
+    function connectionOneType() {
+        return getValue('connectionOneType') || 'Connection 1';
+    }
+
+    function connectionTwoType() {
+        return getValue('connectionTwoType') || 'Connection 2';
+    }
+
+    function updateBoardLabels() {
+        document.getElementById('connectionOneTitle').textContent = connectionOneType();
+        document.getElementById('connectionTwoTitle').textContent = connectionTwoType();
+        document.getElementById('connectionOneCodeBadge').textContent = getValue('onrampCode') || 'CODE-1';
+        document.getElementById('connectionTwoCodeBadge').textContent = getValue('bankCode') || 'CODE-2';
+    }
+
     function runOnrampTest() {
         onrampTestRan = true;
         const checks = [
-            ['Onramp auth and connectivity', !!getValue('onrampEndpoint'), 'Sandbox onramp API endpoint must be confirmed.'],
-            ['Onramp payment input contract', true, 'Amount, currency, customer, billing country, success URL, failure URL, and idempotency key must be mapped.'],
+            [`${connectionOneType()} auth and connectivity`, !!getValue('onrampEndpoint'), 'Sandbox API endpoint must be confirmed.'],
+            [`${connectionOneType()} payment input contract`, true, 'Amount, currency, customer, billing country, success URL, failure URL, and idempotency key must be mapped.'],
             ['Fiat-to-crypto quote contract', false, 'Need quote expiry, asset list, network, fee, spread, and final delivered crypto amount.'],
             ['KYC / identity requirements', false, 'Need KYC level, required fields, country rules, and blocked-user response examples.'],
             ['Wallet address validation', false, 'Need wallet format validation, network mismatch handling, and invalid address error format.'],
-            ['Onramp webhook lifecycle', false, 'Need created, pending, paid, crypto_sent, failed, refunded, chargeback examples.'],
+            [`${connectionOneType()} webhook lifecycle`, false, 'Need created, pending, paid, completed/sent, failed, refunded, chargeback or reversal examples.'],
             ['HMAC-SHA256 signature verification', !!getValue('onrampSignature'), 'Need signature header, shared secret, algorithm, and canonical payload string.'],
-            ['Chargeback and refund handling', false, 'Need onramp dispute, refund, and crypto-delivery reversal policy.']
+            ['Dispute / refund / reversal handling', false, 'Need dispute, refund, and delivery reversal policy.']
         ];
-        onrampOpenItems = renderChecks('onrampResults', checks, getValue('onrampCode'), 'Flamingo Onramp');
+        onrampOpenItems = renderChecks('onrampResults', checks, getValue('onrampCode'), `${providerName()} ${connectionOneType()}`);
         updateBob();
         updateGoLive();
     }
@@ -130,16 +160,16 @@
     function runBankTest() {
         bankTestRan = true;
         const checks = [
-            ['Open Banking auth and connectivity', !!getValue('bankEndpoint'), 'Sandbox open banking API endpoint must be confirmed.'],
+            [`${connectionTwoType()} auth and connectivity`, !!getValue('bankEndpoint'), 'Sandbox API endpoint must be confirmed.'],
             ['Bank consent / authorization flow', false, 'Need redirect/embedded consent flow, consent expiry, cancellation, and timeout examples.'],
             ['Account ownership check', false, 'Need name match, IBAN/account id, and ownership mismatch response format.'],
             ['Payment initiation contract', true, 'Amount, currency, customer, reference, return URLs, and idempotency key must be mapped.'],
-            ['Open Banking webhook lifecycle', false, 'Need initiated, authorized, pending, settled, failed, reversed, expired examples.'],
+            [`${connectionTwoType()} webhook lifecycle`, false, 'Need initiated, authorized, pending, settled, failed, reversed, expired examples.'],
             ['HMAC-SHA256 signature verification', !!getValue('bankSignature'), 'Need signature header, shared secret, algorithm, and canonical payload string.'],
             ['Settlement and reconciliation', false, 'Need settlement report fields, timing, fees, references, and reconciliation identifiers.'],
             ['Failure / reversal handling', false, 'Need insufficient funds, user cancelled, bank rejected, timeout, and reversal examples.']
         ];
-        bankOpenItems = renderChecks('bankResults', checks, getValue('bankCode'), 'Flamingo Open Banking');
+        bankOpenItems = renderChecks('bankResults', checks, getValue('bankCode'), `${providerName()} ${connectionTwoType()}`);
         updateBob();
         updateGoLive();
     }
@@ -160,12 +190,12 @@
 
     function updateBob() {
         const notes = getValue('flamingoNotes');
-        const onrampLines = onrampOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || 'All onramp checks are green.';
-        const bankLines = bankOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || 'All open banking checks are green.';
+        const onrampLines = onrampOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || `All ${connectionOneType()} checks are green.`;
+        const bankLines = bankOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || `All ${connectionTwoType()} checks are green.`;
         document.getElementById('bob').textContent =
-            `Dear Flamingo Team,\n\nWe need to validate two separate Flamingo solutions for Readies:\n\n`
-            + `A) Onramp (${getValue('onrampCode')})\n${onrampLines}\n\n`
-            + `B) Open Banking (${getValue('bankCode')})\n${bankLines}\n\n`
+            `Dear ${providerName()} team,\n\nWe need to validate two separate provider connections for Readies:\n\n`
+            + `A) ${connectionOneType()} (${getValue('onrampCode')})\n${onrampLines}\n\n`
+            + `B) ${connectionTwoType()} (${getValue('bankCode')})\n${bankLines}\n\n`
             + `Shared notes:\n${notes}\n\n`
             + `Please provide the missing API documentation, webhook samples, signature verification details, sandbox credentials, and go-live approval per solution.\n\nThank you.`;
     }
@@ -174,11 +204,11 @@
         pspConfirmed = true;
         if (onrampTestRan) {
             onrampOpenItems = [];
-            document.getElementById('onrampResults').innerHTML += '<div class="status green">Flamingo onramp confirmations recorded.</div>';
+            document.getElementById('onrampResults').innerHTML += `<div class="status green">${escapeHtml(providerName())} ${escapeHtml(connectionOneType())} confirmations recorded.</div>`;
         }
         if (bankTestRan) {
             bankOpenItems = [];
-            document.getElementById('bankResults').innerHTML += '<div class="status green">Flamingo open banking confirmations recorded.</div>';
+            document.getElementById('bankResults').innerHTML += `<div class="status green">${escapeHtml(providerName())} ${escapeHtml(connectionTwoType())} confirmations recorded.</div>`;
         }
         updateBob();
         updateGoLive();
@@ -188,23 +218,23 @@
         const status = document.getElementById('goLiveStatus');
         if (!onrampTestRan || !bankTestRan) {
             status.className = 'status muted';
-            status.textContent = 'Run both Flamingo tests before go-live review.';
+            status.textContent = 'Run both provider tests before go-live review.';
             return;
         }
         if (onrampOpenItems.length === 0 && bankOpenItems.length === 0 && pspConfirmed) {
             status.className = 'status green';
-            status.textContent = 'Both Flamingo solutions are green for final live review.';
+            status.textContent = 'Both provider connections are green for final live review.';
             return;
         }
         status.className = 'status flagged';
-        status.textContent = `Blocked: ${onrampOpenItems.length} onramp item(s) and ${bankOpenItems.length} open banking item(s) still need confirmation.`;
+        status.textContent = `Blocked: ${onrampOpenItems.length} ${connectionOneType()} item(s) and ${bankOpenItems.length} ${connectionTwoType()} item(s) still need confirmation.`;
     }
 
     function goLive() {
         const isGreen = document.getElementById('goLiveStatus').className.includes('green');
         alert(isGreen
-            ? 'Both Flamingo test paths are green. Ready for final live review.'
-            : 'Blocked: run both tests and resolve/confirm all flagged Flamingo items first.');
+            ? 'Both provider test paths are green. Ready for final live review.'
+            : 'Blocked: run both tests and resolve/confirm all flagged provider items first.');
     }
 
     function escapeHtml(value) {
@@ -215,6 +245,8 @@
             .replaceAll('"', '&quot;')
             .replaceAll("'", '&#039;');
     }
+
+    updateBoardLabels();
     </script>
 </body>
 </html>
