@@ -58,7 +58,7 @@ For the next PSP, open the starter file, change the PSP name/code/region/signatu
 
 For Flamingo, open `standalone/flamingo-test.html`. It has two separate test paths:
 
-1. Card-to-Crypto Onramper: `FLM-C2C`
+1. Onramp: `FLM-ONRAMP`
 2. Open Banking: `FLM-OB`
 
 ## Setup in an existing Laravel project

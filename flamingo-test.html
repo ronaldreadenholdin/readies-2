@@ -17,7 +17,7 @@
         .muted { background: #e5e7eb; color: #374151; }
         .code { display: inline-block; padding: 4px 8px; border-radius: 999px; background: #111827; color: white; font-size: 12px; }
         button { padding: 12px 20px; font-size: 16px; border: 0; border-radius: 9px; cursor: pointer; margin: 5px; font-weight: 800; }
-        .btn-card { background: #f97316; color: white; }
+        .btn-onramp { background: #f97316; color: white; }
         .btn-bank { background: #2563eb; color: white; }
         .btn-green { background: #16a34a; color: white; }
         label { display: block; font-weight: 800; margin: 10px 0 6px; }
@@ -31,35 +31,35 @@
     <div class="container">
         <div class="header">
             <h1>Flamingo PSP Pre-Flight Test</h1>
-            <h2>Two products: Card-to-Crypto Onramper + Open Banking</h2>
+            <h2>Two products: Onramp + Open Banking</h2>
         </div>
 
         <div class="card">
             <h3>Flamingo setup</h3>
             <p>
-                Flamingo must be tested as two separate provider solutions because card-to-crypto/onramp and open banking
+                Flamingo must be tested as two separate provider solutions because onramp and open banking
                 have different risk, API, webhook, settlement, and go-live requirements.
             </p>
             <div class="grid">
                 <div>
-                    <label for="cardCode">Card-to-Crypto code</label>
-                    <input id="cardCode" value="FLM-C2C">
+                    <label for="onrampCode">Onramp code</label>
+                    <input id="onrampCode" value="FLM-ONRAMP">
                 </div>
                 <div>
                     <label for="bankCode">Open Banking code</label>
                     <input id="bankCode" value="FLM-OB">
                 </div>
                 <div>
-                    <label for="cardEndpoint">Card-to-Crypto sandbox endpoint</label>
-                    <input id="cardEndpoint" value="https://sandbox.flamingo.example/onramp">
+                    <label for="onrampEndpoint">Onramp sandbox endpoint</label>
+                    <input id="onrampEndpoint" value="https://sandbox.flamingo.example/onramp">
                 </div>
                 <div>
                     <label for="bankEndpoint">Open Banking sandbox endpoint</label>
                     <input id="bankEndpoint" value="https://sandbox.flamingo.example/open-banking">
                 </div>
                 <div>
-                    <label for="cardSignature">Card webhook signature header</label>
-                    <input id="cardSignature" value="X-Flamingo-Signature">
+                    <label for="onrampSignature">Onramp webhook signature header</label>
+                    <input id="onrampSignature" value="X-Flamingo-Signature">
                 </div>
                 <div>
                     <label for="bankSignature">Open Banking webhook signature header</label>
@@ -72,10 +72,10 @@
 
         <div class="grid">
             <div class="card">
-                <h3>Test 1: Card-to-Crypto Onramper <span class="code">FLM-C2C</span></h3>
-                <p>Checks card payment input, fiat-to-crypto quote, KYC, wallet address, onramp order, webhooks, and crypto delivery status.</p>
-                <button class="btn-card" onclick="runCardTest()">Run Card-to-Crypto Test</button>
-                <div id="cardResults"><div class="status muted">Not tested yet.</div></div>
+                <h3>Test 1: Onramp <span class="code">FLM-ONRAMP</span></h3>
+                <p>Checks onramp payment input, fiat-to-crypto quote, KYC, wallet address, onramp order, webhooks, and crypto delivery status.</p>
+                <button class="btn-onramp" onclick="runOnrampTest()">Run Onramp Test</button>
+                <div id="onrampResults"><div class="status muted">Not tested yet.</div></div>
             </div>
 
             <div class="card">
@@ -88,7 +88,7 @@
 
         <div class="card">
             <h3>Bob recommendations</h3>
-            <pre id="bob">Run both Flamingo tests. Bob will create two separate request lists: one for card-to-crypto and one for open banking.</pre>
+            <pre id="bob">Run both Flamingo tests. Bob will create two separate request lists: one for onramp and one for open banking.</pre>
         </div>
 
         <div class="card">
@@ -100,29 +100,29 @@
     </div>
 
     <script>
-    let cardTestRan = false;
+    let onrampTestRan = false;
     let bankTestRan = false;
     let pspConfirmed = false;
-    let cardOpenItems = [];
+    let onrampOpenItems = [];
     let bankOpenItems = [];
 
     function getValue(id) {
         return document.getElementById(id).value.trim();
     }
 
-    function runCardTest() {
-        cardTestRan = true;
+    function runOnrampTest() {
+        onrampTestRan = true;
         const checks = [
-            ['Card auth and connectivity', !!getValue('cardEndpoint'), 'Sandbox onramp API endpoint must be confirmed.'],
-            ['Card payment input contract', true, 'Amount, currency, customer, billing country, success URL, failure URL, and idempotency key must be mapped.'],
+            ['Onramp auth and connectivity', !!getValue('onrampEndpoint'), 'Sandbox onramp API endpoint must be confirmed.'],
+            ['Onramp payment input contract', true, 'Amount, currency, customer, billing country, success URL, failure URL, and idempotency key must be mapped.'],
             ['Fiat-to-crypto quote contract', false, 'Need quote expiry, asset list, network, fee, spread, and final delivered crypto amount.'],
             ['KYC / identity requirements', false, 'Need KYC level, required fields, country rules, and blocked-user response examples.'],
             ['Wallet address validation', false, 'Need wallet format validation, network mismatch handling, and invalid address error format.'],
-            ['Card-to-crypto webhook lifecycle', false, 'Need created, pending, paid, crypto_sent, failed, refunded, chargeback examples.'],
-            ['HMAC-SHA256 signature verification', !!getValue('cardSignature'), 'Need signature header, shared secret, algorithm, and canonical payload string.'],
-            ['Chargeback and refund handling', false, 'Need card dispute flow and crypto-delivery reversal policy.']
+            ['Onramp webhook lifecycle', false, 'Need created, pending, paid, crypto_sent, failed, refunded, chargeback examples.'],
+            ['HMAC-SHA256 signature verification', !!getValue('onrampSignature'), 'Need signature header, shared secret, algorithm, and canonical payload string.'],
+            ['Chargeback and refund handling', false, 'Need onramp dispute, refund, and crypto-delivery reversal policy.']
         ];
-        cardOpenItems = renderChecks('cardResults', checks, getValue('cardCode'), 'Flamingo Card-to-Crypto');
+        onrampOpenItems = renderChecks('onrampResults', checks, getValue('onrampCode'), 'Flamingo Onramp');
         updateBob();
         updateGoLive();
     }
@@ -160,11 +160,11 @@
 
     function updateBob() {
         const notes = getValue('flamingoNotes');
-        const cardLines = cardOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || 'All card-to-crypto checks are green.';
+        const onrampLines = onrampOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || 'All onramp checks are green.';
         const bankLines = bankOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || 'All open banking checks are green.';
         document.getElementById('bob').textContent =
             `Dear Flamingo Team,\n\nWe need to validate two separate Flamingo solutions for Readies:\n\n`
-            + `A) Card-to-Crypto Onramper (${getValue('cardCode')})\n${cardLines}\n\n`
+            + `A) Onramp (${getValue('onrampCode')})\n${onrampLines}\n\n`
             + `B) Open Banking (${getValue('bankCode')})\n${bankLines}\n\n`
             + `Shared notes:\n${notes}\n\n`
             + `Please provide the missing API documentation, webhook samples, signature verification details, sandbox credentials, and go-live approval per solution.\n\nThank you.`;
@@ -172,9 +172,9 @@
 
     function markPspConfirmed() {
         pspConfirmed = true;
-        if (cardTestRan) {
-            cardOpenItems = [];
-            document.getElementById('cardResults').innerHTML += '<div class="status green">Flamingo card-to-crypto confirmations recorded.</div>';
+        if (onrampTestRan) {
+            onrampOpenItems = [];
+            document.getElementById('onrampResults').innerHTML += '<div class="status green">Flamingo onramp confirmations recorded.</div>';
         }
         if (bankTestRan) {
             bankOpenItems = [];
@@ -186,18 +186,18 @@
 
     function updateGoLive() {
         const status = document.getElementById('goLiveStatus');
-        if (!cardTestRan || !bankTestRan) {
+        if (!onrampTestRan || !bankTestRan) {
             status.className = 'status muted';
             status.textContent = 'Run both Flamingo tests before go-live review.';
             return;
         }
-        if (cardOpenItems.length === 0 && bankOpenItems.length === 0 && pspConfirmed) {
+        if (onrampOpenItems.length === 0 && bankOpenItems.length === 0 && pspConfirmed) {
             status.className = 'status green';
             status.textContent = 'Both Flamingo solutions are green for final live review.';
             return;
         }
         status.className = 'status flagged';
-        status.textContent = `Blocked: ${cardOpenItems.length} card-to-crypto item(s) and ${bankOpenItems.length} open banking item(s) still need confirmation.`;
+        status.textContent = `Blocked: ${onrampOpenItems.length} onramp item(s) and ${bankOpenItems.length} open banking item(s) still need confirmation.`;
     }
 
     function goLive() {
