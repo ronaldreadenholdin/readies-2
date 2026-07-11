@@ -19,7 +19,7 @@ Use these files:
 
 For the next PSP, open `next-psp-start-here.html`, change the PSP name/code/region, and click **Run Full Test**.
 
-For any provider, open `provider-test-board.html`. It has two configurable connection tests. Current Flamingo values are:
+For any provider, open `provider-test-board.html`. It has two configurable connection tests. Each connection runs an 84-point checklist. Current Flamingo values are:
 
 1. Connection 1 / Onramp: `OR001`
 2. Connection 2 / Open Banking: `OB003`

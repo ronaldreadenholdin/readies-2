@@ -56,7 +56,7 @@ standalone/
 
 For the next PSP, open the starter file, change the PSP name/code/region/signature header, then click **Run Full Test**.
 
-For any provider, open `standalone/provider-test-board.html`. It has two configurable connection tests. Current Flamingo values are:
+For any provider, open `standalone/provider-test-board.html`. It has two configurable connection tests. Each connection runs an 84-point checklist. Current Flamingo values are:
 
 1. Connection 1 / Onramp: `OR001`
 2. Connection 2 / Open Banking: `OB003`

@@ -37,7 +37,7 @@
         <div class="card">
             <h3>Provider setup</h3>
             <p>
-                Use this same board for each provider. Configure the provider name and two connection/adaptor types, then test each connection separately because they can have different risk, API, webhook, settlement, and go-live requirements.
+                Use this same board for each provider. Configure the provider name and two connection/adaptor types, then test each connection separately because they can have different risk, API, webhook, settlement, and go-live requirements. Each connection runs a full 84-point pre-flight checklist.
             </p>
             <div class="grid">
                 <div>
@@ -99,7 +99,7 @@
 
         <div class="card">
             <h3>Bob recommendations</h3>
-            <pre id="bob">Run both provider tests. Bob will create two separate request lists: one for connection 1 and one for connection 2.</pre>
+            <pre id="bob">Run both provider tests. Bob will create two separate 84-point request lists: one for connection 1 and one for connection 2.</pre>
         </div>
 
         <div class="card">
@@ -142,16 +142,12 @@
 
     function runOnrampTest() {
         onrampTestRan = true;
-        const checks = [
-            [`${connectionOneType()} auth and connectivity`, !!getValue('onrampEndpoint'), 'Sandbox API endpoint must be confirmed.'],
-            [`${connectionOneType()} payment input contract`, true, 'Amount, currency, customer, billing country, success URL, failure URL, and idempotency key must be mapped.'],
-            ['Fiat-to-crypto quote contract', false, 'Need quote expiry, asset list, network, fee, spread, and final delivered crypto amount.'],
-            ['KYC / identity requirements', false, 'Need KYC level, required fields, country rules, and blocked-user response examples.'],
-            ['Wallet address validation', false, 'Need wallet format validation, network mismatch handling, and invalid address error format.'],
-            [`${connectionOneType()} webhook lifecycle`, false, 'Need created, pending, paid, completed/sent, failed, refunded, chargeback or reversal examples.'],
-            ['HMAC-SHA256 signature verification', !!getValue('onrampSignature'), 'Need signature header, shared secret, algorithm, and canonical payload string.'],
-            ['Dispute / refund / reversal handling', false, 'Need dispute, refund, and delivery reversal policy.']
-        ];
+        const checks = buildFullConnectionChecks({
+            type: connectionOneType(),
+            endpointId: 'onrampEndpoint',
+            signatureId: 'onrampSignature',
+            profile: 'onramp'
+        });
         onrampOpenItems = renderChecks('onrampResults', checks, getValue('onrampCode'), `${providerName()} ${connectionOneType()}`);
         updateBob();
         updateGoLive();
@@ -159,25 +155,163 @@
 
     function runBankTest() {
         bankTestRan = true;
-        const checks = [
-            [`${connectionTwoType()} auth and connectivity`, !!getValue('bankEndpoint'), 'Sandbox API endpoint must be confirmed.'],
-            ['Bank consent / authorization flow', false, 'Need redirect/embedded consent flow, consent expiry, cancellation, and timeout examples.'],
-            ['Account ownership check', false, 'Need name match, IBAN/account id, and ownership mismatch response format.'],
-            ['Payment initiation contract', true, 'Amount, currency, customer, reference, return URLs, and idempotency key must be mapped.'],
-            [`${connectionTwoType()} webhook lifecycle`, false, 'Need initiated, authorized, pending, settled, failed, reversed, expired examples.'],
-            ['HMAC-SHA256 signature verification', !!getValue('bankSignature'), 'Need signature header, shared secret, algorithm, and canonical payload string.'],
-            ['Settlement and reconciliation', false, 'Need settlement report fields, timing, fees, references, and reconciliation identifiers.'],
-            ['Failure / reversal handling', false, 'Need insufficient funds, user cancelled, bank rejected, timeout, and reversal examples.']
-        ];
+        const checks = buildFullConnectionChecks({
+            type: connectionTwoType(),
+            endpointId: 'bankEndpoint',
+            signatureId: 'bankSignature',
+            profile: 'openBanking'
+        });
         bankOpenItems = renderChecks('bankResults', checks, getValue('bankCode'), `${providerName()} ${connectionTwoType()}`);
         updateBob();
         updateGoLive();
     }
 
+    function buildFullConnectionChecks(config) {
+        const type = config.type;
+        const endpointConfigured = !!getValue(config.endpointId);
+        const signatureConfigured = !!getValue(config.signatureId);
+        const typeChecks = config.profile === 'onramp' ? onrampSpecificChecks(type) : openBankingSpecificChecks(type);
+        const sharedChecks = sharedProviderChecks(type, endpointConfigured, signatureConfigured);
+        return sharedChecks.concat(typeChecks).slice(0, 84);
+    }
+
+    function sharedProviderChecks(type, endpointConfigured, signatureConfigured) {
+        return [
+            ['01 Provider profile identified', true, `${type} provider name, code, and connection type are captured.`],
+            ['02 Connection ownership confirmed', false, `Confirm who owns ${type}: PSP, aggregator, bank, processor, or internal adaptor.`],
+            ['03 Existing adaptor decision recorded', false, `Decide whether ${type} uses an existing adaptor or needs a dedicated adaptor.`],
+            ['04 Sandbox endpoint configured', endpointConfigured, `Sandbox endpoint for ${type} must be confirmed.`],
+            ['05 Production endpoint documented', false, `Need production endpoint and activation timing for ${type}.`],
+            ['06 API version documented', false, `Need API version, changelog policy, and deprecation notice period for ${type}.`],
+            ['07 Environment separation confirmed', false, `Sandbox and live credentials for ${type} must be isolated.`],
+
+            ['08 Authentication method documented', false, `Need auth method for ${type}: API key, OAuth, JWT, mTLS, or signed request.`],
+            ['09 Credential delivery process secure', false, `Need secure process for receiving and rotating ${type} credentials.`],
+            ['10 Credential rotation policy', false, `Need key rotation process and emergency revoke process for ${type}.`],
+            ['11 IP allow-list requirements', false, `Confirm whether ${type} requires IP allow-listing.`],
+            ['12 mTLS or certificate needs', false, `Confirm if ${type} requires client certificate or public key exchange.`],
+            ['13 Rate limit contract', false, `Need request rate limits, burst limits, and retry-after behavior for ${type}.`],
+            ['14 Timeout contract', false, `Need connect/read timeout expectations and long-running operation rules for ${type}.`],
+
+            ['15 Create request required fields', true, `Map required create/request fields for ${type}.`],
+            ['16 Optional fields documented', false, `Need optional fields and when each is required for ${type}.`],
+            ['17 Amount format confirmed', false, `Need amount units for ${type}: minor units, decimal string, rounding rules.`],
+            ['18 Currency support list', false, `Need supported fiat/settlement currencies for ${type}.`],
+            ['19 Customer reference mapping', true, `Customer id/reference must map into ${type} request.`],
+            ['20 Merchant/order reference mapping', true, `Merchant order id and idempotency key must map into ${type}.`],
+            ['21 Metadata passthrough rules', false, `Need metadata limits, allowed keys, and returned metadata behavior for ${type}.`],
+
+            ['22 Idempotency key supported', false, `Need idempotency header/body field and duplicate response behavior for ${type}.`],
+            ['23 Duplicate request behavior', false, `Need behavior when same order is submitted twice for ${type}.`],
+            ['24 Retry policy safe', false, `Need safe retry rules for network timeout and 5xx on ${type}.`],
+            ['25 Error code catalog', false, `Need all error codes and meanings for ${type}.`],
+            ['26 Validation error shape', false, `Need validation error JSON shape and field-level errors for ${type}.`],
+            ['27 Provider reference returned', false, `Need provider transaction/reference id returned by ${type}.`],
+            ['28 Status query endpoint', false, `Need GET/status endpoint for reconciliation fallback on ${type}.`],
+
+            ['29 Webhook endpoint configured', true, `Readies webhook endpoint planned for ${type}.`],
+            ['30 Webhook event catalog', false, `Need full event list for ${type}.`],
+            ['31 Webhook success sample', false, `Need successful lifecycle webhook sample for ${type}.`],
+            ['32 Webhook failure sample', false, `Need failed lifecycle webhook sample for ${type}.`],
+            ['33 Webhook pending sample', false, `Need pending/in-progress webhook sample for ${type}.`],
+            ['34 Webhook refund/reversal sample', false, `Need refund/reversal webhook sample for ${type}.`],
+            ['35 Webhook delivery retry rules', false, `Need retry schedule, max retries, and dead-letter behavior for ${type}.`],
+
+            ['36 Signature header configured', signatureConfigured, `Signature header for ${type} must be known.`],
+            ['37 HMAC-SHA256 algorithm confirmed', false, `Need exact signing algorithm for ${type}.`],
+            ['38 Canonical payload string confirmed', false, `Need exact raw body/string used for signing ${type} webhooks.`],
+            ['39 Shared secret configured', false, `Need shared signing secret for ${type}.`],
+            ['40 Timestamp header and tolerance', false, `Need timestamp header and replay window for ${type}.`],
+            ['41 Event id replay protection', false, `Need unique event id for replay protection on ${type}.`],
+            ['42 Signature failure response', false, `Need expected response and retry behavior when signature fails for ${type}.`],
+
+            ['43 Status lifecycle map', false, `Need map from ${type} statuses to Readies statuses.`],
+            ['44 Created status mapping', false, `Need created/initiated status mapping for ${type}.`],
+            ['45 Pending status mapping', false, `Need pending/in-review status mapping for ${type}.`],
+            ['46 Completed status mapping', false, `Need completed/success status mapping for ${type}.`],
+            ['47 Failed status mapping', false, `Need failed/declined/rejected status mapping for ${type}.`],
+            ['48 Cancelled/expired mapping', false, `Need cancelled/expired status mapping for ${type}.`],
+            ['49 Refund/reversal mapping', false, `Need refund/reversal/chargeback mapping for ${type}.`],
+
+            ['50 Settlement timing documented', false, `Need settlement timing and cut-off rules for ${type}.`],
+            ['51 Settlement report format', false, `Need settlement report sample and delivery method for ${type}.`],
+            ['52 Reconciliation identifiers', false, `Need transaction, provider, settlement, and order ids for ${type}.`],
+            ['53 Fees documented', false, `Need fee fields, fee currency, and who pays fees for ${type}.`],
+            ['54 FX handling documented', false, `Need FX source, rate timestamp, and spread rules for ${type}.`],
+            ['55 Partial settlement behavior', false, `Need partial settlement behavior for ${type}, if possible.`],
+            ['56 Ledger write contract', false, `Need ledger fields Readies stores for ${type}.`],
+
+            ['57 Risk country rules', false, `Need allowed, blocked, and restricted countries for ${type}.`],
+            ['58 Customer data requirements', false, `Need required customer identity fields for ${type}.`],
+            ['59 PII handling policy', false, `Need PII storage, masking, and deletion expectations for ${type}.`],
+            ['60 Sanctions/AML expectation', false, `Need sanctions/AML screening ownership for ${type}.`]
+        ];
+    }
+
+    function onrampSpecificChecks(type) {
+        return [
+            ['61 Quote creation endpoint', false, 'Need quote endpoint for fiat-to-crypto onramp.'],
+            ['62 Quote expiry behavior', false, 'Need quote expiry seconds and expired quote error.'],
+            ['63 Crypto asset list', false, 'Need supported crypto assets.'],
+            ['64 Blockchain network list', false, 'Need supported networks per crypto asset.'],
+            ['65 Wallet address validation', false, 'Need wallet address validation rules and error response.'],
+            ['66 Network mismatch handling', false, 'Need behavior when wallet network mismatches asset/network.'],
+            ['67 KYC required fields', false, 'Need KYC fields and levels for onramp.'],
+            ['68 KYC pending lifecycle', false, 'Need KYC pending, approved, rejected examples.'],
+            ['69 Card authorization flow', false, 'Need card authorization and capture flow.'],
+            ['70 3DS challenge handling', false, 'Need 3DS challenge, frictionless, failed, timeout flows.'],
+            ['71 Card decline reasons', false, 'Need decline reason code catalog.'],
+            ['72 Onramp order created webhook', false, 'Need order created webhook sample.'],
+            ['73 Payment received webhook', false, 'Need card paid/payment received webhook sample.'],
+            ['74 Crypto sent webhook', false, 'Need crypto sent / delivered webhook sample.'],
+            ['75 Crypto failed webhook', false, 'Need crypto delivery failed webhook sample.'],
+            ['76 Transaction hash field', false, 'Need blockchain tx hash field and explorer URL behavior.'],
+            ['77 Crypto amount finalization', false, 'Need final delivered crypto amount and fee fields.'],
+            ['78 Minimum and maximum limits', false, 'Need min/max fiat and crypto limits.'],
+            ['79 Refund before crypto sent', false, 'Need refund behavior before crypto delivery.'],
+            ['80 Refund after crypto sent', false, 'Need policy after irreversible crypto delivery.'],
+            ['81 Chargeback handling', false, 'Need chargeback/dispute policy and webhook.'],
+            ['82 Travel rule requirements', false, 'Need travel rule or beneficiary information requirements.'],
+            ['83 Onramp go-live approval', false, 'Need written onramp go-live approval.'],
+            ['84 Onramp rollback plan', false, 'Need rollback/disable plan for onramp.']
+        ];
+    }
+
+    function openBankingSpecificChecks(type) {
+        return [
+            ['61 Bank list endpoint', false, 'Need supported bank list endpoint and country coverage.'],
+            ['62 Bank consent start', false, 'Need consent start request and redirect/embedded flow.'],
+            ['63 Consent expiry behavior', false, 'Need consent expiry and timeout examples.'],
+            ['64 Consent cancellation', false, 'Need user cancelled flow and callback.'],
+            ['65 Account ownership check', false, 'Need account owner name/IBAN matching rules.'],
+            ['66 Account mismatch handling', false, 'Need ownership mismatch error and webhook.'],
+            ['67 Payment initiation request', false, 'Need payment initiation fields and references.'],
+            ['68 Strong customer authentication', false, 'Need SCA success/failure/timeout behavior.'],
+            ['69 Bank authorization callback', false, 'Need authorized callback/webhook sample.'],
+            ['70 Bank rejected callback', false, 'Need bank rejected callback/webhook sample.'],
+            ['71 Insufficient funds handling', false, 'Need insufficient funds response and webhook.'],
+            ['72 Pending bank transfer state', false, 'Need pending state and timeout rules.'],
+            ['73 Settled webhook', false, 'Need settled/completed webhook sample.'],
+            ['74 Failed webhook', false, 'Need failed webhook sample.'],
+            ['75 Reversed webhook', false, 'Need reversal/return webhook sample.'],
+            ['76 Bank reference fields', false, 'Need bank reference, payment id, and end-to-end id fields.'],
+            ['77 IBAN/account masking', false, 'Need account masking and PII rules.'],
+            ['78 Settlement report fields', false, 'Need settlement report and reconciliation ids.'],
+            ['79 Cut-off times', false, 'Need bank cut-off and holiday processing rules.'],
+            ['80 Multi-currency support', false, 'Need supported currencies and FX behavior.'],
+            ['81 Refund/reversal request', false, 'Need whether merchant can request reversal/refund.'],
+            ['82 PSD2/regulatory coverage', false, 'Need PSD2/open banking regulatory coverage confirmation.'],
+            ['83 Open banking go-live approval', false, 'Need written open banking go-live approval.'],
+            ['84 Open banking rollback plan', false, 'Need rollback/disable plan for open banking.']
+        ];
+    }
+
     function renderChecks(targetId, checks, code, title) {
         const open = checks.filter((check) => !check[1]);
+        const passed = checks.length - open.length;
         document.getElementById(targetId).innerHTML = `
             <h4>${escapeHtml(title)} - ${escapeHtml(code)}</h4>
+            <div class="status ${open.length === 0 ? 'green' : 'flagged'}">${passed}/${checks.length} checks green. ${open.length} item(s) still need evidence or confirmation.</div>
             ${checks.map((check) => `
                 <div class="status ${check[1] ? 'green' : 'flagged'}">
                     ${check[1] ? 'PASS' : 'FLAG'}: ${escapeHtml(check[0])}<br>
