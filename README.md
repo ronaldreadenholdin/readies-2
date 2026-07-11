@@ -14,9 +14,15 @@ Use these files:
 
 - Original recovered test: `public/pre-flight-test/index.html`
 - Next PSP starter copy: `next-psp-start-here.html`
+- Flamingo dual-solution test: `flamingo-test.html`
 - Polished current dashboard: `pre-flight-test.html`
 
 For the next PSP, open `next-psp-start-here.html`, change the PSP name/code/region, and click **Run Full Test**.
+
+For Flamingo, open `flamingo-test.html`. It has two separate tests:
+
+1. Card-to-Crypto Onramper: `FLM-C2C`
+2. Open Banking: `FLM-OB`
 
 For a quick local static test from this repository:
 

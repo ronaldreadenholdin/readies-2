@@ -51,9 +51,15 @@ standalone/
 
 - Original recovered test: `public/pre-flight-test/index.html`
 - Polished current dashboard: `standalone/pre-flight-test.html`
+- Flamingo dual-solution test: `standalone/flamingo-test.html`
 - Next PSP starter: use the root repository file `next-psp-start-here.html` or copy it into this package before handoff.
 
 For the next PSP, open the starter file, change the PSP name/code/region/signature header, then click **Run Full Test**.
+
+For Flamingo, open `standalone/flamingo-test.html`. It has two separate test paths:
+
+1. Card-to-Crypto Onramper: `FLM-C2C`
+2. Open Banking: `FLM-OB`
 
 ## Setup in an existing Laravel project
 
