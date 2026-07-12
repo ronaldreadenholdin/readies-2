@@ -1,0 +1,2 @@
+# Deny direct web access to PHP sources
+Deny from all
