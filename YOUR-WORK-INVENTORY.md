@@ -82,3 +82,8 @@ CashForo final dual board:
 
 Main build branch for harness/boards:  
 `okepaypre-flight-test-html-763a`
+
+
+## Bob
+
+**Bob is fired.** Remove Bob recommendation/chat from active boards. Use plain request lists only.

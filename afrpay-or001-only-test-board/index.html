@@ -109,11 +109,6 @@
         </div>
 
         <div class="card">
-            <h3>Bob recommendations</h3>
-            <pre id="bob">Run the AfrPay OR001 onramp test. Bob will create one 84-point request list. Open Banking is not part of AfrPay.</pre>
-        </div>
-
-        <div class="card">
             <h3>Go Live Gate</h3>
             <div id="goLiveStatus" class="status muted">Run both provider tests before go-live review.</div>
             <button class="btn-green" onclick="markPspConfirmed()">Mark provider confirmations received</button>
@@ -150,7 +145,7 @@
         const notes = document.getElementById('flamingoNotes');
         notes.value = `${notes.value.trim()}\n\nPayment page note:\n${workText}`.trim();
         saveWorkBox();
-        document.getElementById('workBoxStatus').textContent = 'Added to Provider Notes. Run tests again to include it in Bob recommendations.';
+        document.getElementById('workBoxStatus').textContent = 'Added to Provider Notes. Run tests again to include it in Request list.';
     }
 
     async function copyWorkBox() {
@@ -201,7 +196,7 @@
             profile: 'onramp'
         });
         onrampOpenItems = renderChecks('onrampResults', checks, getValue('onrampCode'), `${providerName()} ${connectionOneType()}`);
-        updateBob();
+        updateRequestList();
         updateGoLive();
     }
 
@@ -214,7 +209,7 @@
             profile: 'openBanking'
         });
         bankOpenItems = renderChecks('bankResults', checks, getValue('bankCode'), `${providerName()} ${connectionTwoType()}`);
-        updateBob();
+        updateRequestList();
         updateGoLive();
     }
 
@@ -379,11 +374,11 @@
         return open;
     }
 
-    function updateBob() {
+    function updateRequestList() {
         const notes = getValue('flamingoNotes');
         const onrampLines = onrampOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || `All ${connectionOneType()} checks are green.`;
         const bankLines = bankOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || `All ${connectionTwoType()} checks are green.`;
-        document.getElementById('bob').textContent =
+        document.getElementById('requestList').textContent =
             `Dear ${providerName()} team,\n\nWe need to validate the AfrPay Onramp connection (OR001) for Readies — card to crypto only; no Open Banking:\n\n`
             + `A) ${connectionOneType()} (${getValue('onrampCode')})\n${onrampLines}\n\n`
             + `B) ${connectionTwoType()} (${getValue('bankCode')})\n${bankLines}\n\n`
@@ -401,7 +396,7 @@
             bankOpenItems = [];
             document.getElementById('bankResults').innerHTML += `<div class="status green">${escapeHtml(providerName())} ${escapeHtml(connectionTwoType())} confirmations recorded.</div>`;
         }
-        updateBob();
+        updateRequestList();
         updateGoLive();
     }
 
