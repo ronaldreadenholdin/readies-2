@@ -1,0 +1,38 @@
+THE PROVIDER TEST BOARD — 5 EVOLUTION VERSIONS
+==============================================
+
+These are the successive versions of the dual-connection board
+(Onramp / card-to-crypto + Open Banking). Open each HTML in a browser.
+
+01-flamingo-reusable-board.html
+   First reusable dual board. Provider=Flamingo. Before full 84-check expansion.
+
+02-flamingo-84-checks.html
+   Same Flamingo board after 84-point checklist expansion + CashForo public-doc evidence hooks.
+
+03-cashforo-stablecoin-onramp.html
+   Provider renamed to CashForo. Readies stablecoin onramp flow modeled
+   (card -> USDT/USDC -> Readies).
+
+04-cashforo-usdt-to-readies-corrected.html
+   Corrected onramper USDT-to-Readies business flow text/checks.
+
+05-cashforo-final-complete.html   <<<< LATEST FULL BOARD
+   Final complete board: 84 checks x2, work box, Bob lists, Go Live gate.
+   Provider=CashForo, OR001 Onramp, OB003 Open Banking.
+
+05b-afrpay-named-final.html
+   Same final board with provider name set to AfrPay (rename only).
+
+05a-cashforo-with-workbox-mid.html
+   Mid step when payment-page work box was added (between 04 and 05).
+
+----------------------------------------------
+OTHER BOARD TYPES (not the dual provider board)
+----------------------------------------------
+other-board-types/
+  A-full-preflight-fbls-xcore.html     — big FBLS/Xcore pre-flight harness
+  B-next-psp-starter-p005.html        — blank next-PSP starter
+  C-ob-fena-open-banking.html         — Fena OB-specific board
+  D-early-preflight-fbls-xcore.html   — earlier smaller FBLS+Xcore UI
+  E-simple-p003-fbls.html             — tiny P003-only board on main

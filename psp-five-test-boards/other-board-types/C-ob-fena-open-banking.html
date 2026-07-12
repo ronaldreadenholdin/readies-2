@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OB Fena Open Banking Test Board</title>
+    <style>
+        :root {
+            --bg: #07111f;
+            --panel: #101a2b;
+            --card: #172238;
+            --line: #2d3a52;
+            --text: #ecf4ff;
+            --muted: #9fb0c8;
+            --green: #21c45d;
+            --amber: #f59f0b;
+            --blue: #38bdf8;
+            --red: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background: radial-gradient(circle at top left, #15335f 0, var(--bg) 42%);
+            color: var(--text);
+            padding: 24px;
+        }
+
+        .board {
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+
+        .hero,
+        .card {
+            background: rgba(16, 26, 43, 0.92);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.32);
+        }
+
+        .hero {
+            padding: 28px;
+            margin-bottom: 20px;
+        }
+
+        .eyebrow {
+            color: var(--blue);
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+        }
+
+        h1 {
+            margin-top: 8px;
+            font-size: 38px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin-top: 10px;
+            line-height: 1.5;
+            max-width: 760px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .grid.two {
+            grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+        }
+
+        .grid.three {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .card {
+            padding: 22px;
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .meta div,
+        .check,
+        .note {
+            background: rgba(255, 255, 255, 0.055);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .label {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .value {
+            font-weight: 700;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .pill.green {
+            color: #062b14;
+            background: var(--green);
+        }
+
+        .pill.amber {
+            color: #382103;
+            background: var(--amber);
+        }
+
+        .pill.blue {
+            color: #06283b;
+            background: var(--blue);
+        }
+
+        button {
+            border: 0;
+            border-radius: 12px;
+            color: #06111f;
+            cursor: pointer;
+            font-weight: 800;
+            margin: 8px 8px 0 0;
+            padding: 13px 18px;
+        }
+
+        .primary {
+            background: var(--green);
+        }
+
+        .secondary {
+            background: var(--blue);
+        }
+
+        .ghost {
+            background: #dbe7f5;
+        }
+
+        .checks {
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .check {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .status {
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 5px 8px;
+            min-width: 58px;
+            text-align: center;
+        }
+
+        .pass {
+            color: #062b14;
+            background: var(--green);
+        }
+
+        .warn {
+            color: #382103;
+            background: var(--amber);
+        }
+
+        .fail {
+            color: #3b0505;
+            background: var(--red);
+        }
+
+        .pending {
+            color: #122033;
+            background: #cbd5e1;
+        }
+
+        .check strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .check span {
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        .note {
+            margin-top: 14px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .chat {
+            height: 220px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.22);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px;
+            line-height: 1.5;
+        }
+
+        .chat p {
+            margin: 0 0 12px;
+        }
+
+        input {
+            width: calc(100% - 86px);
+            background: #0b1322;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            color: var(--text);
+            margin-top: 12px;
+            padding: 13px;
+        }
+
+        a {
+            color: var(--blue);
+        }
+
+        @media (max-width: 860px) {
+            .grid.two,
+            .grid.three,
+            .meta {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="board">
+        <section class="hero">
+            <span class="eyebrow">Readies local test board</span>
+            <h1>OB Fena Open Banking</h1>
+            <p class="subtitle">
+                Local board for the Monday item "Ob Fena Open banking" on Agile - Sprint Planning.
+                Use this page to start the Fena open banking integration test without needing Monday authentication.
+            </p>
+
+            <div class="meta">
+                <div><span class="label">Monday item</span><span class="value">Ob Fena Open banking</span></div>
+                <div><span class="label">Board</span><span class="value">Agile - Sprint Planning</span></div>
+                <div><span class="label">Project</span><span class="value">Readies</span></div>
+                <div><span class="label">Provider</span><span class="value">Fena Labs</span></div>
+                <div><span class="label">Type</span><span class="value">Integration</span></div>
+                <div><span class="label">Testing status</span><span class="pill amber">In Testing</span></div>
+            </div>
+        </section>
+
+        <section class="grid three">
+            <article class="card">
+                <span class="label">Product requirement</span>
+                <span class="pill green">Done</span>
+            </article>
+            <article class="card">
+                <span class="label">Development status</span>
+                <span class="pill green">Done</span>
+            </article>
+            <article class="card">
+                <span class="label">Payment rail</span>
+                <span class="pill blue">Open Banking</span>
+            </article>
+        </section>
+
+        <section class="grid two" style="margin-top: 18px;">
+            <article class="card">
+                <h2>Start Fena test</h2>
+                <p class="subtitle">
+                    Runs the local readiness checks for OB Fena: provider setup, dashboard access, API requirements,
+                    webhook handling, refund path, settlement controls, and go-live evidence.
+                </p>
+                <button class="primary" onclick="runFenaTest()">Run OB Fena Test</button>
+                <button class="secondary" onclick="showBobGuidance()">Show Bob Guidance</button>
+                <button class="ghost" onclick="resetBoard()">Reset Board</button>
+                <div id="bobGuidance" class="note" hidden></div>
+                <div id="results" class="checks">
+                    <div class="check">
+                        <span class="status pending">WAIT</span>
+                        <div><strong>Ready to start</strong><span>Click Run OB Fena Test to populate the board.</span></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="card">
+                <h2>Fena provider snapshot</h2>
+                <div class="note">
+                    <strong>Known details:</strong><br>
+                    Active PSP record exists for FENA LABS on READIES PSP Rohan. Payment type is OPEN BANKING,
+                    GEO is United Kingdom, transaction fee is 0.25 GBP, and dashboard URL is
+                    <a href="https://app.fena.co/sign-in" target="_blank" rel="noreferrer">app.fena.co/sign-in</a>.
+                </div>
+                <div class="note">
+                    Credentials are intentionally not mirrored into this local page. Use the secure Monday item or vault
+                    when a real dashboard login is required.
+                </div>
+            </article>
+        </section>
+
+        <section class="grid two" style="margin-top: 18px;">
+            <article class="card">
+                <h2>Go-live gate</h2>
+                <div id="gate" class="note">
+                    Run the test first. Fena can move forward only after flagged items are resolved or accepted by Readies.
+                </div>
+            </article>
+
+            <article class="card">
+                <h2>Talk to Bob</h2>
+                <div id="chat" class="chat">
+                    <p><strong>Bob:</strong> Start with the OB Fena test. I will flag missing evidence before go-live.</p>
+                </div>
+                <input id="command" type="text" placeholder="Ask Bob about Fena webhooks, settlement, refunds..." onkeydown="if (event.key === 'Enter') sendCommand()">
+                <button class="secondary" onclick="sendCommand()">Send</button>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        const checks = [
+            ["PASS", "Provider record located", "FENA LABS exists on the Readies PSP board and is marked active."],
+            ["PASS", "Open banking rail confirmed", "Payment type is OPEN BANKING and the integration task is tied to Readies."],
+            ["WARN", "Dashboard access needs secure login", "Dashboard URL is known, but credentials must remain outside this local board."],
+            ["WARN", "Webhook evidence required", "Collect Fena webhook payload examples for payment success, failure, and cancellation."],
+            ["WARN", "Refund path requires confirmation", "Confirm refund request format, refund status webhook, and fee handling."],
+            ["PASS", "Commercial snapshot captured", "United Kingdom GEO and 0.25 GBP transaction fee are reflected for the test."],
+            ["WARN", "Settlement controls pending", "Confirm settlement timing, settlement file fields, threshold, and reconciliation references."]
+        ];
+
+        function runFenaTest() {
+            const results = document.getElementById("results");
+            results.innerHTML = checks.map(([status, title, detail]) => {
+                const className = status === "PASS" ? "pass" : status === "WARN" ? "warn" : "fail";
+                return `
+                    <div class="check">
+                        <span class="status ${className}">${status}</span>
+                        <div><strong>${title}</strong><span>${detail}</span></div>
+                    </div>
+                `;
+            }).join("");
+
+            document.getElementById("gate").innerHTML =
+                "<strong>Gate status: In Testing.</strong><br>Fena is ready for integration review, but webhook, refund, and settlement evidence must be attached before production go-live.";
+            addBobMessage("Bob", "OB Fena test started. I flagged dashboard login, webhook evidence, refund path, and settlement controls for final confirmation.");
+        }
+
+        function showBobGuidance() {
+            const guidance = "Ask Fena for signed webhook examples, refund API documentation, settlement report schema, and confirmation that UK open banking limits match Readies routing rules.";
+            const panel = document.getElementById("bobGuidance");
+            panel.hidden = false;
+            panel.innerHTML = `<strong>Bob guidance:</strong><br>${guidance}`;
+            addBobMessage("Bob", guidance);
+        }
+
+        function resetBoard() {
+            document.getElementById("results").innerHTML = `
+                <div class="check">
+                    <span class="status pending">WAIT</span>
+                    <div><strong>Ready to start</strong><span>Click Run OB Fena Test to populate the board.</span></div>
+                </div>
+            `;
+            document.getElementById("gate").textContent =
+                "Run the test first. Fena can move forward only after flagged items are resolved or accepted by Readies.";
+            document.getElementById("bobGuidance").hidden = true;
+            document.getElementById("chat").innerHTML =
+                "<p><strong>Bob:</strong> Board reset. Start with the OB Fena test again.</p>";
+        }
+
+        function sendCommand() {
+            const input = document.getElementById("command");
+            const value = input.value.trim();
+            if (!value) return;
+
+            addBobMessage("You", value);
+            input.value = "";
+
+            const lower = value.toLowerCase();
+            let reply = "I can help with OB Fena test evidence, dashboard access, webhook readiness, refund flow, and settlement checks.";
+            if (lower.includes("webhook")) {
+                reply = "Webhook action: collect Fena success, failure, cancellation, and refund payload samples with signature header details.";
+            } else if (lower.includes("settlement")) {
+                reply = "Settlement action: confirm timing, report fields, transaction references, threshold, and reconciliation process.";
+            } else if (lower.includes("refund")) {
+                reply = "Refund action: confirm API endpoint, required fields, fee behavior, and refund status webhook.";
+            } else if (lower.includes("go live") || lower.includes("golive")) {
+                reply = "Go-live action: keep the gate at In Testing until webhook, refund, and settlement evidence is attached.";
+            }
+            setTimeout(() => addBobMessage("Bob", reply), 250);
+        }
+
+        function addBobMessage(sender, message) {
+            const chat = document.getElementById("chat");
+            const p = document.createElement("p");
+            p.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            chat.appendChild(p);
+            chat.scrollTop = chat.scrollHeight;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Readies Provider Test Board</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; margin: 0; padding: 20px; color: #1f2937; }
+        .container { max-width: 1180px; margin: auto; }
+        .header { background: linear-gradient(135deg, #be123c, #f97316); color: white; padding: 28px; border-radius: 16px; text-align: center; margin-bottom: 20px; }
+        .card { background: white; border-radius: 14px; padding: 24px; margin-bottom: 18px; box-shadow: 0 5px 24px rgba(15,23,42,0.11); }
+        .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+        .status { padding: 13px; border-radius: 10px; font-weight: 700; margin: 10px 0; line-height: 1.45; }
+        .green { background: #dcfce7; color: #166534; }
+        .flagged { background: #fef3c7; color: #92400e; }
+        .danger { background: #fee2e2; color: #991b1b; }
+        .muted { background: #e5e7eb; color: #374151; }
+        .code { display: inline-block; padding: 4px 8px; border-radius: 999px; background: #111827; color: white; font-size: 12px; }
+        button { padding: 12px 20px; font-size: 16px; border: 0; border-radius: 9px; cursor: pointer; margin: 5px; font-weight: 800; }
+        .btn-onramp { background: #f97316; color: white; }
+        .btn-bank { background: #2563eb; color: white; }
+        .btn-green { background: #16a34a; color: white; }
+        label { display: block; font-weight: 800; margin: 10px 0 6px; }
+        input, textarea { width: 100%; box-sizing: border-box; padding: 11px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
+        textarea { min-height: 88px; resize: vertical; }
+        pre { white-space: pre-wrap; background: #f8fafc; border: 1px solid #e5e7eb; padding: 14px; border-radius: 10px; }
+        @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Provider Test Board</h1>
+            <h2>Reusable board for provider connection 1 + connection 2</h2>
+        </div>
+
+        <div class="card">
+            <h3>Provider setup</h3>
+            <p>
+                Use this same board for each provider. Configure the provider name and two connection/adaptor types, then test each connection separately because they can have different risk, API, webhook, settlement, and go-live requirements.
+            </p>
+            <div class="grid">
+                <div>
+                    <label for="providerName">Provider name</label>
+                    <input id="providerName" value="Flamingo" oninput="updateBoardLabels()">
+                </div>
+                <div>
+                    <label for="connectionOneType">Connection 1 type</label>
+                    <input id="connectionOneType" value="Onramp" oninput="updateBoardLabels()">
+                </div>
+                <div>
+                    <label for="connectionTwoType">Connection 2 type</label>
+                    <input id="connectionTwoType" value="Open Banking" oninput="updateBoardLabels()">
+                </div>
+                <div>
+                    <label for="onrampCode">Connection 1 code</label>
+                    <input id="onrampCode" value="OR001" oninput="updateBoardLabels()">
+                </div>
+                <div>
+                    <label for="bankCode">Connection 2 code</label>
+                    <input id="bankCode" value="OB003" oninput="updateBoardLabels()">
+                </div>
+                <div>
+                    <label for="onrampEndpoint">Connection 1 sandbox endpoint</label>
+                    <input id="onrampEndpoint" value="https://sandbox.flamingo.example/onramp">
+                </div>
+                <div>
+                    <label for="bankEndpoint">Connection 2 sandbox endpoint</label>
+                    <input id="bankEndpoint" value="https://sandbox.flamingo.example/open-banking">
+                </div>
+                <div>
+                    <label for="onrampSignature">Connection 1 webhook signature header</label>
+                    <input id="onrampSignature" value="X-Flamingo-Signature">
+                </div>
+                <div>
+                    <label for="bankSignature">Connection 2 webhook signature header</label>
+                    <input id="bankSignature" value="X-Flamingo-Bank-Signature">
+                </div>
+            </div>
+            <label for="flamingoNotes">Provider notes / questions</label>
+            <textarea id="flamingoNotes">Confirm KYC requirements, crypto asset list, wallet address validation, open banking account ownership, webhook signing method, settlement timing, refund/reversal flow, and production go-live approval.</textarea>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>Test 1: <span id="connectionOneTitle">Onramp</span> <span id="connectionOneCodeBadge" class="code">OR001</span></h3>
+                <p>Checks onramp payment input, fiat-to-crypto quote, KYC, wallet address, onramp order, webhooks, and crypto delivery status.</p>
+                <button class="btn-onramp" onclick="runOnrampTest()">Run Connection 1 Test</button>
+                <div id="onrampResults"><div class="status muted">Not tested yet.</div></div>
+            </div>
+
+            <div class="card">
+                <h3>Test 2: <span id="connectionTwoTitle">Open Banking</span> <span id="connectionTwoCodeBadge" class="code">OB003</span></h3>
+                <p>Checks bank authorization, account ownership, payment initiation, consent status, callbacks, settlement, and reversal/failure handling.</p>
+                <button class="btn-bank" onclick="runBankTest()">Run Connection 2 Test</button>
+                <div id="bankResults"><div class="status muted">Not tested yet.</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Bob recommendations</h3>
+            <pre id="bob">Run both provider tests. Bob will create two separate request lists: one for connection 1 and one for connection 2.</pre>
+        </div>
+
+        <div class="card">
+            <h3>Go Live Gate</h3>
+            <div id="goLiveStatus" class="status muted">Run both provider tests before go-live review.</div>
+            <button class="btn-green" onclick="markPspConfirmed()">Mark provider confirmations received</button>
+            <button class="btn-green" onclick="goLive()">Go Live Check</button>
+        </div>
+    </div>
+
+    <script>
+    let onrampTestRan = false;
+    let bankTestRan = false;
+    let pspConfirmed = false;
+    let onrampOpenItems = [];
+    let bankOpenItems = [];
+
+    function getValue(id) {
+        return document.getElementById(id).value.trim();
+    }
+
+    function providerName() {
+        return getValue('providerName') || 'Provider';
+    }
+
+    function connectionOneType() {
+        return getValue('connectionOneType') || 'Connection 1';
+    }
+
+    function connectionTwoType() {
+        return getValue('connectionTwoType') || 'Connection 2';
+    }
+
+    function updateBoardLabels() {
+        document.getElementById('connectionOneTitle').textContent = connectionOneType();
+        document.getElementById('connectionTwoTitle').textContent = connectionTwoType();
+        document.getElementById('connectionOneCodeBadge').textContent = getValue('onrampCode') || 'CODE-1';
+        document.getElementById('connectionTwoCodeBadge').textContent = getValue('bankCode') || 'CODE-2';
+    }
+
+    function runOnrampTest() {
+        onrampTestRan = true;
+        const checks = [
+            [`${connectionOneType()} auth and connectivity`, !!getValue('onrampEndpoint'), 'Sandbox API endpoint must be confirmed.'],
+            [`${connectionOneType()} payment input contract`, true, 'Amount, currency, customer, billing country, success URL, failure URL, and idempotency key must be mapped.'],
+            ['Fiat-to-crypto quote contract', false, 'Need quote expiry, asset list, network, fee, spread, and final delivered crypto amount.'],
+            ['KYC / identity requirements', false, 'Need KYC level, required fields, country rules, and blocked-user response examples.'],
+            ['Wallet address validation', false, 'Need wallet format validation, network mismatch handling, and invalid address error format.'],
+            [`${connectionOneType()} webhook lifecycle`, false, 'Need created, pending, paid, completed/sent, failed, refunded, chargeback or reversal examples.'],
+            ['HMAC-SHA256 signature verification', !!getValue('onrampSignature'), 'Need signature header, shared secret, algorithm, and canonical payload string.'],
+            ['Dispute / refund / reversal handling', false, 'Need dispute, refund, and delivery reversal policy.']
+        ];
+        onrampOpenItems = renderChecks('onrampResults', checks, getValue('onrampCode'), `${providerName()} ${connectionOneType()}`);
+        updateBob();
+        updateGoLive();
+    }
+
+    function runBankTest() {
+        bankTestRan = true;
+        const checks = [
+            [`${connectionTwoType()} auth and connectivity`, !!getValue('bankEndpoint'), 'Sandbox API endpoint must be confirmed.'],
+            ['Bank consent / authorization flow', false, 'Need redirect/embedded consent flow, consent expiry, cancellation, and timeout examples.'],
+            ['Account ownership check', false, 'Need name match, IBAN/account id, and ownership mismatch response format.'],
+            ['Payment initiation contract', true, 'Amount, currency, customer, reference, return URLs, and idempotency key must be mapped.'],
+            [`${connectionTwoType()} webhook lifecycle`, false, 'Need initiated, authorized, pending, settled, failed, reversed, expired examples.'],
+            ['HMAC-SHA256 signature verification', !!getValue('bankSignature'), 'Need signature header, shared secret, algorithm, and canonical payload string.'],
+            ['Settlement and reconciliation', false, 'Need settlement report fields, timing, fees, references, and reconciliation identifiers.'],
+            ['Failure / reversal handling', false, 'Need insufficient funds, user cancelled, bank rejected, timeout, and reversal examples.']
+        ];
+        bankOpenItems = renderChecks('bankResults', checks, getValue('bankCode'), `${providerName()} ${connectionTwoType()}`);
+        updateBob();
+        updateGoLive();
+    }
+
+    function renderChecks(targetId, checks, code, title) {
+        const open = checks.filter((check) => !check[1]);
+        document.getElementById(targetId).innerHTML = `
+            <h4>${escapeHtml(title)} - ${escapeHtml(code)}</h4>
+            ${checks.map((check) => `
+                <div class="status ${check[1] ? 'green' : 'flagged'}">
+                    ${check[1] ? 'PASS' : 'FLAG'}: ${escapeHtml(check[0])}<br>
+                    <small>${escapeHtml(check[2])}</small>
+                </div>
+            `).join('')}
+        `;
+        return open;
+    }
+
+    function updateBob() {
+        const notes = getValue('flamingoNotes');
+        const onrampLines = onrampOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || `All ${connectionOneType()} checks are green.`;
+        const bankLines = bankOpenItems.map((item, index) => `${index + 1}. ${item[0]} - ${item[2]}`).join('\n') || `All ${connectionTwoType()} checks are green.`;
+        document.getElementById('bob').textContent =
+            `Dear ${providerName()} team,\n\nWe need to validate two separate provider connections for Readies:\n\n`
+            + `A) ${connectionOneType()} (${getValue('onrampCode')})\n${onrampLines}\n\n`
+            + `B) ${connectionTwoType()} (${getValue('bankCode')})\n${bankLines}\n\n`
+            + `Shared notes:\n${notes}\n\n`
+            + `Please provide the missing API documentation, webhook samples, signature verification details, sandbox credentials, and go-live approval per solution.\n\nThank you.`;
+    }
+
+    function markPspConfirmed() {
+        pspConfirmed = true;
+        if (onrampTestRan) {
+            onrampOpenItems = [];
+            document.getElementById('onrampResults').innerHTML += `<div class="status green">${escapeHtml(providerName())} ${escapeHtml(connectionOneType())} confirmations recorded.</div>`;
+        }
+        if (bankTestRan) {
+            bankOpenItems = [];
+            document.getElementById('bankResults').innerHTML += `<div class="status green">${escapeHtml(providerName())} ${escapeHtml(connectionTwoType())} confirmations recorded.</div>`;
+        }
+        updateBob();
+        updateGoLive();
+    }
+
+    function updateGoLive() {
+        const status = document.getElementById('goLiveStatus');
+        if (!onrampTestRan || !bankTestRan) {
+            status.className = 'status muted';
+            status.textContent = 'Run both provider tests before go-live review.';
+            return;
+        }
+        if (onrampOpenItems.length === 0 && bankOpenItems.length === 0 && pspConfirmed) {
+            status.className = 'status green';
+            status.textContent = 'Both provider connections are green for final live review.';
+            return;
+        }
+        status.className = 'status flagged';
+        status.textContent = `Blocked: ${onrampOpenItems.length} ${connectionOneType()} item(s) and ${bankOpenItems.length} ${connectionTwoType()} item(s) still need confirmation.`;
+    }
+
+    function goLive() {
+        const isGreen = document.getElementById('goLiveStatus').className.includes('green');
+        alert(isGreen
+            ? 'Both provider test paths are green. Ready for final live review.'
+            : 'Blocked: run both tests and resolve/confirm all flagged provider items first.');
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    updateBoardLabels();
+    </script>
+</body>
+</html>
