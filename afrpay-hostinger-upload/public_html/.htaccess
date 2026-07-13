@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Block direct access to env / logs / source
+RewriteRule ^(\.env|logs/|src/) - [F,L]
+
+# Front controller
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]

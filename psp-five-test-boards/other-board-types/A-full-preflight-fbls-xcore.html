@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Readies PSP Pre-Flight Test Harness</title>
+    <style>
+        :root {
+            --bg: #08111f;
+            --panel: rgba(15, 23, 42, 0.88);
+            --panel-strong: #111827;
+            --card: rgba(255, 255, 255, 0.08);
+            --line: rgba(255, 255, 255, 0.14);
+            --text: #e5eefc;
+            --muted: #94a3b8;
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --blue: #38bdf8;
+            --violet: #a78bfa;
+            --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(56, 189, 248, 0.28), transparent 30rem),
+                radial-gradient(circle at 85% 10%, rgba(167, 139, 250, 0.24), transparent 28rem),
+                linear-gradient(135deg, #07101f 0%, #111827 45%, #172554 100%);
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            border: 0;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 800;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(56, 189, 248, 0.24);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.48;
+        }
+
+        .shell {
+            width: min(1440px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 48px;
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.8fr);
+            gap: 24px;
+            padding: 32px;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(30, 41, 59, 0.74));
+            box-shadow: var(--shadow);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: auto -80px -120px auto;
+            width: 420px;
+            height: 420px;
+            border-radius: 999px;
+            background: rgba(56, 189, 248, 0.16);
+            filter: blur(12px);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 12px;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 999px;
+            color: #bae6fd;
+            background: rgba(8, 47, 73, 0.48);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        h1,
+        h2,
+        h3,
+        p {
+            margin-top: 0;
+        }
+
+        h1 {
+            max-width: 900px;
+            margin-bottom: 12px;
+            font-size: clamp(34px, 4.6vw, 66px);
+            line-height: 0.96;
+            letter-spacing: -0.055em;
+        }
+
+        .hero-copy {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-copy p {
+            max-width: 780px;
+            color: #cbd5e1;
+            font-size: 18px;
+            line-height: 1.65;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-primary {
+            padding: 15px 22px;
+            color: #03111f;
+            background: linear-gradient(135deg, #67e8f9, #22c55e);
+        }
+
+        .btn-secondary {
+            padding: 15px 22px;
+            color: #dbeafe;
+            background: rgba(255, 255, 255, 0.09);
+            border: 1px solid var(--line);
+        }
+
+        .btn-danger {
+            padding: 15px 22px;
+            color: white;
+            background: linear-gradient(135deg, #ef4444, #f97316);
+        }
+
+        .btn-small {
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+        }
+
+        .control-deck {
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: rgba(2, 6, 23, 0.52);
+        }
+
+        .control-deck label {
+            display: block;
+            margin: 14px 0 8px;
+            color: #cbd5e1;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .control-deck input,
+        .control-deck select,
+        .control-deck textarea,
+        .chat-composer input {
+            width: 100%;
+            color: white;
+            border: 1px solid rgba(148, 163, 184, 0.36);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            outline: none;
+        }
+
+        .control-deck input,
+        .control-deck select {
+            height: 44px;
+            padding: 0 12px;
+        }
+
+        .control-deck textarea {
+            min-height: 90px;
+            padding: 12px;
+            resize: vertical;
+        }
+
+        .status-ribbon {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 34px;
+            padding: 8px 11px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .pill.green {
+            color: #bbf7d0;
+            background: rgba(34, 197, 94, 0.17);
+        }
+
+        .pill.amber {
+            color: #fde68a;
+            background: rgba(245, 158, 11, 0.17);
+        }
+
+        .pill.red {
+            color: #fecaca;
+            background: rgba(239, 68, 68, 0.17);
+        }
+
+        .pill.blue {
+            color: #bae6fd;
+            background: rgba(56, 189, 248, 0.16);
+        }
+
+        .grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .grid.metrics {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin: 22px 0;
+        }
+
+        .metric-card,
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: var(--panel);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25);
+        }
+
+        .metric-card {
+            padding: 20px;
+        }
+
+        .metric-card span {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .metric-card strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 36px;
+            letter-spacing: -0.04em;
+        }
+
+        .progress-track {
+            overflow: hidden;
+            height: 10px;
+            margin-top: 14px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.18);
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e);
+            transition: width 0.3s ease;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.75fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .panel {
+            padding: 22px;
+        }
+
+        .panel-title {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .panel-title h2,
+        .panel-title h3 {
+            margin: 0;
+            letter-spacing: -0.025em;
+        }
+
+        .flow-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .flow-step {
+            position: relative;
+            min-height: 132px;
+            padding: 18px;
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 18px;
+            background: linear-gradient(145deg, rgba(14, 165, 233, 0.16), rgba(15, 23, 42, 0.72));
+        }
+
+        .flow-step strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .flow-step p {
+            color: #cbd5e1;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .code-panels {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        pre {
+            overflow: auto;
+            min-height: 270px;
+            max-height: 420px;
+            margin: 0;
+            padding: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 16px;
+            color: #d1fae5;
+            background: #020617;
+            font-size: 12px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+        }
+
+        .test-section {
+            margin-top: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 18px;
+            background: rgba(2, 6, 23, 0.32);
+        }
+
+        .section-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 18px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        }
+
+        .section-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .check-list {
+            display: grid;
+            gap: 12px;
+            padding: 14px;
+        }
+
+        .check-card {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            gap: 14px;
+            padding: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.72);
+        }
+
+        .check-dot {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            font-weight: 900;
+        }
+
+        .check-dot.green {
+            color: #052e16;
+            background: var(--green);
+        }
+
+        .check-dot.flagged {
+            color: #451a03;
+            background: var(--amber);
+        }
+
+        .check-dot.psp {
+            color: white;
+            background: var(--red);
+        }
+
+        .check-copy h4 {
+            margin: 0 0 8px;
+            font-size: 16px;
+        }
+
+        .check-copy p {
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .evidence {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .evidence div {
+            padding: 10px;
+            border-radius: 12px;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.06);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .check-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .bob-card {
+            border: 1px solid rgba(56, 189, 248, 0.24);
+            background: linear-gradient(145deg, rgba(14, 165, 233, 0.14), rgba(15, 23, 42, 0.78));
+        }
+
+        .bob-feed {
+            display: grid;
+            gap: 12px;
+            overflow-y: auto;
+            max-height: 470px;
+            padding-right: 4px;
+        }
+
+        .message {
+            padding: 13px;
+            border-radius: 14px;
+            color: #dbeafe;
+            background: rgba(255, 255, 255, 0.07);
+            line-height: 1.55;
+            font-size: 14px;
+        }
+
+        .message strong {
+            color: white;
+        }
+
+        .message.user {
+            background: rgba(34, 197, 94, 0.13);
+        }
+
+        .chat-composer {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .chat-composer input {
+            height: 46px;
+            padding: 0 14px;
+        }
+
+        .go-live-box {
+            margin-top: 18px;
+            padding: 18px;
+            border: 1px solid rgba(34, 197, 94, 0.28);
+            border-radius: 18px;
+            background: rgba(20, 83, 45, 0.18);
+        }
+
+        .go-live-box p {
+            color: #bbf7d0;
+            line-height: 1.55;
+        }
+
+        .empty-state {
+            padding: 32px;
+            border: 1px dashed rgba(148, 163, 184, 0.36);
+            border-radius: 18px;
+            color: #cbd5e1;
+            text-align: center;
+        }
+
+        @media (max-width: 1080px) {
+            .hero,
+            .main-layout,
+            .code-panels {
+                grid-template-columns: 1fr;
+            }
+
+            .grid.metrics,
+            .flow-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .shell {
+                width: min(100% - 20px, 1440px);
+                padding-top: 10px;
+            }
+
+            .hero,
+            .panel {
+                padding: 18px;
+                border-radius: 20px;
+            }
+
+            .grid.metrics,
+            .flow-grid,
+            .evidence {
+                grid-template-columns: 1fr;
+            }
+
+            .check-card {
+                grid-template-columns: 1fr;
+            }
+
+            .check-actions {
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <section class="hero">
+            <div class="hero-copy">
+                <span class="eyebrow">PSP Pre-Flight Control Room</span>
+                <h1>Test the exact live payment interface before Hostinger go-live.</h1>
+                <p>
+                    Configure FBLS, XCore, or the next customer PSP, then run detailed checks across incoming API payloads,
+                    payment-page output, backend callbacks, webhooks, signatures, and deployment readiness. The live button
+                    stays locked until every precise check is green.
+                </p>
+                <div class="hero-actions">
+                    <button class="btn-primary" onclick="runFullTest()">Run full pre-flight</button>
+                    <button class="btn-secondary" onclick="applyAllLocalAdjustments()">Apply Bob local adjustments</button>
+                    <button class="btn-secondary" onclick="resetTest()">Reset test</button>
+                    <button id="goLiveButton" class="btn-danger" onclick="goLive()" disabled>Push green build to Hostinger</button>
+                </div>
+                <div id="runStatus" class="status-ribbon">
+                    <span class="pill amber">Waiting for test run</span>
+                    <span class="pill blue">Live mirror mode: enabled</span>
+                </div>
+            </div>
+
+            <aside class="control-deck" aria-label="PSP test configuration">
+                <h2>Test configuration</h2>
+                <label for="customerSelect">Customer / PSP preset</label>
+                <select id="customerSelect" onchange="loadPreset(this.value)">
+                    <option value="fbls">P003 - FBLS</option>
+                    <option value="xcore">P004 - XCore</option>
+                    <option value="custom">Custom next customer</option>
+                </select>
+
+                <label for="customerName">Customer reference</label>
+                <input id="customerName" value="P003 - FBLS">
+
+                <label for="pspName">PSP name</label>
+                <input id="pspName" value="FBLS">
+
+                <label for="apiEndpoint">Incoming PSP API endpoint</label>
+                <input id="apiEndpoint" value="https://sandbox.fbls.example/payments">
+
+                <label for="backendEndpoint">Readies backend endpoint</label>
+                <input id="backendEndpoint" value="/api/payments/psp/fbls">
+
+                <label for="webhookEndpoint">Webhook receiver</label>
+                <input id="webhookEndpoint" value="/api/webhooks/fbls">
+
+                <label for="signatureHeader">Signature header</label>
+                <input id="signatureHeader" value="X-FBLS-Signature">
+
+                <label for="payloadNotes">Payload / mapping notes</label>
+                <textarea id="payloadNotes">amount, currency, customerId, idempotencyKey, successUrl, failureUrl, metadata.orderId</textarea>
+
+                <div class="hero-actions">
+                    <button class="btn-primary btn-small" onclick="saveCustomPreset()">Save as custom</button>
+                    <button class="btn-secondary btn-small" onclick="renderInterfacePreview()">Refresh interface preview</button>
+                </div>
+            </aside>
+        </section>
+
+        <section class="grid metrics" aria-label="Test summary">
+            <article class="metric-card">
+                <span>Total checks</span>
+                <strong id="totalChecks">0</strong>
+            </article>
+            <article class="metric-card">
+                <span>Green</span>
+                <strong id="greenChecks">0</strong>
+            </article>
+            <article class="metric-card">
+                <span>Flagged</span>
+                <strong id="flaggedChecks">0</strong>
+            </article>
+            <article class="metric-card">
+                <span>Readiness</span>
+                <strong id="readinessScore">0%</strong>
+                <div class="progress-track">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </article>
+        </section>
+
+        <section class="main-layout">
+            <div class="grid">
+                <section class="panel">
+                    <div class="panel-title">
+                        <h2>Live-interface mirror</h2>
+                        <span class="pill blue">Input API -> payment page -> backend</span>
+                    </div>
+                    <div class="flow-grid">
+                        <article class="flow-step">
+                            <strong>1. Incoming PSP/API input</strong>
+                            <p>The PSP payload is normalized before it touches the live payment page or backend integration.</p>
+                        </article>
+                        <article class="flow-step">
+                            <strong>2. Readies payment interface</strong>
+                            <p>The same route, fields, redirect rules, and customer mapping expected on the live site are checked.</p>
+                        </article>
+                        <article class="flow-step">
+                            <strong>3. Backend + webhook output</strong>
+                            <p>Status updates, signatures, idempotency, and ledger writes are verified before go-live.</p>
+                        </article>
+                    </div>
+                    <div class="code-panels">
+                        <div>
+                            <div class="panel-title">
+                                <h3>Incoming PSP payload</h3>
+                            </div>
+                            <pre id="incomingPreview"></pre>
+                        </div>
+                        <div>
+                            <div class="panel-title">
+                                <h3>Readies output contract</h3>
+                            </div>
+                            <pre id="outputPreview"></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-title">
+                        <h2>Detailed pre-flight checks</h2>
+                        <span id="approvalBadge" class="pill amber">Not approved yet</span>
+                    </div>
+                    <div id="results">
+                        <div class="empty-state">
+                            Run the full pre-flight test to see every individual check, exact evidence, and Bob's fix guidance.
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="grid">
+                <section class="panel bob-card">
+                    <div class="panel-title">
+                        <h2>Bob guidance</h2>
+                        <span id="bobSummary" class="pill amber">Awaiting run</span>
+                    </div>
+                    <div id="bobFeed" class="bob-feed">
+                        <div class="message">
+                            <strong>Bob:</strong> Run the pre-flight and I will list the exact issue per failed point.
+                            If Readies can adjust it locally, I will show the local fix. If only the PSP can fix it,
+                            I will mark it as last-resort PSP support.
+                        </div>
+                    </div>
+                    <div class="chat-composer">
+                        <input id="chatInput" placeholder="Ask Bob what to adjust..." onkeydown="if(event.key === 'Enter') sendCommand()">
+                        <button class="btn-primary btn-small" onclick="sendCommand()">Send</button>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-title">
+                        <h2>Go-live gate</h2>
+                    </div>
+                    <div class="go-live-box">
+                        <p>
+                            The Hostinger live push button unlocks only when every input, mapping, payment-page,
+                            backend, webhook, security, and deployment check is green.
+                        </p>
+                        <button id="goLiveButtonSecondary" class="btn-danger" onclick="goLive()" disabled>Locked until 100% green</button>
+                    </div>
+                </section>
+            </aside>
+        </section>
+    </main>
+
+    <script>
+    const presets = {
+        fbls: {
+            customerName: "P003 - FBLS",
+            pspName: "FBLS",
+            apiEndpoint: "https://sandbox.fbls.example/payments",
+            backendEndpoint: "/api/payments/psp/fbls",
+            webhookEndpoint: "/api/webhooks/fbls",
+            signatureHeader: "X-FBLS-Signature",
+            payloadNotes: "amount, currency, customerId, idempotencyKey, successUrl, failureUrl, metadata.orderId"
+        },
+        xcore: {
+            customerName: "P004 - XCore",
+            pspName: "XCore",
+            apiEndpoint: "https://sandbox.xcore.example/v1/checkout",
+            backendEndpoint: "/api/payments/psp/xcore",
+            webhookEndpoint: "/api/webhooks/xcore",
+            signatureHeader: "X-XCore-Signature",
+            payloadNotes: "amount.value, amount.currency, customer.reference, merchantReference, redirect.success, redirect.cancel"
+        },
+        custom: {
+            customerName: "Next customer",
+            pspName: "Custom PSP",
+            apiEndpoint: "https://sandbox.psp.example/payments",
+            backendEndpoint: "/api/payments/psp/custom",
+            webhookEndpoint: "/api/webhooks/custom",
+            signatureHeader: "X-PSP-Signature",
+            payloadNotes: "Define required PSP fields, Readies normalized fields, redirects, webhook events, and signature rules."
+        }
+    };
+
+    const baseChecks = [
+        {
+            group: "Incoming PSP API",
+            items: [
+                ["auth-header", "Authentication header is present", "Checks that the PSP request contains the configured API key or bearer token before we call the backend.", "Header found and mapped to Readies auth middleware.", "Readies", true],
+                ["base-url", "Sandbox endpoint targets the selected PSP", "Confirms the configured PSP endpoint belongs to the chosen customer preset and not another integration.", "Endpoint matches the active PSP preset.", "Readies", true],
+                ["payload-required-fields", "Required payment fields are mapped", "Checks amount, currency, customer reference, order id, success URL, failure URL, and metadata before the payment page loads.", "All required fields are present in the normalized contract.", "Readies", true],
+                ["idempotency", "Idempotency key prevents duplicate charges", "Verifies that repeated PSP requests carry a stable key that the backend can store and reject on retry.", "Idempotency key generated from customer + order reference.", "Readies", true],
+                ["customer-switch", "Customer preset can be changed by operators", "Ensures FBLS, XCore, and a custom next customer can be selected without editing code.", "Preset selector and custom save are available.", "Readies", true]
+            ]
+        },
+        {
+            group: "Payment-page output",
+            items: [
+                ["checkout-route", "Payment page route receives normalized data", "Confirms the same route planned for live checkout receives the normalized PSP payload.", "Readies output points to /pay/checkout with mapped fields.", "Readies", true],
+                ["amount-currency", "Amount and currency render exactly", "Checks minor units, decimal display, currency code, and customer-visible amount consistency.", "EUR 49.95 renders from 4995 minor units.", "Readies", true],
+                ["redirects", "Success and failure redirects are safe", "Validates success, failure, and cancel URLs before the customer is redirected away from the payment page.", "Redirect allow-list is enabled for checkout callbacks.", "Readies", true],
+                ["three-ds", "3DS challenge strategy is defined", "Checks that challenge, frictionless, failure, and timeout paths are all represented in the output contract.", "3DS challenge_required and fallback statuses are mapped.", "Readies", true],
+                ["frontend-errors", "Customer-facing errors are specific", "Ensures PSP errors become clear payment-page messages instead of generic failed checkout messages.", "Error copy maps PSP codes to customer-safe messages.", "Readies", true]
+            ]
+        },
+        {
+            group: "Backend and ledger",
+            items: [
+                ["backend-route", "Backend route matches live integration", "Checks that the payment create route uses the same interface contract expected on the live environment.", "Backend route is generated from the active PSP config.", "Readies", true],
+                ["status-normalization", "PSP statuses normalize to Readies statuses", "Maps PSP pending, authorized, captured, failed, cancelled, refunded, and chargeback statuses.", "Status map contains all required lifecycle states.", "Readies", true],
+                ["ledger-write", "Ledger write is atomic", "Verifies the backend can write payment, customer, PSP reference, and status in one safe operation.", "Ledger payload includes paymentId, pspReference, amount, currency, and status.", "Readies", true],
+                ["retry-policy", "Retry policy avoids double processing", "Checks that network timeouts retry safely without duplicate ledger writes or duplicate customer redirects.", "Retry policy uses idempotency key and exponential backoff.", "Readies", true],
+                ["observability", "Logs expose the failing integration point", "Ensures each request can be traced by customer, PSP, order id, payment id, and webhook event id.", "Correlation id is present on API, backend, and webhook output.", "Readies", true]
+            ]
+        },
+        {
+            group: "Webhooks and security",
+            items: [
+                ["webhook-route", "Webhook endpoint is configured", "Checks the selected PSP webhook receiver and event route before live callbacks are enabled.", "Webhook path is present and tied to the selected PSP.", "Readies", true],
+                ["signature-header", "Signature header is verified", "Validates that the configured PSP signature header is checked before webhook events are trusted.", "Header name is configured, but secret verification must be adjusted for this PSP.", "Readies", true, "flagged"],
+                ["replay-protection", "Replay protection blocks duplicate events", "Checks timestamp tolerance and event id storage so old webhook events cannot be replayed.", "Replay window exists, but event id persistence must be enabled.", "Readies", true, "flagged"],
+                ["event-dedupe", "Webhook event dedupe is exact", "Confirms the same event id cannot update ledger status twice.", "Dedupe key is pspName + eventId + paymentId.", "Readies", true],
+                ["psp-certificate", "PSP certificate or IP allow-list is confirmed", "Verifies whether the PSP has supplied the final certificate, public key, or IP allow-list needed for live traffic.", "Waiting for PSP live certificate / final allow-list confirmation.", "PSP", false, "psp"]
+            ]
+        },
+        {
+            group: "Go-live readiness",
+            items: [
+                ["environment-separation", "Sandbox and live credentials are separated", "Checks that test credentials cannot accidentally be used in live mode and live secrets are not placed in this page.", "Environment mode stays sandbox until Hostinger go-live is approved.", "Readies", true],
+                ["hostinger-target", "Hostinger target is selected", "Confirms the deployment target is known before the go-live button unlocks.", "Hostinger target: live payment interface.", "Readies", true],
+                ["rollback-plan", "Rollback checkpoint exists", "Ensures the previous live payment interface can be restored if the PSP fails after launch.", "Rollback checkpoint is required before final deployment.", "Readies", true, "flagged"],
+                ["approval-gate", "100% green approval gate is enforced", "Confirms the go-live action is disabled until every detailed check is green.", "Gate is active and tied to the current test run.", "Readies", true],
+                ["psp-last-resort", "PSP support is last resort only", "Marks items as PSP-owned only when Readies cannot safely adjust the interface locally.", "One PSP-owned item remains until final PSP certificate / allow-list arrives.", "PSP", false, "psp"]
+            ]
+        }
+    ];
+
+    let currentChecks = [];
+    let hasRun = false;
+
+    function getConfig() {
+        return {
+            customerName: document.getElementById("customerName").value.trim() || "Unnamed customer",
+            pspName: document.getElementById("pspName").value.trim() || "Unnamed PSP",
+            apiEndpoint: document.getElementById("apiEndpoint").value.trim(),
+            backendEndpoint: document.getElementById("backendEndpoint").value.trim(),
+            webhookEndpoint: document.getElementById("webhookEndpoint").value.trim(),
+            signatureHeader: document.getElementById("signatureHeader").value.trim(),
+            payloadNotes: document.getElementById("payloadNotes").value.trim()
+        };
+    }
+
+    function loadPreset(key) {
+        const savedCustom = readSavedCustomPreset();
+        const preset = key === "custom" && savedCustom ? savedCustom : presets[key];
+        Object.entries(preset).forEach(([field, value]) => {
+            document.getElementById(field).value = value;
+        });
+        renderInterfacePreview();
+        if (hasRun) {
+            runFullTest();
+        }
+    }
+
+    function saveCustomPreset() {
+        const config = getConfig();
+        localStorage.setItem("readiesPspCustomPreset", JSON.stringify(config));
+        document.getElementById("customerSelect").value = "custom";
+        addBobMessage("Bob", `Saved ${config.customerName} as the editable custom test customer. You can now run the same detailed interface checks for this PSP.`);
+        renderInterfacePreview();
+    }
+
+    function readSavedCustomPreset() {
+        try {
+            return JSON.parse(localStorage.getItem("readiesPspCustomPreset"));
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function buildChecks() {
+        const config = getConfig();
+        return baseChecks.flatMap((section) => section.items.map((item) => {
+            const [id, name, description, evidence, owner, adjustable, presetStatus = "green"] = item;
+            return {
+                id,
+                group: section.group,
+                name,
+                description,
+                evidence,
+                owner,
+                adjustable,
+                status: presetStatus,
+                bob: buildBobAdvice(presetStatus, owner, adjustable, name, config),
+                fix: buildFixText(id, config)
+            };
+        }));
+    }
+
+    function buildBobAdvice(status, owner, adjustable, name, config) {
+        if (status === "green") {
+            return `This point is green for ${config.pspName}. Keep it locked into the live mirror contract.`;
+        }
+        if (adjustable) {
+            return `Flagged: ${name}. Bob can adjust this locally in the test interface before we ask the PSP for help.`;
+        }
+        return `Last resort: ${name}. This needs ${owner} confirmation before live traffic can be approved.`;
+    }
+
+    function buildFixText(id, config) {
+        const fixes = {
+            "signature-header": `Bind ${config.signatureHeader || "the PSP signature header"} to the webhook verifier and add this PSP's secret to the backend environment.`,
+            "replay-protection": "Enable event id persistence and reject webhook timestamps outside the accepted tolerance window.",
+            "rollback-plan": "Create the Hostinger rollback checkpoint and record the last stable live payment interface version.",
+            "psp-certificate": `Request the final ${config.pspName} live certificate, public key, or IP allow-list confirmation from the PSP.`,
+            "psp-last-resort": `Keep ${config.pspName} support as the last resort after every Readies-owned mapping and interface adjustment is complete.`
+        };
+        return fixes[id] || "No adjustment needed for this check.";
+    }
+
+    function runFullTest() {
+        hasRun = true;
+        currentChecks = buildChecks();
+        renderInterfacePreview();
+        renderResults();
+        renderMetrics();
+        renderBobSummary();
+    }
+
+    function applyLocalAdjustment(id) {
+        const check = currentChecks.find((item) => item.id === id);
+        if (!check || !check.adjustable) {
+            return;
+        }
+        check.status = "green";
+        check.evidence = `Adjusted locally: ${check.fix}`;
+        check.bob = "Bob applied the local interface adjustment. Re-run against the real PSP response before final live approval.";
+        renderResults();
+        renderMetrics();
+        renderBobSummary();
+    }
+
+    function markPspConfirmed(id) {
+        const check = currentChecks.find((item) => item.id === id);
+        if (!check || check.adjustable) {
+            return;
+        }
+        const config = getConfig();
+        check.status = "green";
+        check.evidence = `PSP confirmed for ${config.pspName}: ${check.fix}`;
+        check.bob = "PSP last-resort confirmation is recorded. This point can now pass the live approval gate.";
+        renderResults();
+        renderMetrics();
+        renderBobSummary();
+    }
+
+    function applyAllLocalAdjustments() {
+        if (!hasRun) {
+            runFullTest();
+        }
+        currentChecks.forEach((check) => {
+            if (check.adjustable && check.status !== "green") {
+                check.status = "green";
+                check.evidence = `Adjusted locally: ${check.fix}`;
+                check.bob = "Bob applied the local interface adjustment. Verify it again with the PSP payload before go-live.";
+            }
+        });
+        renderResults();
+        renderMetrics();
+        renderBobSummary();
+    }
+
+    function resetTest() {
+        hasRun = false;
+        currentChecks = [];
+        document.getElementById("results").innerHTML = `
+            <div class="empty-state">
+                Run the full pre-flight test to see every individual check, exact evidence, and Bob's fix guidance.
+            </div>
+        `;
+        document.getElementById("bobFeed").innerHTML = "";
+        addBobMessage("Bob", "Test reset. Configure FBLS, XCore, or a custom next customer, then run the full pre-flight again.");
+        renderMetrics();
+        renderRunStatus();
+        setGoLiveEnabled(false);
+    }
+
+    function renderResults() {
+        const groups = currentChecks.reduce((acc, check) => {
+            acc[check.group] = acc[check.group] || [];
+            acc[check.group].push(check);
+            return acc;
+        }, {});
+
+        document.getElementById("results").innerHTML = Object.entries(groups).map(([group, checks]) => {
+            const green = checks.filter((check) => check.status === "green").length;
+            return `
+                <section class="test-section">
+                    <div class="section-header">
+                        <h3>${escapeHtml(group)}</h3>
+                        <span class="pill ${green === checks.length ? "green" : "amber"}">${green}/${checks.length} green</span>
+                    </div>
+                    <div class="check-list">
+                        ${checks.map(renderCheckCard).join("")}
+                    </div>
+                </section>
+            `;
+        }).join("");
+    }
+
+    function renderCheckCard(check) {
+        const icon = check.status === "green" ? "✓" : check.status === "psp" ? "!" : "!";
+        const label = check.status === "green" ? "Green" : check.status === "psp" ? "Needs PSP" : "Flagged";
+        const action = check.status === "green"
+            ? `<span class="pill green">Approved</span>`
+            : check.status === "psp"
+                ? `<button class="btn-secondary btn-small" onclick="markPspConfirmed('${check.id}')">Mark PSP confirmed</button>`
+                : `<button class="btn-primary btn-small" onclick="applyLocalAdjustment('${check.id}')">Bob adjust</button>`;
+
+        return `
+            <article class="check-card">
+                <div class="check-dot ${check.status}">${icon}</div>
+                <div class="check-copy">
+                    <h4>${escapeHtml(check.name)}</h4>
+                    <p>${escapeHtml(check.description)}</p>
+                    <div class="status-ribbon">
+                        <span class="pill ${check.status === "green" ? "green" : check.status === "psp" ? "red" : "amber"}">${label}</span>
+                        <span class="pill blue">Owner: ${escapeHtml(check.owner)}</span>
+                    </div>
+                    <div class="evidence">
+                        <div><strong>Evidence:</strong><br>${escapeHtml(check.evidence)}</div>
+                        <div><strong>Bob:</strong><br>${escapeHtml(check.bob)}<br><br><strong>Fix:</strong> ${escapeHtml(check.fix)}</div>
+                    </div>
+                </div>
+                <div class="check-actions">${action}</div>
+            </article>
+        `;
+    }
+
+    function renderMetrics() {
+        const total = currentChecks.length;
+        const green = currentChecks.filter((check) => check.status === "green").length;
+        const flagged = currentChecks.filter((check) => check.status === "flagged").length;
+        const psp = currentChecks.filter((check) => check.status === "psp").length;
+        const score = total ? Math.round((green / total) * 100) : 0;
+        document.getElementById("totalChecks").textContent = total;
+        document.getElementById("greenChecks").textContent = green;
+        document.getElementById("flaggedChecks").textContent = flagged + psp;
+        document.getElementById("readinessScore").textContent = `${score}%`;
+        document.getElementById("progressFill").style.width = `${score}%`;
+        document.getElementById("approvalBadge").className = `pill ${score === 100 ? "green" : psp ? "red" : "amber"}`;
+        document.getElementById("approvalBadge").textContent = score === 100 ? "Approved for live" : "Not approved yet";
+        renderRunStatus(score, flagged, psp);
+        setGoLiveEnabled(score === 100);
+    }
+
+    function renderRunStatus(score = 0, flagged = 0, psp = 0) {
+        const config = getConfig();
+        const status = !hasRun
+            ? `<span class="pill amber">Waiting for test run</span><span class="pill blue">Live mirror mode: enabled</span>`
+            : `<span class="pill ${score === 100 ? "green" : "amber"}">${score}% green for ${escapeHtml(config.customerName)}</span>
+               <span class="pill ${flagged ? "amber" : "green"}">${flagged} local adjustment${flagged === 1 ? "" : "s"}</span>
+               <span class="pill ${psp ? "red" : "green"}">${psp} PSP last-resort item${psp === 1 ? "" : "s"}</span>`;
+        document.getElementById("runStatus").innerHTML = status;
+    }
+
+    function renderBobSummary() {
+        const config = getConfig();
+        const flagged = currentChecks.filter((check) => check.status === "flagged");
+        const psp = currentChecks.filter((check) => check.status === "psp");
+        const green = currentChecks.filter((check) => check.status === "green").length;
+        document.getElementById("bobSummary").className = `pill ${flagged.length || psp.length ? "amber" : "green"}`;
+        document.getElementById("bobSummary").textContent = flagged.length || psp.length ? "Action needed" : "All green";
+        document.getElementById("bobFeed").innerHTML = "";
+        addBobMessage("Bob", `${config.customerName} run complete: ${green}/${currentChecks.length} checks green.`);
+        flagged.forEach((check) => {
+            addBobMessage("Bob", `${check.name}: ${check.bob} Fix: ${check.fix}`);
+        });
+        psp.forEach((check) => {
+            addBobMessage("Bob", `${check.name}: ${check.bob} This is not a code-mapping problem; request PSP confirmation before live.`);
+        });
+        if (!flagged.length && !psp.length) {
+            addBobMessage("Bob", "Everything is green. The Hostinger go-live button is unlocked for this test run.");
+        }
+    }
+
+    function renderInterfacePreview() {
+        const config = getConfig();
+        const incoming = {
+            method: "POST",
+            endpoint: config.apiEndpoint,
+            headers: {
+                Authorization: "Bearer sandbox_token_not_stored_here",
+                "Idempotency-Key": `${slug(config.customerName)}-order-10045`,
+                [config.signatureHeader || "X-PSP-Signature"]: "sandbox_signature"
+            },
+            body: {
+                customerReference: config.customerName,
+                psp: config.pspName,
+                amount: 4995,
+                currency: "EUR",
+                orderId: "ORD-10045",
+                successUrl: "https://readies.example/pay/success",
+                failureUrl: "https://readies.example/pay/failure",
+                metadata: config.payloadNotes.split(",").map((item) => item.trim()).filter(Boolean)
+            }
+        };
+        const output = {
+            backendRoute: config.backendEndpoint,
+            webhookReceiver: config.webhookEndpoint,
+            paymentPage: "/pay/checkout",
+            normalizedPayment: {
+                customer: config.customerName,
+                provider: config.pspName,
+                displayAmount: "EUR 49.95",
+                statusMap: ["created", "pending", "authorized", "captured", "failed", "refunded", "chargeback"],
+                requires3ds: true,
+                signatureHeader: config.signatureHeader,
+                goLiveTarget: "Hostinger live payment interface"
+            }
+        };
+        document.getElementById("incomingPreview").textContent = JSON.stringify(incoming, null, 2);
+        document.getElementById("outputPreview").textContent = JSON.stringify(output, null, 2);
+    }
+
+    function setGoLiveEnabled(enabled) {
+        document.getElementById("goLiveButton").disabled = !enabled;
+        document.getElementById("goLiveButtonSecondary").disabled = !enabled;
+        document.getElementById("goLiveButtonSecondary").textContent = enabled ? "Push green build to Hostinger" : "Locked until 100% green";
+    }
+
+    function goLive() {
+        const notGreen = currentChecks.filter((check) => check.status !== "green");
+        if (notGreen.length) {
+            alert(`Not approved. ${notGreen.length} checks still need attention before Hostinger live deployment.`);
+            return;
+        }
+        alert("Approved: all PSP pre-flight checks are green. Ready to push this interface to Hostinger live.");
+    }
+
+    function sendCommand() {
+        const input = document.getElementById("chatInput");
+        const value = input.value.trim();
+        if (!value) {
+            return;
+        }
+        addBobMessage("You", value, true);
+        input.value = "";
+        const response = createBobResponse(value);
+        window.setTimeout(() => addBobMessage("Bob", response), 250);
+    }
+
+    function createBobResponse(value) {
+        const lower = value.toLowerCase();
+        const flagged = currentChecks.filter((check) => check.status !== "green");
+        if (lower.includes("xcore")) {
+            document.getElementById("customerSelect").value = "xcore";
+            loadPreset("xcore");
+            return "Switched the test configuration to XCore. Run the full pre-flight to check the same live-interface contract for that PSP.";
+        }
+        if (lower.includes("fbls")) {
+            document.getElementById("customerSelect").value = "fbls";
+            loadPreset("fbls");
+            return "Switched the test configuration to FBLS. Run the full pre-flight to verify every detailed point.";
+        }
+        if (lower.includes("adjust")) {
+            return flagged.length
+                ? `There are ${flagged.length} open points. I can adjust Readies-owned flagged checks locally. PSP-owned items still need PSP confirmation.`
+                : "No open points right now. Everything in the current test run is green.";
+        }
+        if (lower.includes("confirm") || lower.includes("certificate") || lower.includes("allow-list")) {
+            return "When the PSP sends the final certificate, public key, or allow-list confirmation, use Mark PSP confirmed on those last-resort checks. The go-live gate will only unlock after that.";
+        }
+        if (lower.includes("psp")) {
+            const pspItems = flagged.filter((check) => check.status === "psp").map((check) => check.name);
+            return pspItems.length
+                ? `PSP last-resort items: ${pspItems.join(", ")}. Ask the PSP only for those items after local adjustments are complete.`
+                : "No PSP last-resort items are open in the current run.";
+        }
+        return "I can switch between FBLS, XCore, or a custom customer, explain flagged checks, and apply local Readies-owned adjustments before go-live.";
+    }
+
+    function addBobMessage(author, text, isUser = false) {
+        const feed = document.getElementById("bobFeed");
+        const message = document.createElement("div");
+        message.className = `message${isUser ? " user" : ""}`;
+        const strong = document.createElement("strong");
+        strong.textContent = `${author}: `;
+        message.appendChild(strong);
+        message.appendChild(document.createTextNode(text));
+        feed.appendChild(message);
+        feed.scrollTop = feed.scrollHeight;
+    }
+
+    function slug(value) {
+        return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "customer";
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    renderInterfacePreview();
+    renderMetrics();
+    </script>
+</body>
+</html>

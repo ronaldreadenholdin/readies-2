@@ -1,0 +1,15 @@
+AfrPay real materials are NOT in this package.
+
+Owner identity:
+- 3 geos with different costs: Europe, Kazakhstan, Tunisia
+- Finished and tested BEFORE Flamingo was given
+- Mix-up happened AFTER the AfrPay test
+
+What is missing from readies-2 (searched Jul 13 2026):
+- Final AfrPay onboarding document
+- Adjusted AfrPay API after test approval
+- Per-geo cost model (Europe / Kazakhstan / Tunisia)
+- Any verified AfrPay endpoints or product codes
+
+Do NOT rebuild AfrPay from CashForo or Flamingo files in folder 02.
+Recover AfrPay only from owner source outside this repo.

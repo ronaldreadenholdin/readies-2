@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AfrPay Live API — Hostinger</title>
+  <style>
+    body { font-family: Georgia, "Times New Roman", serif; margin: 0; background: linear-gradient(160deg, #fff7ed, #ffedd5 40%, #fed7aa); color: #1c1917; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 48px 20px; }
+    h1 { font-size: 2.2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+    p { line-height: 1.5; }
+    .box { background: rgba(255,255,255,0.72); border: 1px solid #fdba74; padding: 20px 22px; margin: 18px 0; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92rem; }
+    pre { background: #1c1917; color: #ffedd5; padding: 14px; overflow: auto; }
+    a { color: #9a3412; font-weight: 700; }
+    .ok { color: #166534; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>AfrPay Live API</h1>
+    <p>Hostinger upload is live on this domain. This is the adjusted API Bob uploads to <code>public_html</code>.</p>
+
+    <div class="box">
+      <p class="ok">Check API status:</p>
+      <p><a href="/api/afrpay/status">/api/afrpay/status</a></p>
+    </div>
+
+    <div class="box">
+      <p><strong>After green pre-flight</strong>, set in <code>.env</code>:</p>
+      <pre>AFRPAY_TEST_APPROVED=true
+AFRPAY_OR001_TEST_APPROVED=true
+AFRPAY_OB003_TEST_APPROVED=true
+AFRPAY_LIVE_ENABLED=true</pre>
+      <p>Full steps: see <code>GO_LIVE.txt</code> in this folder.</p>
+    </div>
+
+    <div class="box">
+      <p><strong>Create payment (OR001)</strong></p>
+      <pre>POST /api/afrpay/OR001/payments
+Content-Type: application/json
+
+{
+  "merchant_reference": "ORDER-10001",
+  "customer_reference": "CUST-500",
+  "amount_minor": 10000,
+  "currency": "EUR",
+  "success_url": "https://your-domain.com/success",
+  "failure_url": "https://your-domain.com/failure",
+  "idempotency_key": "ORDER-10001-OR001",
+  "metadata": { "target_asset": "USDT", "exchange_wallet_reference": "wallet_123" }
+}</pre>
+    </div>
+  </div>
+</body>
+</html>

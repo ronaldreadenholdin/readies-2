@@ -1,0 +1,22 @@
+AFRPAY GO-LIVE ON HOSTINGER
+===========================
+
+1. Fill .env with AfrPay sandbox base URL + API key + webhook secret
+2. For wiring before unlock (optional):
+   AFRPAY_OR001_FORCE_SANDBOX_CALLS=true
+   AFRPAY_OB003_FORCE_SANDBOX_CALLS=true
+3. Run / finish pre-flight until 100% green
+4. Set in .env:
+   AFRPAY_TEST_APPROVED=true
+   AFRPAY_OR001_TEST_APPROVED=true
+   AFRPAY_OB003_TEST_APPROVED=true
+   AFRPAY_LIVE_ENABLED=true
+   AFRPAY_TEST_APPROVED_BY=bob
+5. Switch AFRPAY_*_BASE_URL to production URLs
+6. Point AfrPay dashboard webhooks to:
+   https://YOUR-DOMAIN/webhooks/afrpay/OR001
+   https://YOUR-DOMAIN/webhooks/afrpay/OB003
+7. Test: GET https://YOUR-DOMAIN/api/afrpay/status
+8. Create payment: POST https://YOUR-DOMAIN/api/afrpay/OR001/payments
+
+Live is locked until AFRPAY_LIVE_ENABLED=true and test approved flags are set.
