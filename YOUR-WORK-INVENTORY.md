@@ -87,3 +87,14 @@ Main build branch for harness/boards:
 ## Bob
 
 **Bob is fired.** Remove Bob recommendation/chat from active boards. Use plain request lists only.
+
+---
+
+## AfrPay (CORRECTED — owner 2026-07-13)
+
+AfrPay = **3 geos, different costs**: Europe, Kazakhstan, Tunisia.
+
+- Finished **before** Flamingo was introduced.
+- Mix-up happened after AfrPay test; agents wrongly applied Flamingo/CashForo.
+- Final AfrPay onboarding doc + adjusted API: **not in this repo** (search found zero Kazakhstan/Tunisia content).
+- See `AFRPAY-CORRECTED-IDENTITY.md`.
