@@ -1,0 +1,7 @@
+P003 = FBLS
+P004 = Xcore
+P005 = Next PSP starter (placeholder)
+OR001 = CashForo onramp (card → crypto → Readies)
+OB003 = CashForo open banking
+OB Fena = Fena only
+AfrPay = Europe / Kazakhstan / Tunisia (different costs) — materials NOT in this package

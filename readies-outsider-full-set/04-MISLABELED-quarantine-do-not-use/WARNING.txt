@@ -1,0 +1,14 @@
+DO NOT USE THESE AS AFRPAY.
+
+The following files exist on branch okepayafrpay-full-set-docs-2c8a but are
+Flamingo/CashForo templates renamed to "AfrPay". They are quarantined by name
+only in this outsider pack — contents are NOT included on purpose.
+
+- afrpay-full-set-all-docs.zip
+- afrpay-live-api-after-test-approval.zip
+- afrpay-hostinger-public-html.zip / afrpay-hostinger-upload.zip
+- afrpay-or001-only-test-board.zip
+- afrpay-provider-test-package.zip (preflight branch)
+- psp-five-test-boards/05b-afrpay-named-final.html
+
+If you need CashForo OR001/OB003 work, use folder 02-real-work/cashforo/ instead.
