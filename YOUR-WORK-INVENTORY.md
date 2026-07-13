@@ -94,7 +94,8 @@ Main build branch for harness/boards:
 
 AfrPay = **3 geos, different costs**: Europe, Kazakhstan, Tunisia.
 
-- Finished **before** Flamingo was introduced.
-- Mix-up happened after AfrPay test; agents wrongly applied Flamingo/CashForo.
-- Final AfrPay onboarding doc + adjusted API: **not in this repo** (search found zero Kazakhstan/Tunisia content).
+- Finished and tested **before** Flamingo was introduced (Flamingo was given only after AfrPay was done).
+- Mix-up happened **after the AfrPay test**; later agents stamped Flamingo/CashForo onto AfrPay.
+- Final AfrPay onboarding doc + adjusted API: **not in this repo** (search found zero Kazakhstan/Tunisia content in git, transcripts, or sibling repos).
+- All current `afrpay-*` zips/folders on this branch are **mislabeled — do not use**.
 - See `AFRPAY-CORRECTED-IDENTITY.md`.
