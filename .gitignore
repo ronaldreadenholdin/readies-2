@@ -1,4 +1,6 @@
 .DS_Store
 *.log
+__pycache__/
+*.pyc
 bob-c-0609/hostinger/public_html/bob-c/.env
 bob-c-0609/hostinger/public_html/bob-c/storage/conversation.json
