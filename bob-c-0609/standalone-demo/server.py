@@ -62,6 +62,10 @@ class Handler(SimpleHTTPRequestHandler):
             if action == "history":
                 self._json({"ok": True, "messages": HISTORY})
                 return
+            if action == "work":
+                from bob_g_helper import catalog_summary
+                self._json({"ok": True, **catalog_summary()})
+                return
             self._json({"ok": True, **status(), "history_count": len(HISTORY)})
             return
         super().do_GET()
@@ -72,6 +76,18 @@ class Handler(SimpleHTTPRequestHandler):
         if action == "clear":
             HISTORY.clear()
             self._json({"ok": True, "messages": []})
+            return
+        if action == "recommend":
+            from bob_g_helper import recommend
+            flagged = payload.get("flagged") or []
+            psp = str(payload.get("psp") or "PSP")
+            if not isinstance(flagged, list):
+                flagged = []
+            self._json({
+                "ok": True,
+                "function": "BobRecommendationService::generate",
+                "reply": recommend(flagged, psp),
+            })
             return
         if action == "ask":
             message = str(payload.get("message") or "").strip()
@@ -86,11 +102,12 @@ class Handler(SimpleHTTPRequestHandler):
                 "mode": status()["mode"],
                 "model": status()["model"],
                 "reply": reply,
-                "source": "bob-g" if status()["connected"] else "local-helper",
+                "source": "bob-g" if status()["connected"] else "bob-g-workdesk",
+                "desk": status().get("work"),
                 "messages": HISTORY,
             }
             if not status()["connected"]:
-                result["notice"] = "Bob G Grok is not connected yet. Add XAI_API_KEY to bob-c/.env."
+                result["notice"] = "Using Bob G work desk. Add XAI_API_KEY if you want live Grok on top of this catalog."
             self._json(result)
             return
         self._json({"ok": False, "error": "Unknown BOB C action."}, 404)

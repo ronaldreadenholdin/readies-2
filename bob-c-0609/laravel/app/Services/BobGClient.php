@@ -8,7 +8,7 @@ use RuntimeException;
 
 class BobGClient
 {
-    public const FALLBACK_MODE = 'local-helper';
+    public const FALLBACK_MODE = 'bob-g-workdesk';
     public const GROK_MODE = 'bob-g-grok';
 
     public function connected(): bool
@@ -16,15 +16,35 @@ class BobGClient
         return filled(config('bob_c.xai_api_key'));
     }
 
+    public function work(): array
+    {
+        $paths = [
+            resource_path('bob-g-work/catalog.json'),
+            base_path('bob-c-0609/bob-g-work/catalog.json'),
+        ];
+        foreach ($paths as $path) {
+            if (is_file($path)) {
+                $decoded = json_decode((string) file_get_contents($path), true);
+                if (is_array($decoded)) {
+                    return $decoded + ['functions' => ['list_work', 'recommend', 'advise', 'respond', 'go_live_gate']];
+                }
+            }
+        }
+
+        return ['agent' => 'Bob G', 'extension' => 'BOB C', 'completed' => [], 'open' => []];
+    }
+
     public function status(): array
     {
         return [
             'agent' => 'BOB C',
             'assistant' => 'Bob G',
+            'extends' => 'Bob G',
             'mode' => $this->connected() ? self::GROK_MODE : self::FALLBACK_MODE,
-            'model' => $this->connected() ? config('bob_c.xai_model') : 'readies-local-helper',
+            'model' => $this->connected() ? config('bob_c.xai_model') : 'bob-g-workdesk',
             'connected' => $this->connected(),
             'site' => config('app.url', 'https://0609.readies.biz'),
+            'work' => $this->work(),
         ];
     }
 
@@ -54,17 +74,19 @@ class BobGClient
         return [
             'ok' => true,
             'mode' => self::FALLBACK_MODE,
-            'model' => 'readies-local-helper',
+            'model' => 'bob-g-workdesk',
             'reply' => $this->localReply($message),
-            'source' => 'local-helper',
-            'notice' => 'Bob G Grok is not connected yet. Add XAI_API_KEY to the 0609 .env.',
+            'source' => 'bob-g-workdesk',
+            'desk' => $this->work(),
+            'notice' => 'Using Bob G work desk. Add XAI_API_KEY if you want live Grok on top of this catalog.',
         ];
     }
 
     public function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are Bob G, a Grok-powered Readies / Okepay backend assistant.
+You are Bob G. BOB C is your 0609 sidebar extension.
+Do not rebuild work you already shipped. Continue open catalog items only.
 You are used from the BOB C sidebar tab on https://0609.readies.biz.
 
 Help authorized backend users:
@@ -132,23 +154,33 @@ PROMPT;
     public function localReply(string $message): string
     {
         $lower = strtolower($message);
+        $work = $this->work();
+
+        if (preg_match('/work|what did|catalog|inventory|already built/', $lower) === 1) {
+            $titles = collect($work['completed'] ?? [])->pluck('title')->filter()->values()->all();
+            $open = collect($work['open'] ?? [])->pluck('title')->filter()->values()->all();
+            return "BOB C extends Bob G. Already built:\n- ".implode("\n- ", $titles)."\n\nStill open:\n- ".implode("\n- ", $open);
+        }
 
         if (str_contains($lower, 'afrpay')) {
-            return "AfrPay is a separate provider with three geos: Europe, Kazakhstan, and Tunisia. Do not reuse CashForo OR001/OB003 or Flamingo boards as AfrPay. If you do not have the original AfrPay onboarding/API, ask the owner for those files before generating live adaptors.\n\nI can still draft a Laravel stub that keeps the three geos separate, with sandbox-only flags, once you share the real endpoints.";
+            return 'Recover AfrPay Europe / Kazakhstan / Tunisia materials. Do not copy CashForo OR001/OB003.';
         }
 
-        if (preg_match('/cashforo|or001|ob003/', $lower) === 1) {
-            return "CashForo uses two products:\n- OR001 onramp (card → USDT/USDC → Readies)\n- OB003 open banking\n\nFor a Laravel drop-in, create `CashForoOnrampAdaptor` and `CashForoOpenBankingAdaptor` behind `PspAdaptorInterface`, plus `/webhooks/cashforo/OR001` and `/webhooks/cashforo/OB003`. Keep `LIVE_ENABLED=false` until pre-flight is green.\n\nConnect Bob G with `XAI_API_KEY` if you want me to generate the full files from Grok.";
+        if (preg_match('/cashforo|or001|ob003|adaptor/', $lower) === 1) {
+            return 'Bob G already created `PspAdaptorInterface`, `CashForoOnrampAdaptor` (OR001), and `CashForoOpenBankingAdaptor` (OB003). Map real CashForo docs onto those stubs. Do not write new adaptors.';
         }
 
-        if (preg_match('/fbls|p003|xcore|p004|psp/', $lower) === 1) {
-            return "Known Readies PSP codes:\n- P003 FBLS\n- P004 Xcore (Europe: 3DS, name rules, signatures)\n- P005 next starter\n\nOn 0609 the existing harness lives at `/psp-sandbox` and should stay sandbox-only until checks are green. Tell me which provider and I will draft the Laravel controller, webhook middleware, and `.env` keys.";
+        if (preg_match('/recommend|flagged|request list/', $lower) === 1) {
+            return app(BobRecommendationService::class)->generate([
+                ['name' => 'Webhook sample', 'details' => 'Need a signed webhook payload before go-live.'],
+                ['name' => 'Signature header', 'details' => 'Confirm header name, secret, and canonical string.'],
+            ]);
         }
 
-        if (preg_match('/function|controller|route|laravel|migrate/', $lower) === 1) {
-            return "I can draft Laravel pieces for 0609:\n1. Route in `routes/web.php` or a dedicated routes file\n2. Controller under `app/Http/Controllers`\n3. Service under `app/Services`\n4. Blade view under `resources/views` extending `layouts.adminpanel`\n5. Migration if you need storage\n\nDescribe the function you want (name, input, output, who can use it). Connect `XAI_API_KEY` to have Bob G / Grok write the full files.";
+        if (preg_match('/fbls|p003|xcore|p004|pre-flight|harness/', $lower) === 1) {
+            return 'Bob G already built `PspTestHarnessService` and `/psp-sandbox` for FBLS P003 and Xcore P004. BOB C continues flagged checks and the go-live gate.';
         }
 
-        return "I am Bob G, used from the BOB C tab.\n\nI can help you:\n- create Laravel functions for the 0609 backend\n- integrate PSPs (FBLS, Xcore, CashForo, AfrPay geos, Fena)\n- draft webhooks, signatures, and go-live gates\n\nGrok is not connected yet. Add `XAI_API_KEY` to the 0609 `.env` to switch this tab from the local helper to live Bob G.\n\nAsk a specific task, for example: “Draft a Laravel webhook for FBLS P003”.";
+        return 'I am Bob G, used through BOB C. Continue existing work. Do not rebuild boards or adaptors that already exist.';
     }
 }

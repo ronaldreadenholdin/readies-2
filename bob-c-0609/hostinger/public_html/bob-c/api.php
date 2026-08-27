@@ -24,6 +24,24 @@ try {
         ]);
     }
 
+    if ($action === 'work' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+        bob_c_json(['ok' => true] + $client->desk()->summary());
+    }
+
+    if ($action === 'recommend' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        $input = bob_c_json_input();
+        $psp = trim((string) ($input['psp'] ?? 'PSP'));
+        $flagged = $input['flagged'] ?? [];
+        if (! is_array($flagged)) {
+            $flagged = [];
+        }
+        bob_c_json([
+            'ok' => true,
+            'function' => 'BobRecommendationService::generate',
+            'reply' => $client->desk()->recommend($flagged, $psp !== '' ? $psp : 'PSP'),
+        ]);
+    }
+
     if ($action === 'history' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
         bob_c_json([
             'ok' => true,

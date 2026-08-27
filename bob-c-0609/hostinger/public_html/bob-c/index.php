@@ -71,23 +71,29 @@ header('Referrer-Policy: same-origin');
                         </form>
                     </section>
                     <aside class="card side-card">
-                        <h3>Bob G can</h3>
-                        <ul>
-                            <li>Create Laravel controllers, routes, services, and migrations</li>
-                            <li>Draft PSP adaptors and webhook handlers</li>
-                            <li>Keep sandbox and live traffic gated</li>
-                            <li>Explain 0609 Hostinger deploy steps</li>
+                        <h3>BOB C extends Bob G</h3>
+                        <p>This tab continues Bob G work. It does not start a new agent.</p>
+                        <div class="quick">
+                            <button type="button" class="ghost ask-preset" data-ask="What work did Bob G already build?">Bob G work</button>
+                            <button type="button" class="ghost ask-preset" data-ask="Continue FBLS P003 and Xcore P004 harness">P003 / P004</button>
+                            <button type="button" class="ghost ask-preset" data-ask="Continue CashForo OR001 and OB003 adaptor mapping">CashForo</button>
+                            <button type="button" class="ghost ask-preset" data-ask="Write Bob recommendations for flagged webhook and signature items">Recommend</button>
+                        </div>
+                        <h3>Already built</h3>
+                        <ul id="completed-work" class="codes">
+                            <li>Adaptor interface + CashForo stubs</li>
+                            <li>Pre-flight harness P003/P004</li>
+                            <li>Bob recommendations + guidance</li>
+                            <li>84-point boards + Fena board</li>
                         </ul>
-                        <h3>Provider codes</h3>
-                        <ul class="codes">
-                            <li><strong>P003</strong> FBLS</li>
-                            <li><strong>P004</strong> Xcore</li>
-                            <li><strong>P005</strong> Next starter</li>
-                            <li><strong>OR001</strong> CashForo onramp</li>
-                            <li><strong>OB003</strong> CashForo open banking</li>
-                            <li><strong>AfrPay</strong> Europe / Kazakhstan / Tunisia</li>
+                        <h3>Still open</h3>
+                        <ul id="open-work" class="codes">
+                            <li>CashForo live API mapping</li>
+                            <li>AfrPay Europe / KZ / Tunisia docs</li>
+                            <li>0609 sidebar paste</li>
+                            <li>XAI_API_KEY for live Grok</li>
                         </ul>
-                        <p class="fine">Drafts only. Review before Hostinger deploy. No live PSP switch from chat.</p>
+                        <p class="fine">Reuse Bob G files. No live PSP switch from chat.</p>
                     </aside>
                 </section>
             <?php endif; ?>

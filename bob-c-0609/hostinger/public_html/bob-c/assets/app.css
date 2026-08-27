@@ -84,6 +84,8 @@ button:disabled { opacity: .6; cursor: wait; }
 .codes { list-style: none; padding: 0; }
 .codes li { padding: 6px 0; border-bottom: 1px solid var(--line); }
 .fine { font-size: 12px; color: var(--muted); margin-top: 16px; }
+.quick { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
+.quick button { font-size: 12px; padding: 8px 10px; }
 .lock-card { max-width: 480px; }
 .lock-card form { display: flex; gap: 10px; }
 

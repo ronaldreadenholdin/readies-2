@@ -1,0 +1,105 @@
+{
+  "agent": "Bob G",
+  "extension": "BOB C",
+  "site": "https://0609.readies.biz",
+  "rule": "BOB C extends Bob G. Do not rebuild Bob G work. Continue the open items only.",
+  "completed": [
+    {
+      "id": "psp-adaptor-interface",
+      "title": "PSP adaptor interface",
+      "files": [
+        "app/Contracts/PspAdaptorInterface.php",
+        "app/Services/Psp/PspAdaptorFactory.php",
+        "app/DTO/PspPaymentRequest.php",
+        "app/DTO/PspPaymentResponse.php",
+        "app/DTO/PspRefundRequest.php",
+        "app/DTO/PspRefundResponse.php",
+        "app/DTO/PspWebhookResult.php"
+      ],
+      "functions": ["code", "connectionType", "createPayment", "getPaymentStatus", "refund", "verifyWebhook", "handleWebhook"]
+    },
+    {
+      "id": "cashforo-adaptors",
+      "title": "CashForo adaptors OR001 + OB003",
+      "status": "stubs_waiting_api_docs",
+      "files": [
+        "app/Services/Psp/Adaptors/CashForoOnrampAdaptor.php",
+        "app/Services/Psp/Adaptors/CashForoOpenBankingAdaptor.php",
+        "config/psp_adaptors.php"
+      ],
+      "notes": "Payloads are drafted. Live mapping is blocked on CashForo API docs."
+    },
+    {
+      "id": "preflight-harness",
+      "title": "PSP pre-flight harness",
+      "files": [
+        "app/Services/PspTestHarnessService.php",
+        "app/Http/Controllers/PspSandboxController.php",
+        "resources/views/psp_sandbox/index.blade.php",
+        "pre-flight-test.html"
+      ],
+      "functions": ["runAll", "runFullTest", "runProvider", "testAuthConnectivity", "testWebhookHandling", "testSignatureVerification", "test3dsGeoSupport"],
+      "codes": ["P003", "P004"]
+    },
+    {
+      "id": "bob-recommendations",
+      "title": "Bob recommendation + guidance functions",
+      "files": [
+        "app/Services/BobRecommendationService.php",
+        "pre-flight-test.html"
+      ],
+      "functions": ["generate", "buildBobAdvice", "createBobResponse", "applyLocalAdjustment", "renderBobSummary", "updateBob"]
+    },
+    {
+      "id": "provider-boards",
+      "title": "Dual-connection 84-point boards",
+      "files": [
+        "provider-test-board.html",
+        "next-psp-start-here.html",
+        "hostinger-provider-test-board/"
+      ]
+    },
+    {
+      "id": "ob-fena",
+      "title": "OB Fena test board",
+      "files": ["ob-fena-test.html"],
+      "functions": ["runFenaTest", "showBobGuidance"]
+    },
+    {
+      "id": "webhook-middleware",
+      "title": "HMAC webhook verifier",
+      "files": ["app/Http/Middleware/VerifyPspWebhook.php"]
+    }
+  ],
+  "providers": [
+    {"code": "P003", "name": "FBLS", "kind": "card_psp"},
+    {"code": "P004", "name": "Xcore", "kind": "europe_card_psp", "notes": "3DS, name rules, signatures"},
+    {"code": "P005", "name": "Next PSP starter", "kind": "placeholder"},
+    {"code": "OR001", "name": "CashForo Onramp", "kind": "onramp"},
+    {"code": "OB003", "name": "CashForo Open Banking", "kind": "open_banking"},
+    {"code": "OB-FENA", "name": "Fena", "kind": "open_banking"},
+    {"code": "AFRPAY", "name": "AfrPay", "kind": "three_geos", "geos": ["Europe", "Kazakhstan", "Tunisia"], "notes": "Do not treat as CashForo or Flamingo. Real API materials are missing."}
+  ],
+  "open": [
+    {
+      "id": "cashforo-api-docs",
+      "title": "Map CashForo live API on OR001/OB003 adaptors",
+      "blocked_on": "CashForo endpoint, auth, webhook, and signature docs"
+    },
+    {
+      "id": "afrpay-real-materials",
+      "title": "Recover AfrPay Europe / Kazakhstan / Tunisia materials",
+      "blocked_on": "Owner onboarding + cost model + post-test API"
+    },
+    {
+      "id": "0609-sidebar",
+      "title": "Show BOB C on 0609 layouts.adminpanel",
+      "blocked_on": "Hostinger upload + one sidebar paste"
+    },
+    {
+      "id": "grok-key",
+      "title": "Connect live Grok for Bob G answers",
+      "blocked_on": "XAI_API_KEY"
+    }
+  ]
+}

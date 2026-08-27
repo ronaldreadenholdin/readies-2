@@ -28,15 +28,29 @@ final class BobGClient
         return is_string($this->apiKey) && $this->apiKey !== '';
     }
 
+    public function desk(): BobGWorkDesk
+    {
+        $path = bob_c_root() . '/work/catalog.json';
+        if (! is_file($path)) {
+            $path = dirname(__DIR__, 3) . '/bob-g-work/catalog.json';
+        }
+
+        return BobGWorkDesk::load($path);
+    }
+
     public function status(): array
     {
+        $desk = $this->desk()->summary();
+
         return [
             'agent' => 'BOB C',
             'assistant' => 'Bob G',
-            'mode' => $this->connected() ? self::GROK_MODE : self::FALLBACK_MODE,
-            'model' => $this->connected() ? $this->model : 'readies-local-helper',
+            'extends' => 'Bob G',
+            'mode' => $this->connected() ? self::GROK_MODE : 'bob-g-workdesk',
+            'model' => $this->connected() ? $this->model : 'bob-g-workdesk',
             'connected' => $this->connected(),
             'site' => bob_c_env('APP_URL', 'https://0609.readies.biz'),
+            'work' => $desk,
         ];
     }
 
@@ -47,8 +61,11 @@ final class BobGClient
             throw new InvalidArgumentException('Ask Bob G a question first.');
         }
 
+        $desk = $this->desk();
+        $deskReply = $desk->respond($message);
+
         $messages = array_merge(
-            [['role' => 'system', 'content' => self::systemPrompt()]],
+            [['role' => 'system', 'content' => self::systemPrompt() . "\n\n" . $desk->summary()['rule']]],
             $this->normalizeHistory($history),
             [['role' => 'user', 'content' => $message]],
         );
@@ -61,23 +78,26 @@ final class BobGClient
                 'model' => $this->model,
                 'reply' => $reply,
                 'source' => 'bob-g',
+                'desk' => $desk->summary(),
             ];
         }
 
         return [
             'ok' => true,
-            'mode' => self::FALLBACK_MODE,
-            'model' => 'readies-local-helper',
-            'reply' => self::localReply($message),
-            'source' => 'local-helper',
-            'notice' => 'Bob G Grok is not connected yet. Add XAI_API_KEY to bob-c/.env.',
+            'mode' => 'bob-g-workdesk',
+            'model' => 'bob-g-workdesk',
+            'reply' => $deskReply,
+            'source' => 'bob-g-workdesk',
+            'desk' => $desk->summary(),
+            'notice' => 'Using Bob G work desk. Add XAI_API_KEY if you want live Grok on top of this catalog.',
         ];
     }
 
     public static function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are Bob G, a Grok-powered Readies / Okepay backend assistant.
+You are Bob G. BOB C is your 0609 sidebar extension.
+Do not rebuild work you already shipped. Continue open catalog items only.
 You are used from the BOB C sidebar tab on https://0609.readies.biz.
 
 Help authorized backend users:

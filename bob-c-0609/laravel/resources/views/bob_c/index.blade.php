@@ -6,7 +6,7 @@
         <div>
             <div class="text-uppercase small font-weight-bold mb-2">Backend · Sidebar</div>
             <h1 class="mb-1">BOB C</h1>
-            <p class="mb-0">Ask Bob G to create Laravel functions and integrate PSPs.</p>
+            <p class="mb-0">BOB C extends Bob G. Continue harness, recommendations, and adaptor work.</p>
         </div>
         <div id="status-pill" class="badge badge-warning p-2">Checking Bob G…</div>
     </div>

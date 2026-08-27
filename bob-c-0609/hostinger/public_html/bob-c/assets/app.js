@@ -49,6 +49,19 @@
         });
     }
 
+    function fillList(id, items, fallback) {
+        const el = document.getElementById(id);
+        if (!el || !items || !items.length) {
+            return;
+        }
+        el.innerHTML = '';
+        items.forEach(function (item) {
+            const li = document.createElement('li');
+            li.textContent = item.title || item || fallback;
+            el.appendChild(li);
+        });
+    }
+
     async function loadStatus() {
         const res = await fetch(apiUrl('status'), { headers: headers() });
         const data = await res.json();
@@ -57,10 +70,14 @@
             return;
         }
         if (data.connected) {
-            statusPill.textContent = 'Bob G connected · ' + data.model;
+            statusPill.textContent = 'Bob G + Grok · ' + data.model;
             statusPill.classList.add('ok');
         } else {
-            statusPill.textContent = 'Local helper · add XAI_API_KEY for Bob G';
+            statusPill.textContent = 'BOB C extends Bob G work desk';
+        }
+        if (data.work) {
+            fillList('completed-work', data.work.completed, 'Completed');
+            fillList('open-work', data.work.open, 'Open');
         }
     }
 
@@ -109,6 +126,13 @@
             renderHistory([]);
         });
     }
+
+    document.querySelectorAll('.ask-preset').forEach(function (button) {
+        button.addEventListener('click', function () {
+            input.value = button.getAttribute('data-ask') || '';
+            form.dispatchEvent(new Event('submit', { cancelable: true }));
+        });
+    });
 
     loadStatus();
     loadHistory();

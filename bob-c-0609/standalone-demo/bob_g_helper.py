@@ -1,36 +1,63 @@
-"""Local Bob G helper used when XAI_API_KEY is missing."""
+"""BOB C helper that extends Bob G's existing work catalog."""
 
 from __future__ import annotations
 
+import json
 import os
 import re
+from pathlib import Path
 from typing import Any
 
+CATALOG_PATHS = [
+    Path(__file__).resolve().parents[1] / "bob-g-work" / "catalog.json",
+    Path(__file__).resolve().parents[1] / "hostinger" / "public_html" / "bob-c" / "work" / "catalog.json",
+]
 
-SYSTEM_PROMPT = """You are Bob G, a Grok-powered Readies / Okepay backend assistant.
-You are used from the BOB C sidebar tab on https://0609.readies.biz.
 
-Help authorized backend users:
-1. Create Laravel functions, controllers, routes, services, jobs, migrations, and Blade views.
-2. Integrate payment service providers (PSPs) into the Readies gateway.
-3. Draft webhook handlers, signature checks, sandbox vs live gates, and go-live checklists.
-4. Explain errors and propose reviewable code.
+def load_catalog() -> dict[str, Any]:
+    for path in CATALOG_PATHS:
+        if path.is_file():
+            return json.loads(path.read_text())
+    return {}
 
-Known provider codes:
-- P003 = FBLS
-- P004 = Xcore
-- P005 = next PSP starter
-- OR001 = CashForo onramp (card → USDT/USDC → Readies)
-- OB003 = CashForo open banking
-- AfrPay = three geos with different costs: Europe, Kazakhstan, Tunisia. Real AfrPay API docs may be missing. Do not invent them. Do not treat AfrPay as CashForo or Flamingo.
 
-Hard rules:
-- Never print live secrets, passwords, or webhook secrets.
-- Never enable live PSP traffic from chat.
-- All generated code is a draft. A human must review before Hostinger deploy.
-- Prefer Laravel + Hostinger public/ document-root patterns.
-- Keep answers practical and specific. Include file paths when you generate code.
-"""
+def catalog_summary(catalog: dict[str, Any] | None = None) -> dict[str, Any]:
+    data = catalog or load_catalog()
+    return {
+        "agent": data.get("agent", "Bob G"),
+        "extension": data.get("extension", "BOB C"),
+        "rule": data.get("rule", "BOB C extends Bob G."),
+        "completed": data.get("completed", []),
+        "open": data.get("open", []),
+        "providers": data.get("providers", []),
+        "functions": ["list_work", "recommend", "advise", "respond", "go_live_gate"],
+    }
+
+
+def recommend(flagged_items: list[Any], psp_name: str = "PSP") -> str:
+    if not flagged_items:
+        return "All checks are green. No Bob recommendations needed."
+    lines = [
+        f"Dear {psp_name} Team,",
+        "",
+        "During the Readies PSP pre-flight check we found the following items that must be completed before live activation:",
+        "",
+    ]
+    for index, item in enumerate(flagged_items, start=1):
+        if isinstance(item, dict):
+            category = item.get("category") or item.get("name") or "check"
+            details = item.get("details") or item.get("message") or item.get("recommendation") or "Needs confirmation."
+        else:
+            category = str(item)
+            details = "Needs confirmation."
+        lines.append(f"{index}. {category}: {details}")
+    lines.extend([
+        "",
+        "Please provide the missing documentation, sample payloads, signature details, or written approval so Readies can complete the go-live review.",
+        "",
+        "Thank you.",
+    ])
+    return "\n".join(lines)
 
 
 def status() -> dict[str, Any]:
@@ -38,66 +65,76 @@ def status() -> dict[str, Any]:
     return {
         "agent": "BOB C",
         "assistant": "Bob G",
-        "mode": "bob-g-grok" if connected else "local-helper",
-        "model": os.environ.get("XAI_MODEL", "grok-3") if connected else "readies-local-helper",
+        "extends": "Bob G",
+        "mode": "bob-g-grok" if connected else "bob-g-workdesk",
+        "model": os.environ.get("XAI_MODEL", "grok-3") if connected else "bob-g-workdesk",
         "connected": connected,
         "site": os.environ.get("APP_URL", "https://0609.readies.biz"),
+        "work": catalog_summary(),
     }
 
 
 def local_reply(message: str) -> str:
-    lower = message.lower()
+    catalog = load_catalog()
+    lower = message.lower().strip()
+    completed = catalog.get("completed", [])
+    open_items = catalog.get("open", [])
+
+    if re.search(r"work|what did|catalog|inventory|already built", lower):
+        titles = [row.get("title", row.get("id")) for row in completed]
+        open_titles = [row.get("title", row.get("id")) for row in open_items]
+        return "BOB C extends Bob G. Already built:\n- " + "\n- ".join(titles) + "\n\nStill open:\n- " + "\n- ".join(open_titles)
 
     if "afrpay" in lower:
         return (
-            "AfrPay is a separate provider with three geos: Europe, Kazakhstan, and Tunisia. "
-            "Do not reuse CashForo OR001/OB003 or Flamingo boards as AfrPay. If you do not have "
-            "the original AfrPay onboarding/API, ask the owner for those files before generating live adaptors.\n\n"
-            "I can still draft a Laravel stub that keeps the three geos separate, with sandbox-only flags, "
-            "once you share the real endpoints."
+            "Recover AfrPay Europe / Kazakhstan / Tunisia materials. Blocked on: "
+            "Owner onboarding + cost model + post-test API. AfrPay stays Europe / "
+            "Kazakhstan / Tunisia. Do not copy CashForo OR001/OB003."
         )
 
-    if re.search(r"cashforo|or001|ob003", lower):
+    if re.search(r"cashforo|or001|ob003|adaptor", lower):
         return (
-            "CashForo uses two products:\n"
-            "- OR001 onramp (card → USDT/USDC → Readies)\n"
-            "- OB003 open banking\n\n"
-            "For a Laravel drop-in, create `CashForoOnrampAdaptor` and `CashForoOpenBankingAdaptor` "
-            "behind `PspAdaptorInterface`, plus `/webhooks/cashforo/OR001` and `/webhooks/cashforo/OB003`. "
-            "Keep `LIVE_ENABLED=false` until pre-flight is green.\n\n"
-            "Connect Bob G with `XAI_API_KEY` if you want me to generate the full files from Grok."
+            "Bob G already created `PspAdaptorInterface`, `CashForoOnrampAdaptor` (OR001), "
+            "and `CashForoOpenBankingAdaptor` (OB003). Those files are stubs with "
+            "`API_DOCS_REQUIRED`. BOB C should map the real CashForo docs onto those adaptors, "
+            "not write new ones."
         )
 
-    if re.search(r"fbls|p003|xcore|p004|psp", lower):
-        return (
-            "Known Readies PSP codes:\n"
-            "- P003 FBLS\n"
-            "- P004 Xcore (Europe: 3DS, name rules, signatures)\n"
-            "- P005 next starter\n\n"
-            "On 0609 the existing harness lives at `/psp-sandbox` and should stay sandbox-only until "
-            "checks are green. Tell me which provider and I will draft the Laravel controller, "
-            "webhook middleware, and `.env` keys."
+    if re.search(r"recommend|flagged|request list", lower):
+        return recommend(
+            [
+                {"name": "Webhook sample", "details": "Need a signed webhook payload before go-live."},
+                {"name": "Signature header", "details": "Confirm header name, secret, and canonical string."},
+            ],
+            "PSP",
         )
 
-    if re.search(r"function|controller|route|laravel|migrate", lower):
+    if re.search(r"fbls|p003|xcore|p004|pre-flight|harness", lower):
         return (
-            "I can draft Laravel pieces for 0609:\n"
-            "1. Route in `routes/web.php` or a dedicated routes file\n"
-            "2. Controller under `app/Http/Controllers`\n"
-            "3. Service under `app/Services`\n"
-            "4. Blade view under `resources/views` extending `layouts.adminpanel`\n"
-            "5. Migration if you need storage\n\n"
-            "Describe the function you want (name, input, output, who can use it). "
-            "Connect `XAI_API_KEY` to have Bob G / Grok write the full files."
+            "Bob G already built `PspTestHarnessService` and `/psp-sandbox` for FBLS P003 and "
+            "Xcore P004, plus `createBobResponse` / `buildBobAdvice` in `pre-flight-test.html`. "
+            "Use those. BOB C only continues flagged checks, local adjustments, and the go-live gate."
+        )
+
+    if re.search(r"fena|ob-fena", lower):
+        return (
+            "Bob G already built the OB Fena board with `runFenaTest` and `showBobGuidance`. "
+            "Continue webhook evidence, refund path, and settlement controls. Do not mix Fena with CashForo OB003."
+        )
+
+    if re.search(r"go live|golive|live traffic", lower):
+        return "Go-live stays locked. Bob G will not enable live PSP traffic until every check is green."
+
+    if re.search(r"function|controller|laravel|route", lower):
+        return (
+            "Reuse Bob G's Laravel pieces first: `PspSandboxController`, `BobRecommendationService`, "
+            "`VerifyPspWebhook`, and `layouts.adminpanel` views. BOB C adds `/bob-c` as the sidebar "
+            "extension. Only draft a new function if it is not already in the Bob G catalog."
         )
 
     return (
-        "I am Bob G, used from the BOB C tab.\n\n"
-        "I can help you:\n"
-        "- create Laravel functions for the 0609 backend\n"
-        "- integrate PSPs (FBLS, Xcore, CashForo, AfrPay geos, Fena)\n"
-        "- draft webhooks, signatures, and go-live gates\n\n"
-        "Grok is not connected yet. Add `XAI_API_KEY` to `public_html/bob-c/.env` to switch this tab "
-        "from the local helper to live Bob G.\n\n"
-        "Ask a specific task, for example: “Draft a Laravel webhook for FBLS P003”."
+        "I am Bob G, used through BOB C.\n\n"
+        "Ask me to continue existing work: recommendations, FBLS P003, Xcore P004, "
+        "CashForo OR001/OB003 mapping, Fena, or the 0609 sidebar. I will not rebuild "
+        "boards or adaptors that already exist."
     )

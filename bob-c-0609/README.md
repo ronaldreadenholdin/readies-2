@@ -1,6 +1,10 @@
 # BOB C on 0609 — Ask Bob G
 
-Adds a **BOB C** sidebar tab to the 0609.readies.biz backend. The tab opens an Ask Bob G chat. Bob G is the Grok agent that helps create Laravel functions and integrate PSPs.
+Adds a **BOB C** sidebar tab to the 0609.readies.biz backend.
+
+**BOB C is an extension of Bob G.** It does not start a new agent. It loads Bob G’s existing work (harness, recommendations, adaptors, boards) and continues the open items.
+
+See `bob-g-work/WORK-AUDIT.md` and `bob-g-work/catalog.json`.
 
 This repository is **not** the full 0609 Laravel host. This pack is the drop-in for that host.
 

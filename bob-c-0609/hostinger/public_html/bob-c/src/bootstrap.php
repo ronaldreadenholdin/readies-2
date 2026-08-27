@@ -94,5 +94,7 @@ function bob_c_require_token(): void
 
 bob_c_load_env(bob_c_root() . '/.env');
 
+require_once __DIR__ . '/BobRecommendationService.php';
+require_once __DIR__ . '/BobGWorkDesk.php';
 require_once __DIR__ . '/BobGClient.php';
 require_once __DIR__ . '/ConversationStore.php';

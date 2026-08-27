@@ -22,6 +22,11 @@ class BobCController extends Controller
         ]);
     }
 
+    public function work(BobGClient $client)
+    {
+        return response()->json(['ok' => true] + $client->work());
+    }
+
     public function history()
     {
         return response()->json([
