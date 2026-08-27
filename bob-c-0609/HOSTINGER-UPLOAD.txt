@@ -1,0 +1,36 @@
+HOSTINGER UPLOAD — BOB C / ASK BOB G
+====================================
+
+Upload this pack as a subdirectory. Do not empty public_html.
+Do not overwrite the existing 0609 Laravel site.
+
+1. Log in to Hostinger hPanel
+2. Open File Manager
+3. Open public_html for 0609.readies.biz
+   (If this is a Laravel app, that folder is usually the Laravel "public" directory)
+4. Create folder: bob-c
+5. Upload EVERYTHING from hostinger/public_html/bob-c/ into public_html/bob-c/
+   - index.php
+   - api.php
+   - .htaccess
+   - .env.example
+   - assets/
+   - src/
+   - storage/
+6. In public_html/bob-c/ copy .env.example to .env
+7. Edit .env:
+   XAI_API_KEY=your-grok-key
+   BOB_C_ACCESS_TOKEN=a-long-random-token
+   APP_URL=https://0609.readies.biz
+8. Open:
+   https://0609.readies.biz/bob-c/?token=YOUR_TOKEN
+
+Sidebar:
+Paste the BOB C link from laravel/INSTALL-SIDEBAR.md into layouts.adminpanel
+so the tab appears on the 0609 backend.
+
+API after upload:
+- GET  /bob-c/api.php?action=status
+- GET  /bob-c/api.php?action=history
+- POST /bob-c/api.php?action=ask
+- POST /bob-c/api.php?action=clear

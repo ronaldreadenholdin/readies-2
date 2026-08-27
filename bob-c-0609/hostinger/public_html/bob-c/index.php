@@ -1,0 +1,104 @@
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/src/bootstrap.php';
+
+$expected = bob_c_env('BOB_C_ACCESS_TOKEN');
+$token = $_GET['token'] ?? '';
+$needsToken = is_string($expected) && $expected !== '';
+$authorized = ! $needsToken || (is_string($token) && hash_equals($expected, $token));
+
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: same-origin');
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOB C · Ask Bob G</title>
+    <link rel="stylesheet" href="assets/app.css">
+</head>
+<body data-authorized="<?= $authorized ? '1' : '0' ?>">
+    <div class="shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">R</div>
+                <div>
+                    <div class="brand-name">0609 Readies</div>
+                    <div class="brand-sub">Backend</div>
+                </div>
+            </div>
+            <nav>
+                <a href="/psp-sandbox">PSP Sandbox</a>
+                <a href="/pre-flight-test">Pre-flight</a>
+                <a class="active" href="./">BOB C</a>
+            </nav>
+        </aside>
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <div class="eyebrow">Backend · Sidebar</div>
+                    <h1>BOB C</h1>
+                </div>
+                <div id="status-pill" class="pill">Checking Bob G…</div>
+            </header>
+
+            <?php if (! $authorized): ?>
+                <section class="card lock-card">
+                    <h2>This tab is protected</h2>
+                    <p>Add the BOB C access token to open Ask Bob G.</p>
+                    <form method="get">
+                        <input type="password" name="token" placeholder="Access token" required>
+                        <button type="submit">Open BOB C</button>
+                    </form>
+                </section>
+            <?php else: ?>
+                <section class="layout">
+                    <section class="card chat-card">
+                        <div class="card-head">
+                            <div>
+                                <h2>Ask Bob G</h2>
+                                <p>Grok agent for Laravel functions and PSP integrations.</p>
+                            </div>
+                            <button id="clear-btn" type="button" class="ghost">Clear</button>
+                        </div>
+                        <div id="chat" class="chat" aria-live="polite"></div>
+                        <form id="ask-form" class="composer">
+                            <textarea id="message" rows="2" placeholder="Ask Bob G to draft a Laravel function or PSP integration…" required></textarea>
+                            <button type="submit">Ask Bob G</button>
+                        </form>
+                    </section>
+                    <aside class="card side-card">
+                        <h3>Bob G can</h3>
+                        <ul>
+                            <li>Create Laravel controllers, routes, services, and migrations</li>
+                            <li>Draft PSP adaptors and webhook handlers</li>
+                            <li>Keep sandbox and live traffic gated</li>
+                            <li>Explain 0609 Hostinger deploy steps</li>
+                        </ul>
+                        <h3>Provider codes</h3>
+                        <ul class="codes">
+                            <li><strong>P003</strong> FBLS</li>
+                            <li><strong>P004</strong> Xcore</li>
+                            <li><strong>P005</strong> Next starter</li>
+                            <li><strong>OR001</strong> CashForo onramp</li>
+                            <li><strong>OB003</strong> CashForo open banking</li>
+                            <li><strong>AfrPay</strong> Europe / Kazakhstan / Tunisia</li>
+                        </ul>
+                        <p class="fine">Drafts only. Review before Hostinger deploy. No live PSP switch from chat.</p>
+                    </aside>
+                </section>
+            <?php endif; ?>
+        </main>
+    </div>
+    <script>
+        window.BOB_C = {
+            token: <?= json_encode($authorized ? (string) $token : '') ?>,
+            api: 'api.php'
+        };
+    </script>
+    <script src="assets/app.js"></script>
+</body>
+</html>
