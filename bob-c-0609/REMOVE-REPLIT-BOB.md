@@ -8,17 +8,26 @@ Keep only BOB C:
 /var/www/html/adapter/public/bob-c/
 ```
 
-## Run on the 0609 server
+## Correct path on the VPS
 
-```bash
-cd /var/www/html/adapter
-bash /path/to/remove-replit-bob.sh /var/www/html/adapter
+After BOB C is uploaded, the script is here:
+
+```text
+/var/www/html/adapter/public/bob-c/remove-replit-bob.sh
 ```
 
-Or copy `remove-replit-bob.sh` onto the server and run:
+Run:
 
 ```bash
-bash remove-replit-bob.sh /var/www/html/adapter
+bash /var/www/html/adapter/public/bob-c/remove-replit-bob.sh /var/www/html/adapter
+```
+
+If that file is missing, download it onto the VPS:
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/ronaldreadenholdin/readies-2/okepaybob-c-sidebar-06bd/remove-replit-bob.sh" -o /var/www/html/adapter/public/bob-c/remove-replit-bob.sh
+chmod +x /var/www/html/adapter/public/bob-c/remove-replit-bob.sh
+bash /var/www/html/adapter/public/bob-c/remove-replit-bob.sh /var/www/html/adapter
 ```
 
 The script:
