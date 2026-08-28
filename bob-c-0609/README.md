@@ -12,7 +12,7 @@ This repository is **not** the full 0609 Laravel host. This pack is the drop-in 
 
 | Path | Use |
 |------|-----|
-| `hostinger/public_html/bob-c/` | Upload this folder to Hostinger as `public_html/bob-c/` |
+| `hostinger/public_html/bob-c/` | Upload to `/var/www/html/adapter/public/bob-c/` |
 | `laravel/` | Merge into the existing 0609 Laravel app (sidebar + `/bob-c` route) |
 | `standalone-demo/` | Local preview of the same admin UI |
 
@@ -28,19 +28,23 @@ After Laravel merge, open:
 https://0609.readies.biz/bob-c
 ```
 
-## Fastest way onto 0609 (Hostinger)
+## Fastest way onto 0609
 
-1. Log in to Hostinger hPanel.
-2. Open File Manager.
-3. Open the site document root (`public_html`, or Laravel `public/`).
-4. Create folder `bob-c` if it does not exist.
-5. Upload **everything inside** `hostinger/public_html/bob-c/` into that folder.
-6. Copy `.env.example` to `.env`.
-7. Put the Grok/xAI key in `.env` as `XAI_API_KEY=...`
-8. Set `BOB_C_ACCESS_TOKEN` to a long random string.
-9. Open `https://0609.readies.biz/bob-c/?token=YOUR_TOKEN`
+Live folder:
 
-Then add a sidebar link in `layouts.adminpanel` that points to `/bob-c/` (see `laravel/INSTALL-SIDEBAR.md`).
+```text
+/var/www/html/adapter/public/bob-c/
+```
+
+1. Upload **everything inside** `hostinger/public_html/bob-c/` into `/var/www/html/adapter/public/bob-c/`.
+2. Do not overwrite `/var/www/html/adapter/public/index.php`.
+3. Copy `.env.example` to `.env` in that `bob-c` folder.
+4. Put the real Grok key in `.env` as `XAI_API_KEY=...`
+5. Set `BOB_C_ACCESS_TOKEN` to a long random string.
+6. Open `https://0609.readies.biz/bob-c/?token=YOUR_TOKEN`
+7. Replace the old Replit Bob sidebar link with `/bob-c/` in `layouts.adminpanel`.
+
+See `HOSTINGER-UPLOAD.txt` and `laravel/INSTALL-SIDEBAR.md`.
 
 ## Connect Bob G
 

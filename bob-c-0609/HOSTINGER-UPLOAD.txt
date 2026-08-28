@@ -1,15 +1,20 @@
-HOSTINGER UPLOAD — BOB C / ASK BOB G
-====================================
+HOSTINGER / 0609 PATH — BOB C
+=============================
 
-Upload this pack as a subdirectory. Do not empty public_html.
-Do not overwrite the existing 0609 Laravel site.
+Live document root:
+  /var/www/html/adapter/public
 
-1. Log in to Hostinger hPanel
-2. Open File Manager
-3. Open public_html for 0609.readies.biz
-   (If this is a Laravel app, that folder is usually the Laravel "public" directory)
-4. Create folder: bob-c
-5. Upload EVERYTHING from hostinger/public_html/bob-c/ into public_html/bob-c/
+Upload BOB C here only:
+  /var/www/html/adapter/public/bob-c/
+
+Do not empty /var/www/html/adapter/public
+Do not overwrite index.php or the existing Laravel site.
+Replace the old Replit Bob tab by pointing that sidebar link to /bob-c/
+
+1. Create folder if missing:
+   /var/www/html/adapter/public/bob-c/
+
+2. Upload EVERYTHING from hostinger/public_html/bob-c/ into that folder:
    - index.php
    - api.php
    - .htaccess
@@ -17,20 +22,23 @@ Do not overwrite the existing 0609 Laravel site.
    - assets/
    - src/
    - storage/
-6. In public_html/bob-c/ copy .env.example to .env
-7. Edit .env:
-   XAI_API_KEY=your-grok-key
-   BOB_C_ACCESS_TOKEN=a-long-random-token
+   - work/
+
+3. In /var/www/html/adapter/public/bob-c/ copy .env.example to .env
+
+4. Edit .env:
    APP_URL=https://0609.readies.biz
-8. Open:
+   XAI_API_KEY=your-real-grok-key
+   XAI_MODEL=grok-3
+   XAI_BASE_URL=https://api.x.ai/v1
+   BOB_C_ACCESS_TOKEN=your-long-random-token
+
+5. Open:
    https://0609.readies.biz/bob-c/?token=YOUR_TOKEN
 
-Sidebar:
-Paste the BOB C link from laravel/INSTALL-SIDEBAR.md into layouts.adminpanel
-so the tab appears on the 0609 backend.
+6. In the 0609 sidebar (old Replit Bob), change the link to /bob-c/
+   Layout file is usually:
+   /var/www/html/adapter/resources/views/layouts/adminpanel.blade.php
 
-API after upload:
-- GET  /bob-c/api.php?action=status
-- GET  /bob-c/api.php?action=history
-- POST /bob-c/api.php?action=ask
-- POST /bob-c/api.php?action=clear
+Laravel app root (for later merge, not for this upload):
+  /var/www/html/adapter

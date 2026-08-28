@@ -34,10 +34,16 @@ If the sidebar is a plain list of links:
 <a href="{{ url('/bob-c') }}" class="{{ request()->is('bob-c*') ? 'active' : '' }}">BOB C</a>
 ```
 
-If you uploaded the Hostinger folder instead of merging Laravel:
+If you uploaded the Hostinger folder to `/var/www/html/adapter/public/bob-c/`, replace the old Replit Bob sidebar item with:
 
 ```html
 <a href="/bob-c/">BOB C</a>
+```
+
+Usual layout file:
+
+```text
+/var/www/html/adapter/resources/views/layouts/adminpanel.blade.php
 ```
 
 ## 3. Env
@@ -58,4 +64,7 @@ php artisan config:clear
 php artisan view:clear
 ```
 
-Open `https://0609.readies.biz/bob-c`
+Open `https://0609.readies.biz/bob-c/`
+
+Laravel app root: `/var/www/html/adapter`  
+Public / BOB C folder: `/var/www/html/adapter/public/bob-c/`
