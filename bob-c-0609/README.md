@@ -42,7 +42,7 @@ Live folder:
 4. Put the real Grok key in `.env` as `XAI_API_KEY=...`
 5. Set `BOB_C_ACCESS_TOKEN` to a long random string.
 6. Open `https://0609.readies.biz/bob-c/?token=YOUR_TOKEN`
-7. Replace the old Replit Bob sidebar link with `/bob-c/` in `layouts.adminpanel`.
+7. Cancel the old Replit Bob completely. On the 0609 server run `remove-replit-bob.sh`. See `REMOVE-REPLIT-BOB.md`.
 
 See `HOSTINGER-UPLOAD.txt` and `laravel/INSTALL-SIDEBAR.md`.
 
@@ -61,7 +61,7 @@ Without `XAI_API_KEY`, BOB C still loads and answers from the built-in Readies/P
 
 ## Laravel merge
 
-Copy `laravel/app`, `laravel/config`, `laravel/database`, `laravel/resources`, and `laravel/routes` into the 0609 Laravel root. Register the routes and sidebar as documented in `laravel/INSTALL-SIDEBAR.md`. Then:
+Copy `laravel/app`, `laravel/config`, `laravel/database`, `laravel/resources`, and `laravel/routes` into `/var/www/html/adapter`. Register the routes and sidebar as documented in `laravel/INSTALL-SIDEBAR.md`. Then:
 
 ```bash
 php artisan migrate

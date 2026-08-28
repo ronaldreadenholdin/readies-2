@@ -9,7 +9,8 @@ Upload BOB C here only:
 
 Do not empty /var/www/html/adapter/public
 Do not overwrite index.php or the existing Laravel site.
-Replace the old Replit Bob tab by pointing that sidebar link to /bob-c/
+Cancel the old Replit Bob completely. Keep only BOB C at /bob-c/
+Run remove-replit-bob.sh on the server. See REMOVE-REPLIT-BOB.md.
 
 1. Create folder if missing:
    /var/www/html/adapter/public/bob-c/
