@@ -12,7 +12,14 @@ Do not overwrite index.php or the existing Laravel site.
 Cancel the old Replit Bob completely. Keep only BOB C at /bob-c/
 Run remove-replit-bob.sh on the server. See REMOVE-REPLIT-BOB.md.
 
-1. Create folder if missing:
+On the VPS, deploy the files first:
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/ronaldreadenholdin/readies-2/okepaybob-c-sidebar-06bd/deploy-bob-c.sh" -o /tmp/deploy-bob-c.sh
+bash /tmp/deploy-bob-c.sh /var/www/html/adapter/public/bob-c
+```
+
+Or create folder if missing:
    /var/www/html/adapter/public/bob-c/
 
 2. Upload EVERYTHING from hostinger/public_html/bob-c/ into that folder:
