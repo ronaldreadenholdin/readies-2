@@ -12,6 +12,17 @@ Do not overwrite index.php or the existing Laravel site.
 Cancel the old Replit Bob completely. Keep only BOB C at /bob-c/
 Run remove-replit-bob.sh on the server. See REMOVE-REPLIT-BOB.md.
 
+Download ZIP on the VPS (flat pack, unzip into bob-c):
+
+https://github.com/ronaldreadenholdin/readies-2/raw/okepaybob-c-sidebar-06bd/bob-c-vps.zip
+
+```bash
+mkdir -p /var/www/html/adapter/public/bob-c
+curl -fL "https://github.com/ronaldreadenholdin/readies-2/raw/okepaybob-c-sidebar-06bd/bob-c-vps.zip" -o /tmp/bob-c-vps.zip
+python3 -c "import zipfile; zipfile.ZipFile('/tmp/bob-c-vps.zip').extractall('/var/www/html/adapter/public/bob-c')"
+cp -n /var/www/html/adapter/public/bob-c/.env.example /var/www/html/adapter/public/bob-c/.env
+```
+
 On the VPS, deploy the files first:
 
 ```bash
