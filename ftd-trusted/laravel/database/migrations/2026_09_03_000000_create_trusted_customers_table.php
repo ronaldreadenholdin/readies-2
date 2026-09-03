@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('trusted_customers', function (Blueprint $table) {
             $table->id();
+            $table->string('merchant', 64)->default('default')->index();
             $table->string('email')->nullable()->index();
             $table->string('phone', 32)->nullable()->index();
             $table->string('card_first6_last4', 10)->nullable()->index();

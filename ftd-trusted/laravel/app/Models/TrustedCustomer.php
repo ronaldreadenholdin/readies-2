@@ -9,6 +9,7 @@ class TrustedCustomer extends Model
     protected $table = 'trusted_customers';
 
     protected $fillable = [
+        'merchant',
         'email',
         'phone',
         'card_first6_last4',

@@ -42,11 +42,26 @@ Classify body:
   "birthday": "1990-05-01",
   "full_name": "Jane Doe",
   "provider": "P003",
+  "merchant": "shop-a",
   "biz": "gambling"
 }
 ```
 
 A successful pay call stores the identifiers and returns **trusted**.
+
+## Merchant upload
+
+A merchant can upload their own CSV. That file **replaces the whole trusted list for that merchant**. After upload, classify/paid for that merchant uses only that list (plus later successful payments).
+
+```text
+POST /ftd-trusted/api.php?action=upload
+merchant=shop-a
+file=merchant-list.csv
+```
+
+CSV columns: `email,phone,card_first6,card_last4,birthday,full_name,biz`
+
+Example file: `standalone/merchant-list.example.csv`
 
 ## Biz column
 

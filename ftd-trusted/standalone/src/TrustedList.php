@@ -41,8 +41,9 @@ final class TrustedList
      */
     public function classify(array $input): array
     {
+        $merchant = $this->normalizeMerchant($input['merchant'] ?? null);
         $keys = $this->keys($input);
-        $records = $this->all();
+        $records = $this->forMerchant($merchant);
 
         foreach ([
             self::MATCH_EMAIL,
@@ -81,12 +82,14 @@ final class TrustedList
      */
     public function markPaid(array $input): array
     {
+        $merchant = $this->normalizeMerchant($input['merchant'] ?? null);
         $keys = $this->keys($input);
         $existing = $this->classify($input);
         $record = $existing['record'] ?? [
             'id' => bin2hex(random_bytes(8)),
             'created_at' => gmdate('c'),
         ];
+        $record['merchant'] = $merchant;
 
         foreach ($keys as $field => $value) {
             if ($value !== null) {
@@ -135,9 +138,143 @@ final class TrustedList
         ];
     }
 
-    public function count(): int
+    public function count(?string $merchant = null): int
     {
-        return count($this->all());
+        if ($merchant === null) {
+            return count($this->all());
+        }
+
+        return count($this->forMerchant($this->normalizeMerchant($merchant)));
+    }
+
+    /**
+     * Upload replaces the whole list for that merchant.
+     *
+     * @return array{merchant:string,imported:int,skipped:int,trusted_count:int}
+     */
+    public function replaceFromCsv(string $merchant, string $csv): array
+    {
+        $merchant = $this->normalizeMerchant($merchant);
+        if ($merchant === 'default') {
+            throw new InvalidArgumentException('Merchant name is required for an upload.');
+        }
+
+        $rows = $this->parseCsv($csv);
+        $imported = [];
+        $skipped = 0;
+        foreach ($rows as $row) {
+            $keys = $this->keys($row);
+            if (! array_filter($keys)) {
+                $skipped++;
+                continue;
+            }
+            $record = [
+                'id' => bin2hex(random_bytes(8)),
+                'merchant' => $merchant,
+                'trusted' => true,
+                'source' => 'merchant_upload',
+                'successful_payments' => 0,
+                'created_at' => gmdate('c'),
+                'updated_at' => gmdate('c'),
+            ];
+            foreach ($keys as $field => $value) {
+                if ($value !== null) {
+                    $record[$field] = $value;
+                }
+            }
+            $biz = $this->normalizeBiz($row['biz'] ?? $row['business'] ?? null);
+            if ($biz !== null) {
+                $record['biz'] = $biz;
+            }
+            $imported[] = $record;
+        }
+
+        $kept = array_values(array_filter(
+            $this->all(),
+            fn (array $row): bool => ($row['merchant'] ?? 'default') !== $merchant
+        ));
+        $this->write(['records' => array_merge($kept, $imported)]);
+
+        return [
+            'merchant' => $merchant,
+            'imported' => count($imported),
+            'skipped' => $skipped,
+            'trusted_count' => count($imported),
+            'rule' => 'This upload is now the whole trusted list for this merchant.',
+        ];
+    }
+
+    public function normalizeMerchant(mixed $value): string
+    {
+        $merchant = strtolower($this->clean((string) $value, 64));
+        $merchant = preg_replace('/[^a-z0-9_-]+/', '-', $merchant) ?? '';
+        $merchant = trim($merchant, '-');
+
+        return $merchant !== '' ? $merchant : 'default';
+    }
+
+    /**
+     * @return list<array<string,mixed>>
+     */
+    private function forMerchant(string $merchant): array
+    {
+        return array_values(array_filter(
+            $this->all(),
+            fn (array $row): bool => ($row['merchant'] ?? 'default') === $merchant
+        ));
+    }
+
+    /**
+     * @return list<array<string,string>>
+     */
+    private function parseCsv(string $csv): array
+    {
+        $csv = preg_replace('/^\xEF\xBB\xBF/', '', $csv) ?? $csv;
+        $handle = fopen('php://temp', 'r+');
+        if ($handle === false) {
+            throw new RuntimeException('Could not read CSV.');
+        }
+        fwrite($handle, $csv);
+        rewind($handle);
+        $header = fgetcsv($handle);
+        if (! is_array($header) || $header === [null] || $header === false) {
+            fclose($handle);
+            throw new InvalidArgumentException('CSV needs a header row.');
+        }
+        $header = array_map(static function ($item): string {
+            return strtolower(trim((string) $item));
+        }, $header);
+        $aliases = [
+            'e-mail' => 'email',
+            'mail' => 'email',
+            'mobile' => 'phone',
+            'tel' => 'phone',
+            'bin' => 'card_first6',
+            'first6' => 'card_first6',
+            'last4' => 'card_last4',
+            'dob' => 'birthday',
+            'birth_date' => 'birthday',
+            'name' => 'full_name',
+            'customer_name' => 'full_name',
+            'business' => 'biz',
+            'vertical' => 'biz',
+        ];
+        $header = array_map(static fn (string $item): string => $aliases[$item] ?? $item, $header);
+
+        $rows = [];
+        while (($data = fgetcsv($handle)) !== false) {
+            if ($data === [null] || $data === []) {
+                continue;
+            }
+            $row = [];
+            foreach ($header as $i => $key) {
+                $row[$key] = (string) ($data[$i] ?? '');
+            }
+            $rows[] = $row;
+        }
+        fclose($handle);
+
+        return $rows;
     }
 
     /**

@@ -21,7 +21,20 @@ declare(strict_types=1);
 <main>
     <h1>FTD vs trusted</h1>
     <p class="fine">Every provider. Not on the list = FTD. On the list, or paid once successfully = trusted. Match: email, then phone, then card first 6 + last 4, then birthday, then full name.</p>
+    <section>
+        <h2>Merchant list upload</h2>
+        <p class="fine">The uploaded CSV becomes the whole trusted list for that merchant. Columns: email, phone, card_first6, card_last4, birthday, full_name, biz.</p>
+        <form id="upload-form">
+            <label>Merchant</label>
+            <input name="merchant" required placeholder="merchant-id">
+            <label>CSV file</label>
+            <input name="file" type="file" accept=".csv,text/csv" required>
+            <button type="submit">Upload merchant list</button>
+        </form>
+    </section>
     <form id="form">
+        <label>Merchant</label>
+        <input name="merchant" placeholder="merchant-id">
         <div class="row">
             <div><label>Email</label><input name="email" type="email"></div>
             <div><label>Phone</label><input name="phone"></div>
@@ -72,6 +85,11 @@ async function send(action) {
 }
 form.addEventListener('submit', function (e) { e.preventDefault(); send('classify'); });
 document.getElementById('paid').addEventListener('click', function () { send('paid'); });
+document.getElementById('upload-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const res = await fetch('api.php?action=upload', { method: 'POST', body: new FormData(e.target) });
+    out.textContent = JSON.stringify(await res.json(), null, 2);
+});
 </script>
 </body>
 </html>

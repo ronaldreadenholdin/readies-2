@@ -29,4 +29,12 @@ class TrustedListController extends Controller
     {
         return response()->json(['ok' => true] + $list->markPaid($request->all()));
     }
+
+    public function upload(Request $request, TrustedListService $list)
+    {
+        $file = $request->file('file');
+        $csv = $file ? (string) file_get_contents($file->getRealPath()) : (string) $request->input('csv', '');
+
+        return response()->json(['ok' => true] + $list->replaceFromCsv((string) $request->input('merchant', ''), $csv));
+    }
 }

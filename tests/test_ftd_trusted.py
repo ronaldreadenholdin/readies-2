@@ -95,6 +95,22 @@ class FtdTrustedTests(unittest.TestCase):
             ("email", "phone", "card_first6_last4", "birthday", "full_name"),
         )
 
+    def test_merchant_upload_replaces_whole_list(self):
+        self.list.mark_paid({"merchant": "shop-a", "email": "old@x.com"})
+        result = self.list.replace_from_csv("shop-a", "email,full_name,biz\nnew@x.com,Ann Smith,pharma\n")
+        self.assertEqual(result["imported"], 1)
+        self.assertEqual(self.list.classify({"merchant": "shop-a", "email": "old@x.com"})["status"], FTD)
+        self.assertEqual(self.list.classify({"merchant": "shop-a", "email": "new@x.com"})["status"], TRUSTED)
+
+    def test_merchant_lists_stay_separate(self):
+        self.list.replace_from_csv("shop-a", "email\na@x.com\n")
+        self.assertEqual(self.list.classify({"merchant": "shop-b", "email": "a@x.com"})["status"], FTD)
+        self.assertEqual(self.list.classify({"merchant": "shop-a", "email": "a@x.com"})["status"], TRUSTED)
+
+    def test_upload_needs_merchant(self):
+        with self.assertRaises(ValueError):
+            self.list.replace_from_csv("", "email\na@x.com\n")
+
     def test_persists(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "trusted-list.json"

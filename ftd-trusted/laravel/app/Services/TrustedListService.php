@@ -12,6 +12,7 @@ class TrustedListService
 
     public function classify(array $input): array
     {
+        $merchant = $this->normalizeMerchant($input['merchant'] ?? null);
         $keys = $this->keys($input);
 
         foreach (['email', 'phone', 'card_first6_last4', 'birthday', 'full_name'] as $field) {
@@ -21,7 +22,10 @@ class TrustedListService
             }
 
             $column = $field === 'card_first6_last4' ? 'card_first6_last4' : $field;
-            $record = TrustedCustomer::query()->where($column, $value)->first();
+            $record = TrustedCustomer::query()
+                ->where('merchant', $merchant)
+                ->where($column, $value)
+                ->first();
             if ($record) {
                 return [
                     'status' => self::TRUSTED,
@@ -57,6 +61,7 @@ class TrustedListService
             $record->biz = $biz;
         }
 
+        $record->merchant = $this->normalizeMerchant($input['merchant'] ?? null);
         $record->successful_payments = (int) $record->successful_payments + 1;
         $record->last_provider = substr((string) ($input['provider'] ?? ''), 0, 32);
         $record->last_paid_at = Carbon::now();
@@ -67,6 +72,64 @@ class TrustedListService
             'matched_by' => 'successful_payment',
             'record' => $record->toArray(),
         ];
+    }
+
+    public function replaceFromCsv(string $merchant, string $csv): array
+    {
+        $merchant = $this->normalizeMerchant($merchant);
+        if ($merchant === 'default') {
+            throw new \InvalidArgumentException('Merchant name is required for an upload.');
+        }
+
+        TrustedCustomer::query()->where('merchant', $merchant)->delete();
+
+        $rows = array_map('str_getcsv', preg_split('/\r\n|\r|\n/', preg_replace('/^\xEF\xBB\xBF/', '', $csv) ?? $csv) ?: []);
+        $header = array_map(static fn ($item) => strtolower(trim((string) $item)), $rows[0] ?? []);
+        $imported = 0;
+        $skipped = 0;
+        foreach (array_slice($rows, 1) as $data) {
+            if ($data === [] || $data === [null]) {
+                continue;
+            }
+            $row = [];
+            foreach ($header as $i => $key) {
+                $row[$key] = (string) ($data[$i] ?? '');
+            }
+            $keys = $this->keys($row);
+            if (! array_filter($keys)) {
+                $skipped++;
+                continue;
+            }
+            $record = new TrustedCustomer(['merchant' => $merchant]);
+            foreach ($keys as $field => $value) {
+                if ($value !== null) {
+                    $record->{$field} = $value;
+                }
+            }
+            $biz = $this->normalizeBiz($row['biz'] ?? $row['business'] ?? null);
+            if ($biz !== null) {
+                $record->biz = $biz;
+            }
+            $record->save();
+            $imported++;
+        }
+
+        return [
+            'merchant' => $merchant,
+            'imported' => $imported,
+            'skipped' => $skipped,
+            'trusted_count' => $imported,
+            'rule' => 'This upload is now the whole trusted list for this merchant.',
+        ];
+    }
+
+    public function normalizeMerchant(mixed $value): string
+    {
+        $merchant = strtolower(trim((string) $value));
+        $merchant = preg_replace('/[^a-z0-9_-]+/', '-', $merchant) ?? '';
+        $merchant = trim($merchant, '-');
+
+        return $merchant !== '' ? $merchant : 'default';
     }
 
     public function keys(array $input): array

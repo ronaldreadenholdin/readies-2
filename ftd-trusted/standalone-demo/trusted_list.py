@@ -52,13 +52,19 @@ class TrustedList:
             "full_name": self._name(input_data.get("full_name") or input_data.get("name")),
         }
 
+    def merchant(self, value: Any) -> str:
+        raw = re.sub(r"[^a-z0-9_-]+", "-", str(value or "").strip().lower()).strip("-")
+        return raw or "default"
+
     def classify(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        merchant = self.merchant(input_data.get("merchant"))
         keys = self.keys(input_data)
+        records = [row for row in self.records if (row.get("merchant") or "default") == merchant]
         for field in MATCH_ORDER:
             value = keys.get(field)
             if not value:
                 continue
-            for record in self.records:
+            for record in records:
                 if record.get(field) == value:
                     return {"status": TRUSTED, "matched_by": field, "record": record}
         return {"status": FTD, "matched_by": None, "record": None}
@@ -66,6 +72,7 @@ class TrustedList:
     def mark_paid(self, input_data: dict[str, Any]) -> dict[str, Any]:
         found = self.classify(input_data)
         record = dict(found["record"] or {"id": uuid4().hex[:16], "created_at": _now(), "successful_payments": 0})
+        record["merchant"] = self.merchant(input_data.get("merchant"))
         for field, value in self.keys(input_data).items():
             if value:
                 record[field] = value
@@ -79,6 +86,53 @@ class TrustedList:
         record["updated_at"] = _now()
         self._upsert(record)
         return {"status": TRUSTED, "matched_by": "successful_payment", "record": record}
+
+    def replace_from_csv(self, merchant: str, csv_text: str) -> dict[str, Any]:
+        merchant = self.merchant(merchant)
+        if merchant == "default":
+            raise ValueError("Merchant name is required for an upload.")
+        lines = csv_text.replace("\ufeff", "").splitlines()
+        if not lines:
+            raise ValueError("CSV needs a header row.")
+        import csv
+        from io import StringIO
+
+        reader = csv.DictReader(StringIO(csv_text.replace("\ufeff", "")))
+        imported: list[dict[str, Any]] = []
+        skipped = 0
+        for raw in reader:
+            row = {str(k).strip().lower(): (v or "") for k, v in raw.items() if k}
+            aliases = {"mail": "email", "mobile": "phone", "bin": "card_first6", "last4": "card_last4", "dob": "birthday", "name": "full_name", "business": "biz"}
+            row = {aliases.get(k, k): v for k, v in row.items()}
+            keys = self.keys(row)
+            if not any(keys.values()):
+                skipped += 1
+                continue
+            record = {
+                "id": uuid4().hex[:16],
+                "merchant": merchant,
+                "trusted": True,
+                "source": "merchant_upload",
+                "successful_payments": 0,
+                "created_at": _now(),
+                "updated_at": _now(),
+            }
+            for field, value in keys.items():
+                if value:
+                    record[field] = value
+            biz = self._biz(row.get("biz") or row.get("business"))
+            if biz:
+                record["biz"] = biz
+            imported.append(record)
+        self.records = [row for row in self.records if (row.get("merchant") or "default") != merchant] + imported
+        self._write()
+        return {
+            "merchant": merchant,
+            "imported": len(imported),
+            "skipped": skipped,
+            "trusted_count": len(imported),
+            "rule": "This upload is now the whole trusted list for this merchant.",
+        }
 
     def _upsert(self, record: dict[str, Any]) -> None:
         for index, row in enumerate(self.records):
