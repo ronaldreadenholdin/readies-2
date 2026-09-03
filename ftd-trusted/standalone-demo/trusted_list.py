@@ -57,7 +57,7 @@ class TrustedList:
         return raw or "default"
 
     def classify(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        merchant = self.merchant(input_data.get("merchant"))
+        merchant = self.merchant(input_data.get("merchant") or input_data.get("merchant_id"))
         keys = self.keys(input_data)
         records = [row for row in self.records if (row.get("merchant") or "default") == merchant]
         for field in MATCH_ORDER:
@@ -72,7 +72,7 @@ class TrustedList:
     def mark_paid(self, input_data: dict[str, Any]) -> dict[str, Any]:
         found = self.classify(input_data)
         record = dict(found["record"] or {"id": uuid4().hex[:16], "created_at": _now(), "successful_payments": 0})
-        record["merchant"] = self.merchant(input_data.get("merchant"))
+        record["merchant"] = self.merchant(input_data.get("merchant") or input_data.get("merchant_id"))
         for field, value in self.keys(input_data).items():
             if value:
                 record[field] = value
@@ -90,7 +90,7 @@ class TrustedList:
     def replace_from_csv(self, merchant: str, csv_text: str) -> dict[str, Any]:
         merchant = self.merchant(merchant)
         if merchant == "default":
-            raise ValueError("Merchant name is required for an upload.")
+            raise ValueError("Merchant name is required. Admin uploads the list for a merchant.")
         lines = csv_text.replace("\ufeff", "").splitlines()
         if not lines:
             raise ValueError("CSV needs a header row.")
@@ -112,7 +112,7 @@ class TrustedList:
                 "id": uuid4().hex[:16],
                 "merchant": merchant,
                 "trusted": True,
-                "source": "merchant_upload",
+                "source": "admin_upload",
                 "successful_payments": 0,
                 "created_at": _now(),
                 "updated_at": _now(),
@@ -131,7 +131,7 @@ class TrustedList:
             "imported": len(imported),
             "skipped": skipped,
             "trusted_count": len(imported),
-            "rule": "This upload is now the whole trusted list for this merchant.",
+            "rule": "Admin upload is now the whole trusted list for this merchant. Merchants do not upload.",
         }
 
     def _upsert(self, record: dict[str, Any]) -> None:

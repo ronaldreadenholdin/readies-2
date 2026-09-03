@@ -12,7 +12,8 @@ class TrustedListController extends Controller
         return response()->json([
             'ok' => true,
             'list' => 'FTD vs trusted',
-            'scope' => 'every provider',
+            'scope' => 'every provider, one list per merchant',
+            'upload' => 'Admin only. 0609 staff upload the list for a merchant. Merchants do not upload.',
             'match_order' => ['email', 'phone', 'card_first6_last4', 'birthday', 'full_name'],
             'biz_column' => 'biz',
             'biz_values' => ['gambling', 'gaming', 'mlm', 'food_supplements', 'pharma', 'forex', 'digital_products', 'other'],
@@ -34,7 +35,8 @@ class TrustedListController extends Controller
     {
         $file = $request->file('file');
         $csv = $file ? (string) file_get_contents($file->getRealPath()) : (string) $request->input('csv', '');
+        $merchant = (string) ($request->input('merchant_id') ?: $request->input('merchant', ''));
 
-        return response()->json(['ok' => true] + $list->replaceFromCsv((string) $request->input('merchant', ''), $csv));
+        return response()->json(['ok' => true] + $list->replaceFromCsv($merchant, $csv));
     }
 }

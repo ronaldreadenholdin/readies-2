@@ -12,7 +12,7 @@ class TrustedListService
 
     public function classify(array $input): array
     {
-        $merchant = $this->normalizeMerchant($input['merchant'] ?? null);
+        $merchant = $this->normalizeMerchant($input['merchant'] ?? $input['merchant_id'] ?? null);
         $keys = $this->keys($input);
 
         foreach (['email', 'phone', 'card_first6_last4', 'birthday', 'full_name'] as $field) {
@@ -61,7 +61,7 @@ class TrustedListService
             $record->biz = $biz;
         }
 
-        $record->merchant = $this->normalizeMerchant($input['merchant'] ?? null);
+        $record->merchant = $this->normalizeMerchant($input['merchant'] ?? $input['merchant_id'] ?? null);
         $record->successful_payments = (int) $record->successful_payments + 1;
         $record->last_provider = substr((string) ($input['provider'] ?? ''), 0, 32);
         $record->last_paid_at = Carbon::now();
@@ -78,7 +78,7 @@ class TrustedListService
     {
         $merchant = $this->normalizeMerchant($merchant);
         if ($merchant === 'default') {
-            throw new \InvalidArgumentException('Merchant name is required for an upload.');
+            throw new \InvalidArgumentException('Merchant name is required. Admin uploads the list for a merchant.');
         }
 
         TrustedCustomer::query()->where('merchant', $merchant)->delete();
@@ -119,8 +119,33 @@ class TrustedListService
             'imported' => $imported,
             'skipped' => $skipped,
             'trusted_count' => $imported,
-            'rule' => 'This upload is now the whole trusted list for this merchant.',
+            'rule' => 'Admin upload is now the whole trusted list for this merchant. Merchants do not upload.',
         ];
+    }
+
+    /**
+     * Admin helper: record a successful payment for a merchant's customer.
+     *
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
+    public function markPaidSuccessfully(string $merchantId, array $input): array
+    {
+        $input['merchant'] = $merchantId;
+
+        return $this->markPaid($input);
+    }
+
+    /**
+     * Admin helper: replace a merchant's whole list from an uploaded CSV path.
+     *
+     * @return array<string, mixed>
+     */
+    public function replaceMerchantList(string $merchantId, string $path): array
+    {
+        $csv = is_file($path) ? (string) file_get_contents($path) : '';
+
+        return $this->replaceFromCsv($merchantId, $csv);
     }
 
     public function normalizeMerchant(mixed $value): string

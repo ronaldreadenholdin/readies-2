@@ -41,7 +41,7 @@ final class TrustedList
      */
     public function classify(array $input): array
     {
-        $merchant = $this->normalizeMerchant($input['merchant'] ?? null);
+        $merchant = $this->normalizeMerchant($input['merchant'] ?? $input['merchant_id'] ?? null);
         $keys = $this->keys($input);
         $records = $this->forMerchant($merchant);
 
@@ -82,7 +82,7 @@ final class TrustedList
      */
     public function markPaid(array $input): array
     {
-        $merchant = $this->normalizeMerchant($input['merchant'] ?? null);
+        $merchant = $this->normalizeMerchant($input['merchant'] ?? $input['merchant_id'] ?? null);
         $keys = $this->keys($input);
         $existing = $this->classify($input);
         $record = $existing['record'] ?? [
@@ -148,7 +148,8 @@ final class TrustedList
     }
 
     /**
-     * Upload replaces the whole list for that merchant.
+     * Admin upload replaces the whole list for that merchant.
+     * Merchants do not upload; 0609 staff do this on the admin backend.
      *
      * @return array{merchant:string,imported:int,skipped:int,trusted_count:int}
      */
@@ -156,7 +157,7 @@ final class TrustedList
     {
         $merchant = $this->normalizeMerchant($merchant);
         if ($merchant === 'default') {
-            throw new InvalidArgumentException('Merchant name is required for an upload.');
+            throw new InvalidArgumentException('Merchant name is required. Admin uploads the list for a merchant.');
         }
 
         $rows = $this->parseCsv($csv);
@@ -172,7 +173,7 @@ final class TrustedList
                 'id' => bin2hex(random_bytes(8)),
                 'merchant' => $merchant,
                 'trusted' => true,
-                'source' => 'merchant_upload',
+                'source' => 'admin_upload',
                 'successful_payments' => 0,
                 'created_at' => gmdate('c'),
                 'updated_at' => gmdate('c'),
@@ -200,7 +201,7 @@ final class TrustedList
             'imported' => count($imported),
             'skipped' => $skipped,
             'trusted_count' => count($imported),
-            'rule' => 'This upload is now the whole trusted list for this merchant.',
+            'rule' => 'Admin upload is now the whole trusted list for this merchant. Merchants do not upload.',
         ];
     }
 

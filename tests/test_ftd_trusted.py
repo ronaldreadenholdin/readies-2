@@ -95,12 +95,19 @@ class FtdTrustedTests(unittest.TestCase):
             ("email", "phone", "card_first6_last4", "birthday", "full_name"),
         )
 
-    def test_merchant_upload_replaces_whole_list(self):
+    def test_admin_upload_replaces_whole_list(self):
         self.list.mark_paid({"merchant": "shop-a", "email": "old@x.com"})
         result = self.list.replace_from_csv("shop-a", "email,full_name,biz\nnew@x.com,Ann Smith,pharma\n")
         self.assertEqual(result["imported"], 1)
         self.assertEqual(self.list.classify({"merchant": "shop-a", "email": "old@x.com"})["status"], FTD)
-        self.assertEqual(self.list.classify({"merchant": "shop-a", "email": "new@x.com"})["status"], TRUSTED)
+        trusted = self.list.classify({"merchant": "shop-a", "email": "new@x.com"})
+        self.assertEqual(trusted["status"], TRUSTED)
+        self.assertEqual(trusted["record"]["source"], "admin_upload")
+
+    def test_merchant_id_alias(self):
+        self.list.mark_paid({"merchant_id": "shop-a", "email": "alias@x.com"})
+        self.assertEqual(self.list.classify({"merchant_id": "shop-a", "email": "alias@x.com"})["status"], TRUSTED)
+        self.assertEqual(self.list.classify({"merchant": "shop-a", "email": "alias@x.com"})["status"], TRUSTED)
 
     def test_merchant_lists_stay_separate(self):
         self.list.replace_from_csv("shop-a", "email\na@x.com\n")
@@ -127,15 +134,31 @@ class PackLayoutTests(unittest.TestCase):
             "README.md",
             "standalone/api.php",
             "standalone/src/TrustedList.php",
+            "standalone/index.php",
+            "0609-admin-sidebar.blade.php",
             "laravel/app/Services/TrustedListService.php",
+            "laravel/app/Http/Controllers/Admin/FtdTrustedAdminController.php",
+            "laravel/resources/views/admin/ftd-trusted/index.blade.php",
+            "laravel/routes/admin-ftd-trusted.php",
             "laravel/database/migrations/2026_09_03_000000_create_trusted_customers_table.php",
         ]:
             self.assertTrue((base / rel).is_file(), rel)
+
+    def test_admin_not_merchant_upload(self):
+        readme = (ROOT / "ftd-trusted/README.md").read_text()
+        self.assertIn("Merchants do **not** upload", readme)
+        self.assertNotIn("A merchant can upload their own CSV", readme)
+        index = (ROOT / "ftd-trusted/standalone/index.php").read_text()
+        self.assertIn("Merchants do not upload", index)
+        routes = (ROOT / "ftd-trusted/laravel/routes/ftd_trusted.php").read_text()
+        self.assertNotIn("ftd-trusted.upload", routes)
 
     def test_php_has_match_order(self):
         source = (ROOT / "ftd-trusted/standalone/src/TrustedList.php").read_text()
         self.assertIn("MATCH_EMAIL", source)
         self.assertIn("successful_payment", source)
+        self.assertIn("admin_upload", source)
+        self.assertNotIn("merchant_upload", source)
         self.assertNotIn("replit", source.lower())
 
 

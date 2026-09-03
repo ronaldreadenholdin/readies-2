@@ -16,4 +16,5 @@ python3 - <<PY
 import zipfile
 zipfile.ZipFile("$TMP/pack.zip").extractall("$DEST")
 PY
-echo "Done. Open https://0609.readies.biz/ftd-trusted/"
+echo "Standalone staff tool is at https://0609.readies.biz/ftd-trusted/"
+echo "Merchants do not upload. Prefer the 0609 admin page: /admin/ftd-trusted"

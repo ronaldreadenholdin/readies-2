@@ -7,6 +7,12 @@ One list for every provider. Two states only:
 
 No extra product names in this pack.
 
+## Who uploads
+
+Merchants do **not** upload this list.
+
+0609 admin staff upload and maintain the list **for** a merchant on the admin backend (`layouts.adminpanel`). An admin upload **replaces that merchant’s entire list**.
+
 ## Match order
 
 Stop at the first hit:
@@ -25,11 +31,22 @@ Stop at the first hit:
 
 Laravel app root: `/var/www/html/adapter`
 
+Admin page (after merging `laravel/` and the sidebar snippet):
+
+```text
+https://0609.readies.biz/admin/ftd-trusted
+```
+
+Sidebar item: `0609-admin-sidebar.blade.php`
+
 ## API
+
+Classify and paid stay on the payment path. Upload is admin-only.
 
 - `GET /ftd-trusted/api.php?action=status`
 - `POST /ftd-trusted/api.php?action=classify`
 - `POST /ftd-trusted/api.php?action=paid`
+- `POST /ftd-trusted/api.php?action=upload` — 0609 staff only
 
 Classify body:
 
@@ -49,12 +66,12 @@ Classify body:
 
 A successful pay call stores the identifiers and returns **trusted**.
 
-## Merchant upload
+## Admin upload for a merchant
 
-A merchant can upload their own CSV. That file **replaces the whole trusted list for that merchant**. After upload, classify/paid for that merchant uses only that list (plus later successful payments).
+Staff choose the merchant, then upload that merchant’s CSV. That file **replaces the whole trusted list for that merchant**. After upload, classify/paid for that merchant uses only that list (plus later successful payments).
 
 ```text
-POST /ftd-trusted/api.php?action=upload
+POST /admin/ftd-trusted/upload
 merchant=shop-a
 file=merchant-list.csv
 ```

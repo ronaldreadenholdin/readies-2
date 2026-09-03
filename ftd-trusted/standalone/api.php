@@ -16,7 +16,7 @@ try {
             'list' => 'FTD vs trusted',
             'scope' => 'every provider, one list per merchant',
             'trusted_count' => $list->count(),
-            'upload' => 'POST action=upload with merchant + CSV. That file becomes the whole merchant list.',
+            'upload' => 'Admin only. POST action=upload with merchant + CSV. 0609 staff upload the list for a merchant. Merchants do not upload.',
             'match_order' => [
                 'email',
                 'phone',
@@ -41,7 +41,8 @@ try {
     }
 
     if ($action === 'upload' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
-        $merchant = $_POST['merchant'] ?? (ftd_json_input()['merchant'] ?? '');
+        $input = ftd_json_input();
+        $merchant = $_POST['merchant_id'] ?? $_POST['merchant'] ?? ($input['merchant_id'] ?? $input['merchant'] ?? '');
         $csv = '';
         if (isset($_FILES['file']['tmp_name']) && is_uploaded_file((string) $_FILES['file']['tmp_name'])) {
             $csv = (string) file_get_contents((string) $_FILES['file']['tmp_name']);
