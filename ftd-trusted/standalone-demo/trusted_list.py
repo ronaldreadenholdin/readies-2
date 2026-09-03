@@ -12,6 +12,27 @@ from uuid import uuid4
 FTD = "FTD"
 TRUSTED = "trusted"
 MATCH_ORDER = ("email", "phone", "card_first6_last4", "birthday", "full_name")
+BIZ_VALUES = (
+    "gambling",
+    "gaming",
+    "mlm",
+    "food_supplements",
+    "pharma",
+    "forex",
+    "digital_products",
+    "other",
+)
+BIZ_ALIASES = {
+    "casino": "gambling",
+    "igaming": "gambling",
+    "supplements": "food_supplements",
+    "food_supplement": "food_supplements",
+    "nutra": "food_supplements",
+    "pharmacy": "pharma",
+    "fx": "forex",
+    "digital": "digital_products",
+    "digital_product": "digital_products",
+}
 
 
 class TrustedList:
@@ -48,6 +69,9 @@ class TrustedList:
         for field, value in self.keys(input_data).items():
             if value:
                 record[field] = value
+        biz = self._biz(input_data.get("biz") or input_data.get("business"))
+        if biz:
+            record["biz"] = biz
         record["trusted"] = True
         record["successful_payments"] = int(record.get("successful_payments") or 0) + 1
         record["last_provider"] = str(input_data.get("provider") or "")[:32]
@@ -94,6 +118,14 @@ class TrustedList:
             except ValueError:
                 continue
         return None
+
+    def _biz(self, value: Any) -> str | None:
+        raw = re.sub(r"[\s\-]+", "_", str(value or "").strip().lower())
+        raw = re.sub(r"_+", "_", raw)
+        biz = BIZ_ALIASES.get(raw, raw)
+        if not biz:
+            return None
+        return biz if biz in BIZ_VALUES else biz[:64]
 
     def _name(self, value: Any) -> str | None:
         name = re.sub(r"\s+", " ", str(value or "").strip().lower())

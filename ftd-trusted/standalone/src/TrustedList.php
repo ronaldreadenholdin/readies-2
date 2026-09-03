@@ -13,6 +13,17 @@ final class TrustedList
     public const MATCH_BIRTHDAY = 'birthday';
     public const MATCH_FULL_NAME = 'full_name';
 
+    public const BIZ_VALUES = [
+        'gambling',
+        'gaming',
+        'mlm',
+        'food_supplements',
+        'pharma',
+        'forex',
+        'digital_products',
+        'other',
+    ];
+
     public function __construct(private readonly string $path)
     {
         $dir = dirname($path);
@@ -81,6 +92,11 @@ final class TrustedList
             if ($value !== null) {
                 $record[$field] = $value;
             }
+        }
+
+        $biz = $this->normalizeBiz($input['biz'] ?? $input['business'] ?? null);
+        if ($biz !== null) {
+            $record['biz'] = $biz;
         }
 
         $record['trusted'] = true;
@@ -210,6 +226,37 @@ final class TrustedList
         }
 
         return gmdate('Y-m-d', $time);
+    }
+
+    public function normalizeBiz(mixed $value): ?string
+    {
+        $raw = strtolower($this->clean((string) $value, 64));
+        $raw = str_replace(['-', ' '], '_', $raw);
+        $raw = preg_replace('/_+/', '_', $raw) ?? '';
+        $aliases = [
+            'casino' => 'gambling',
+            'igaming' => 'gambling',
+            'i_gaming' => 'gambling',
+            'game' => 'gaming',
+            'games' => 'gaming',
+            'multi_level_marketing' => 'mlm',
+            'supplements' => 'food_supplements',
+            'food_supplement' => 'food_supplements',
+            'nutra' => 'food_supplements',
+            'nutraceutical' => 'food_supplements',
+            'pharmacy' => 'pharma',
+            'pharmaceutical' => 'pharma',
+            'fx' => 'forex',
+            'digital' => 'digital_products',
+            'digital_product' => 'digital_products',
+            'info_product' => 'digital_products',
+        ];
+        $biz = $aliases[$raw] ?? $raw;
+        if ($biz === '') {
+            return null;
+        }
+
+        return in_array($biz, self::BIZ_VALUES, true) ? $biz : $this->clean($biz, 64);
     }
 
     private function normalizeName(mixed $value): ?string

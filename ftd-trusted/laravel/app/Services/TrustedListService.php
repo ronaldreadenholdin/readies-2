@@ -52,6 +52,11 @@ class TrustedListService
             }
         }
 
+        $biz = $this->normalizeBiz($input['biz'] ?? $input['business'] ?? null);
+        if ($biz !== null) {
+            $record->biz = $biz;
+        }
+
         $record->successful_payments = (int) $record->successful_payments + 1;
         $record->last_provider = substr((string) ($input['provider'] ?? ''), 0, 32);
         $record->last_paid_at = Carbon::now();
@@ -73,6 +78,27 @@ class TrustedListService
             'birthday' => $this->normalizeBirthday($input['birthday'] ?? null),
             'full_name' => $this->normalizeName($input['full_name'] ?? $input['name'] ?? null),
         ];
+    }
+
+    private function normalizeBiz(mixed $value): ?string
+    {
+        $raw = strtolower(trim((string) $value));
+        $raw = str_replace(['-', ' '], '_', $raw);
+        $raw = preg_replace('/_+/', '_', $raw) ?? '';
+        $aliases = [
+            'casino' => 'gambling',
+            'igaming' => 'gambling',
+            'supplements' => 'food_supplements',
+            'food_supplement' => 'food_supplements',
+            'nutra' => 'food_supplements',
+            'pharmacy' => 'pharma',
+            'fx' => 'forex',
+            'digital' => 'digital_products',
+            'digital_product' => 'digital_products',
+        ];
+        $biz = $aliases[$raw] ?? $raw;
+
+        return $biz !== '' ? substr($biz, 0, 64) : null;
     }
 
     private function normalizeEmail(mixed $value): ?string

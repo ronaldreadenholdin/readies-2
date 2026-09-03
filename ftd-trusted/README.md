@@ -41,8 +41,24 @@ Classify body:
   "card_last4": "4242",
   "birthday": "1990-05-01",
   "full_name": "Jane Doe",
-  "provider": "P003"
+  "provider": "P003",
+  "biz": "gambling"
 }
 ```
 
 A successful pay call stores the identifiers and returns **trusted**.
+
+## Biz column
+
+One column: `biz` — the vertical they pay for. Examples:
+
+- gambling
+- gaming
+- mlm
+- food_supplements
+- pharma
+- forex
+- digital_products
+- other
+
+`biz` is stored on the record. It is not a match key.

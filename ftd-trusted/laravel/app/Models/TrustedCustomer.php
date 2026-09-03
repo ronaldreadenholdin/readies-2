@@ -14,6 +14,7 @@ class TrustedCustomer extends Model
         'card_first6_last4',
         'birthday',
         'full_name',
+        'biz',
         'successful_payments',
         'last_provider',
         'last_paid_at',

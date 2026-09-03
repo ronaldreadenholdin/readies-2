@@ -13,6 +13,20 @@ class FtdTrustedTests(unittest.TestCase):
     def setUp(self):
         self.list = TrustedList()
 
+    def test_biz_column_on_paid(self):
+        paid = self.list.mark_paid({
+            "email": "gamble@x.com",
+            "biz": "food supplements",
+            "provider": "P004",
+        })
+        self.assertEqual(paid["record"]["biz"], "food_supplements")
+        again = self.list.classify({"email": "gamble@x.com"})
+        self.assertEqual(again["record"]["biz"], "food_supplements")
+
+    def test_biz_aliases(self):
+        paid = self.list.mark_paid({"email": "fx@x.com", "biz": "FX"})
+        self.assertEqual(paid["record"]["biz"], "forex")
+
     def test_unknown_is_ftd(self):
         result = self.list.classify({"email": "new@example.com"})
         self.assertEqual(result["status"], FTD)

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('card_first6_last4', 10)->nullable()->index();
             $table->date('birthday')->nullable()->index();
             $table->string('full_name')->nullable()->index();
+            $table->string('biz', 64)->nullable()->index();
             $table->unsignedInteger('successful_payments')->default(0);
             $table->string('last_provider', 32)->nullable();
             $table->timestamp('last_paid_at')->nullable();

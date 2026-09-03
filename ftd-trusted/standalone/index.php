@@ -34,7 +34,23 @@ declare(strict_types=1);
             <div><label>Birthday</label><input name="birthday" placeholder="1990-05-01"></div>
             <div><label>Full name</label><input name="full_name"></div>
         </div>
-        <label>Provider</label><input name="provider" placeholder="P003">
+        <div class="row">
+            <div>
+                <label>Biz they pay for</label>
+                <select name="biz" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+                    <option value="">Select</option>
+                    <option value="gambling">gambling</option>
+                    <option value="gaming">gaming</option>
+                    <option value="mlm">mlm</option>
+                    <option value="food_supplements">food supplements</option>
+                    <option value="pharma">pharma</option>
+                    <option value="forex">forex</option>
+                    <option value="digital_products">digital products</option>
+                    <option value="other">other</option>
+                </select>
+            </div>
+            <div><label>Provider</label><input name="provider" placeholder="P003"></div>
+        </div>
         <button type="submit">Classify</button>
         <button type="button" id="paid">Mark paid once</button>
     </form>

@@ -14,6 +14,8 @@ class TrustedListController extends Controller
             'list' => 'FTD vs trusted',
             'scope' => 'every provider',
             'match_order' => ['email', 'phone', 'card_first6_last4', 'birthday', 'full_name'],
+            'biz_column' => 'biz',
+            'biz_values' => ['gambling', 'gaming', 'mlm', 'food_supplements', 'pharma', 'forex', 'digital_products', 'other'],
             'rule' => 'not on the list → FTD; on the list or paid once successfully → trusted',
         ]);
     }

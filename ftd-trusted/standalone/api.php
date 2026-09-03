@@ -23,6 +23,8 @@ try {
                 'birthday',
                 'full_name',
             ],
+            'biz_column' => 'biz',
+            'biz_values' => TrustedList::BIZ_VALUES,
             'rule' => 'not on the list → FTD; on the list or paid once successfully → trusted',
         ]);
     }
