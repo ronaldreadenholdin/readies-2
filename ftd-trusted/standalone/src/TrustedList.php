@@ -1,0 +1,232 @@
+<?php
+
+declare(strict_types=1);
+
+final class TrustedList
+{
+    public const FTD = 'FTD';
+    public const TRUSTED = 'trusted';
+
+    public const MATCH_EMAIL = 'email';
+    public const MATCH_PHONE = 'phone';
+    public const MATCH_CARD = 'card_first6_last4';
+    public const MATCH_BIRTHDAY = 'birthday';
+    public const MATCH_FULL_NAME = 'full_name';
+
+    public function __construct(private readonly string $path)
+    {
+        $dir = dirname($path);
+        if (! is_dir($dir)) {
+            mkdir($dir, 0750, true);
+        }
+        if (! is_file($path)) {
+            $this->write(['records' => []]);
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $input
+     * @return array{status:string,matched_by:?string,record:?array}
+     */
+    public function classify(array $input): array
+    {
+        $keys = $this->keys($input);
+        $records = $this->all();
+
+        foreach ([
+            self::MATCH_EMAIL,
+            self::MATCH_PHONE,
+            self::MATCH_CARD,
+            self::MATCH_BIRTHDAY,
+            self::MATCH_FULL_NAME,
+        ] as $field) {
+            $value = $keys[$field] ?? null;
+            if ($value === null) {
+                continue;
+            }
+            foreach ($records as $record) {
+                if (($record[$field] ?? null) === $value) {
+                    return [
+                        'status' => self::TRUSTED,
+                        'matched_by' => $field,
+                        'record' => $record,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'status' => self::FTD,
+            'matched_by' => null,
+            'record' => null,
+        ];
+    }
+
+    /**
+     * A successful payment puts the customer on the list.
+     *
+     * @param array<string,mixed> $input
+     * @return array{status:string,matched_by:string,record:array}
+     */
+    public function markPaid(array $input): array
+    {
+        $keys = $this->keys($input);
+        $existing = $this->classify($input);
+        $record = $existing['record'] ?? [
+            'id' => bin2hex(random_bytes(8)),
+            'created_at' => gmdate('c'),
+        ];
+
+        foreach ($keys as $field => $value) {
+            if ($value !== null) {
+                $record[$field] = $value;
+            }
+        }
+
+        $record['trusted'] = true;
+        $record['successful_payments'] = (int) ($record['successful_payments'] ?? 0) + 1;
+        $record['last_provider'] = $this->clean((string) ($input['provider'] ?? ''), 32);
+        $record['last_paid_at'] = gmdate('c');
+        $record['updated_at'] = gmdate('c');
+
+        $this->upsert($record);
+
+        return [
+            'status' => self::TRUSTED,
+            'matched_by' => 'successful_payment',
+            'record' => $record,
+        ];
+    }
+
+    /**
+     * @param array<string,mixed> $input
+     * @return array<string,?string>
+     */
+    public function keys(array $input): array
+    {
+        $email = $this->normalizeEmail($input['email'] ?? null);
+        $phone = $this->normalizePhone($input['phone'] ?? null);
+        $card = $this->normalizeCard($input['card_first6'] ?? null, $input['card_last4'] ?? null);
+        $birthday = $this->normalizeBirthday($input['birthday'] ?? null);
+        $name = $this->normalizeName($input['full_name'] ?? $input['name'] ?? null);
+
+        return [
+            self::MATCH_EMAIL => $email,
+            self::MATCH_PHONE => $phone,
+            self::MATCH_CARD => $card,
+            self::MATCH_BIRTHDAY => $birthday,
+            self::MATCH_FULL_NAME => $name,
+        ];
+    }
+
+    public function count(): int
+    {
+        return count($this->all());
+    }
+
+    /**
+     * @return list<array<string,mixed>>
+     */
+    private function all(): array
+    {
+        $raw = file_get_contents($this->path);
+        $decoded = is_string($raw) ? json_decode($raw, true) : null;
+        $records = is_array($decoded) ? ($decoded['records'] ?? []) : [];
+
+        return is_array($records) ? array_values($records) : [];
+    }
+
+    /**
+     * @param array<string,mixed> $record
+     */
+    private function upsert(array $record): void
+    {
+        $records = $this->all();
+        $found = false;
+        foreach ($records as $i => $row) {
+            if (($row['id'] ?? null) === ($record['id'] ?? null)) {
+                $records[$i] = $record;
+                $found = true;
+                break;
+            }
+        }
+        if (! $found) {
+            $records[] = $record;
+        }
+        $this->write(['records' => $records]);
+    }
+
+    /**
+     * @param array<string,mixed> $payload
+     */
+    private function write(array $payload): void
+    {
+        file_put_contents(
+            $this->path,
+            json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
+    }
+
+    private function normalizeEmail(mixed $value): ?string
+    {
+        $email = strtolower($this->clean((string) $value, 190));
+        if ($email === '' || ! str_contains($email, '@')) {
+            return null;
+        }
+
+        return $email;
+    }
+
+    private function normalizePhone(mixed $value): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $value) ?? '';
+        if (strlen($digits) < 8) {
+            return null;
+        }
+
+        return $digits;
+    }
+
+    private function normalizeCard(mixed $first6, mixed $last4): ?string
+    {
+        $bin = preg_replace('/\D+/', '', (string) $first6) ?? '';
+        $tail = preg_replace('/\D+/', '', (string) $last4) ?? '';
+        if (strlen($bin) !== 6 || strlen($tail) !== 4) {
+            return null;
+        }
+
+        return $bin . $tail;
+    }
+
+    private function normalizeBirthday(mixed $value): ?string
+    {
+        $raw = $this->clean((string) $value, 32);
+        if ($raw === '') {
+            return null;
+        }
+        $time = strtotime($raw);
+        if ($time === false) {
+            return null;
+        }
+
+        return gmdate('Y-m-d', $time);
+    }
+
+    private function normalizeName(mixed $value): ?string
+    {
+        $name = strtolower($this->clean((string) $value, 190));
+        $name = preg_replace('/\s+/', ' ', $name) ?? '';
+        if ($name === '' || ! str_contains($name, ' ')) {
+            return null;
+        }
+
+        return $name;
+    }
+
+    private function clean(string $value, int $max): string
+    {
+        $value = trim($value);
+
+        return substr($value, 0, $max);
+    }
+}

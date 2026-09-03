@@ -1,0 +1,16 @@
+FTD vs trusted — 0609 path
+==========================
+
+Upload standalone files to:
+
+  /var/www/html/adapter/public/ftd-trusted/
+
+Then open:
+
+  https://0609.readies.biz/ftd-trusted/
+
+Or merge laravel/ into /var/www/html/adapter and run migrate.
+
+ZIP:
+
+  ftd-trusted-vps.zip
