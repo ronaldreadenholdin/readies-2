@@ -1,0 +1,20 @@
+FTD vs trusted — 0609 admin backend
+===================================
+
+Merchants do not upload this list.
+0609 admin staff upload and maintain the list for a merchant.
+
+Preferred: merge laravel/ into /var/www/html/adapter,
+add 0609-admin-sidebar.blade.php to layouts.adminpanel,
+then open:
+
+  https://0609.readies.biz/admin/ftd-trusted
+
+Standalone drop-in (staff tool only, not a merchant portal):
+
+  /var/www/html/adapter/public/ftd-trusted/
+  https://0609.readies.biz/ftd-trusted/
+
+ZIP:
+
+  ftd-trusted-vps.zip
