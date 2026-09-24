@@ -1,0 +1,9 @@
+{
+  "merchant_reference": "neckermann-test-order-1001",
+  "payment_id": "fbls_pay_789",
+  "amount": {
+    "value": "49.95",
+    "currency": "EUR"
+  },
+  "reason": "conformance_fixture"
+}

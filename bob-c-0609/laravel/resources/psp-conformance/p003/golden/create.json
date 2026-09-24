@@ -1,0 +1,26 @@
+{
+  "schema_version": "readies.psp.normalized.v1",
+  "psp_code": "P003",
+  "operation": "create_payment",
+  "merchant_reference": "neckermann-test-order-1001",
+  "payment_id": "fbls_pay_789",
+  "psp_reference": "P003-TXN-001",
+  "status": "pending",
+  "amount": {
+    "value": "49.95",
+    "currency": "EUR",
+    "minor_units": 4995
+  },
+  "created_at": "2026-09-24T16:20:30Z",
+  "updated_at": "2026-09-24T16:21:00Z",
+  "decline": {
+    "class": "none",
+    "code": null,
+    "message": null,
+    "cascade_reason": null
+  },
+  "webhook_event": null,
+  "metadata": {
+    "cascade_eligible": true
+  }
+}

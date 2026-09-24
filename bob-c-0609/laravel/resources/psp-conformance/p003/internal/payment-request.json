@@ -1,0 +1,14 @@
+{
+  "merchant_reference": "neckermann-test-order-1001",
+  "amount": {
+    "value": "49.95",
+    "currency": "EUR"
+  },
+  "customer": {
+    "email": "tester@neckermann.example"
+  },
+  "billing": {
+    "postal_code": "10115",
+    "country": "DE"
+  }
+}
