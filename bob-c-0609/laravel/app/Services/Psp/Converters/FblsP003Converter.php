@@ -20,7 +20,19 @@ final class FblsP003Converter implements PspConverterInterface
             'merchant_reference',
             'amount.value',
             'amount.currency',
+            'customer.email',
             'billing.postal_code',
+        ];
+    }
+
+    public function createPayloadFieldMap(): array
+    {
+        return [
+            'merchant_reference' => 'merchantRef',
+            'amount.value' => 'amountCents',
+            'amount.currency' => 'currency',
+            'customer.email' => 'customer.email',
+            'billing.postal_code' => 'customer.billingZip',
         ];
     }
 

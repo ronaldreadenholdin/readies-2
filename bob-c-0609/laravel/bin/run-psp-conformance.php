@@ -16,6 +16,7 @@ $requires = [
     '/app/Services/Psp/Contracts/PspConverterInterface.php',
     '/app/Services/Psp/PspNormalizedContract.php',
     '/app/Services/Psp/ConversionKillerChecker.php',
+    '/app/Services/Psp/CascadeRequirementsResolver.php',
     '/app/Services/Psp/AbstractPspAdaptor.php',
     '/app/Services/Psp/Converters/FblsP003Converter.php',
     '/app/Services/Psp/Fixtures/FblsP003FixtureTransport.php',
@@ -24,6 +25,7 @@ $requires = [
     '/app/Services/Psp/PspAdaptorFactory.php',
     '/app/Services/Psp/PspConformanceReportWriter.php',
     '/app/Services/Psp/PspConformanceGate.php',
+    '/app/Services/Psp/PspCascadeRouter.php',
 ];
 
 foreach ($requires as $file) {

@@ -49,6 +49,18 @@ Every adapter method returns the same normalized shape:
 - `PspAdapterRegistry` is the only lookup path for PSP adapters. `eligibleForCascade()` returns true only for a 100% conformance report.
 - `FblsP003Adaptor` is the template PSP because FBSL/FBLS P003 is the only provider with checked-in pre-flight evidence here. The full live FBSL adapter code was not present.
 
+## Cascade pre-collection contract
+
+`CascadeRequirementsResolver` takes an ordered cascade such as `["P001", "P002", "P003"]` and returns the union of every converter's `requiredFields()`, including which PSP and cascade index needs each field. Checkout must validate the payment request against that union before hop 1 fires.
+
+Rules:
+
+- Missing union fields are reported before any PSP attempt.
+- The cascade must not discover required customer data mid-route.
+- Each converter declares `createPayloadFieldMap()` so the adapter sends only the fields that PSP maps. Extra data gathered for downline PSPs must not leak to upstream PSPs.
+- If a field is still missing at a hop, `AbstractPspAdaptor` soft-skips with `missing_required_field:<field>` instead of silently stopping.
+- `ConversionKillerChecker::checkDeclaredFieldDependencies()` flags converters that map an internal field without declaring it in `requiredFields()`.
+
 ## Conversion-killer categories
 
 The gate checks and reports:
@@ -64,6 +76,7 @@ The gate checks and reports:
 - `signature/encoding`
 - `soft/hard decline misclass`
 - exact golden normalized output drift
+- undeclared converter dependencies that would break checkout pre-collection
 
 Each failed issue row includes PSP code, endpoint, check id/name, internal and PSP field paths, expected and actual values, category, root cause, code location, severity, and suggested fix.
 
@@ -77,4 +90,4 @@ The command writes timestamped JSON and Markdown under the output directory. It 
 
 ## Current P003 result
 
-P003 passes the normalized create/status/refund/webhook golden comparisons. It is still not eligible for cascade because the existing pre-flight evidence has 2 flagged rows: Webhook Handling and Signature Verification. Score from the current fixture set is 47/49 = 95.92%.
+P003 passes the normalized create/status/refund/webhook golden comparisons and declared-dependency checks. It is still not eligible for cascade because the existing pre-flight evidence has 2 flagged rows: Webhook Handling and Signature Verification. Score from the current fixture set is 53/55 = 96.36%.

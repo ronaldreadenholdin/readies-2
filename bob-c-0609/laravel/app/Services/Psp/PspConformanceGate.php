@@ -35,7 +35,15 @@ final class PspConformanceGate
         }
 
         $request = $fixtures->paymentRequest();
-        foreach ($this->checker->checkRequiredFields($this->converterFrom($adaptor), $request, 'create') as $row) {
+        $converter = $this->converterFrom($adaptor);
+        foreach ($this->checker->checkRequiredFields($converter, $request, 'create') as $row) {
+            $allChecks[] = $row;
+            if (! $row['passed']) {
+                $issues[] = $row;
+            }
+        }
+
+        foreach ($this->checker->checkDeclaredFieldDependencies($converter) as $row) {
             $allChecks[] = $row;
             if (! $row['passed']) {
                 $issues[] = $row;

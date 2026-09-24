@@ -33,6 +33,32 @@ final class ConversionKillerChecker
         return $results;
     }
 
+    public function checkDeclaredFieldDependencies(PspConverterInterface $converter): array
+    {
+        $required = array_flip($converter->requiredFields());
+        $results = [];
+        foreach ($converter->createPayloadFieldMap() as $internalField => $pspField) {
+            $results[] = $this->result(
+                $converter->pspCode(),
+                'create',
+                "declared_dependency.{$internalField}",
+                'Declared converter dependency',
+                $internalField,
+                $pspField,
+                'field declared in requiredFields',
+                isset($required[$internalField]) ? 'declared' : 'undeclared',
+                'missing requiredField',
+                isset($required[$internalField]),
+                "The converter maps {$internalField} into {$pspField} but did not declare it in requiredFields, so checkout pre-collection would miss it.",
+                get_class($converter) . '::createPayloadFieldMap',
+                'blocks cascade',
+                "Add {$internalField} to requiredFields or remove it from the create payload map.",
+            );
+        }
+
+        return $results;
+    }
+
     public function checkNormalizedOutput(string $pspCode, string $connection, array $normalized, ?array $golden = null): array
     {
         $errors = PspNormalizedContract::validate($normalized);

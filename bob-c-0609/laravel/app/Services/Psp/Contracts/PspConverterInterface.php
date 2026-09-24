@@ -16,6 +16,13 @@ interface PspConverterInterface
      */
     public function requiredFields(): array;
 
+    /**
+     * Dotted internal field paths mapped into create-payment PSP fields.
+     *
+     * @return array<string, string>
+     */
+    public function createPayloadFieldMap(): array;
+
     public function toCreatePaymentPayload(PspPaymentRequest $request): array;
 
     public function toRefundPayload(PspRefundRequest $request): array;
