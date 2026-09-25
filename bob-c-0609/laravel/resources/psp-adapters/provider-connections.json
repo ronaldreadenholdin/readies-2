@@ -1,0 +1,10 @@
+[
+  {
+    "adapter_number": "ADP-01",
+    "provider_code": "P003",
+    "connection_code": "ADP-01 / P003",
+    "provider_name": "FBLS",
+    "converter": "FblsP003Converter",
+    "status": "sandbox"
+  }
+]

@@ -42,6 +42,17 @@ Every adapter method returns the same normalized shape:
 
 `PspNormalizedContract::validate()` enforces required keys, status and decline enums, uppercase 3-letter currency codes, decimal amount formatting, integer minor units, UTC `Z` timestamps, webhook signature status, and cascade metadata.
 
+## Numbered adapter standards
+
+Readies has seven adapter standards, `ADP-01` through `ADP-07`.
+
+- `ADP-01` is active and is the Card PSP standard. It uses `readies.psp.normalized.v1`.
+- `ADP-02` through `ADP-07` are planned placeholders with name `TBD`; their contracts are intentionally not invented here.
+- Every provider connection is registered as `{adapter_number} / {provider_code}`, for example `ADP-01 / P003`.
+- Each connection has its own converter that maps the provider API into that adapter standard's normalized contract.
+- A connection is eligible only when its adapter conformance checklist is exactly `100%`. There are no code overrides.
+- Failed checks generate open questions that identify whether the converter can close the gap or whether the provider must change/document something.
+
 ## Adapter pattern
 
 - Converters implement `PspConverterInterface`; all PSP-specific field maps and `requiredFields()` live there.

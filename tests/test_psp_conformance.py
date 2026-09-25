@@ -16,6 +16,8 @@ KEY_STATUS_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/psp-key-status.
 MARKETING_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/marketing.html"
 MARKETING_RESULTS_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/marketing-results-pigeon.html"
 MARKETING_ASSETS = ROOT / "bob-c-0609/laravel/resources/psp-marketing/marketing-assets.json"
+ADAPTER_STANDARDS = ROOT / "bob-c-0609/laravel/resources/psp-adapters/adapter-standards.json"
+PROVIDER_CONNECTIONS = ROOT / "bob-c-0609/laravel/resources/psp-adapters/provider-connections.json"
 
 
 class PspConformanceFixtureTests(unittest.TestCase):
@@ -103,6 +105,22 @@ class PspConformanceFixtureTests(unittest.TestCase):
         missing = [field for field in required if bad.get(field) in (None, "", [], "unknown")]
         open_questions = [{"field": field, "severity": "blocks go-live"} for field in missing]
         self.assertEqual(open_questions, [{"field": "mdr_percent", "severity": "blocks go-live"}])
+
+    def test_numbered_adapter_standards_registry(self):
+        standards = json.loads(ADAPTER_STANDARDS.read_text())
+        self.assertEqual([row["adapter_number"] for row in standards], [f"ADP-0{i}" for i in range(1, 8)])
+        self.assertEqual(standards[0]["name"], "Card PSP")
+        self.assertEqual(standards[0]["status"], "active")
+        self.assertEqual(standards[0]["version"], "readies.psp.normalized.v1")
+        for row in standards[1:]:
+            self.assertEqual(row["status"], "planned")
+            self.assertEqual(row["name"], "TBD")
+            self.assertIsNone(row["normalized_contract"])
+
+        connections = json.loads(PROVIDER_CONNECTIONS.read_text())
+        self.assertEqual(connections[0]["connection_code"], "ADP-01 / P003")
+        self.assertEqual(connections[0]["adapter_number"], "ADP-01")
+        self.assertEqual(connections[0]["provider_code"], "P003")
 
     def test_eligibility_filter_skip_reasons(self):
         profile = json.loads((FIXTURE_ROOT / "commercial-profile.json").read_text())
@@ -274,6 +292,8 @@ class PspConformanceFixtureTests(unittest.TestCase):
 
         key_page = KEY_STATUS_PAGE.read_text()
         self.assertIn("Open 0609 vault entry", key_page)
+        self.assertIn("ADP-01 / P003", key_page)
+        self.assertIn("blocked until 100%", key_page)
         self.assertIn("missing", key_page)
         self.assertNotIn("test_secret", key_page)
         self.assertNotIn("xai-", key_page.lower())
@@ -451,7 +471,11 @@ class PspConformanceTests(unittest.TestCase):
             self.assertEqual(summary["failed"], 3)
             self.assertEqual(summary["score_percent"], 96.39)
             self.assertFalse(summary["eligible_for_cascade"])
+            self.assertEqual(summary["adapter_number"], "ADP-01")
+            self.assertEqual(summary["connection_code"], "ADP-01 / P003")
+            self.assertEqual(summary["eligibility_rule"], "eligible only at 100%")
             self.assertEqual(report["open_questions"]["P003"][0]["field"], "live_keys_status")
+            self.assertIn(report["open_questions"]["P003"][0]["gap_owner"], {"provider", "converter"})
             self.assertEqual(report["credential_status"]["P003"]["live"]["status"], "missing")
             self.assertNotIn("test_secret", proc.stdout)
 

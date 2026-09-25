@@ -15,6 +15,8 @@ $requires = [
     '/app/Services/Psp/Credentials/PspCredentialProviderInterface.php',
     '/app/Services/Psp/Credentials/FakePspCredentialProvider.php',
     '/app/Services/Psp/Credentials/VaultPspCredentialProvider.php',
+    '/app/Services/Psp/Standards/AdapterStandardRegistry.php',
+    '/app/Services/Psp/Standards/ProviderConnectionRegistry.php',
     '/app/Services/Psp/Commercial/PspCommercialProfile.php',
     '/app/Services/Psp/Commercial/PspEligibilityFilter.php',
     '/app/Services/Psp/Trusted/PersonalDataEncryptionInterface.php',

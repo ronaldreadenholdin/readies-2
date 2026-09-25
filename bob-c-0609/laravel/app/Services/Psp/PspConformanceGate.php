@@ -7,6 +7,8 @@ use App\Services\Psp\Commercial\PspCommercialProfile;
 use App\Services\Psp\Credentials\FakePspCredentialProvider;
 use App\Services\Psp\Credentials\PspCredentialProviderInterface;
 use App\Services\Psp\Fixtures\FblsP003FixtureTransport;
+use App\Services\Psp\Standards\AdapterStandardRegistry;
+use App\Services\Psp\Standards\ProviderConnectionRegistry;
 use RuntimeException;
 
 final class PspConformanceGate
@@ -28,6 +30,10 @@ final class PspConformanceGate
         $pspCode = strtoupper(trim($pspCode));
         $adaptor = $this->registry->get($pspCode);
         $fixtures = $this->fixturesFor($pspCode);
+        $standards = AdapterStandardRegistry::fromJsonFile(dirname(__DIR__, 3) . '/resources/psp-adapters/adapter-standards.json');
+        $connections = ProviderConnectionRegistry::fromJsonFile(dirname(__DIR__, 3) . '/resources/psp-adapters/provider-connections.json');
+        $connection = $connections->forProvider($pspCode) ?? ['adapter_number' => 'ADP-01', 'provider_code' => $pspCode, 'connection_code' => 'ADP-01 / ' . $pspCode];
+        $standard = $standards->get($connection['adapter_number']) ?? null;
 
         $allChecks = [];
         $issues = [];
@@ -105,13 +111,20 @@ final class PspConformanceGate
                     'passed' => $passed,
                     'failed' => $failed,
                     'score_percent' => $score,
+                    'adapter_number' => $connection['adapter_number'],
+                    'adapter_name' => $standard['name'] ?? null,
+                    'connection_code' => $connection['connection_code'],
+                    'provider_code' => $pspCode,
+                    'eligibility_rule' => 'eligible only at 100%',
                     'eligible_for_cascade' => $score === 100.0,
                 ],
             ],
             'conversion_killers' => $issues,
             'open_questions' => [
-                $pspCode => $profile->openQuestions(),
+                $pspCode => array_merge($this->profileOpenQuestions($profile), $this->openQuestionsForIssues($issues)),
             ],
+            'adapter_standards' => $standards->all(),
+            'provider_connections' => $connections->all(),
             'checks' => $allChecks,
         ];
 
@@ -215,5 +228,37 @@ final class PspConformanceGate
         }
 
         return $files;
+    }
+
+    private function openQuestionsForIssues(array $issues): array
+    {
+        $questions = [];
+        foreach ($issues as $issue) {
+            $questions[] = [
+                'field' => $issue['preflight_check_id'] ?? 'check',
+                'question' => 'What is needed to make this check pass at 100% for the connection?',
+                'severity' => $issue['severity'] ?? 'blocks go-live',
+                'gap_owner' => $this->gapOwner($issue),
+            ];
+        }
+
+        return $questions;
+    }
+
+    private function profileOpenQuestions(PspCommercialProfile $profile): array
+    {
+        return array_map(static function (array $question): array {
+            return $question + ['gap_owner' => 'provider'];
+        }, $profile->openQuestions());
+    }
+
+    private function gapOwner(array $issue): string
+    {
+        $category = $issue['killer_category'] ?? '';
+        if (in_array($category, ['unit/cents', 'currency', 'rounding', 'status enum', 'date/timezone', 'ID case/whitespace', 'null vs empty', 'soft/hard decline misclass', 'hardcoded credential'], true)) {
+            return 'converter';
+        }
+
+        return 'provider';
     }
 }

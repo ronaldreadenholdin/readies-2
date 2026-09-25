@@ -20,6 +20,8 @@ final class PspEligibilityFilter
 
             $audit[] = [
                 'psp_code' => $code,
+                'adapter_number' => $profile['adapter_number'] ?? null,
+                'connection_code' => ($profile['adapter_number'] ?? 'ADP-01') . ' / ' . $code,
                 'connection' => 'eligibility',
                 'attempted_at' => gmdate('Y-m-d\TH:i:s\Z'),
                 'webhook_or_status_received' => null,

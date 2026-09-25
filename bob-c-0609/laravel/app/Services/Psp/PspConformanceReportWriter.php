@@ -44,6 +44,10 @@ final class PspConformanceReportWriter
             $eligible = ($summary['eligible_for_cascade'] ?? false) ? 'yes' : 'no';
             $lines[] = "## {$pspCode}";
             $lines[] = '';
+            $lines[] = '- Connection: `' . ($summary['connection_code'] ?? $pspCode) . '`';
+            $lines[] = '- Adapter: `' . ($summary['adapter_number'] ?? 'unknown') . '` ' . ($summary['adapter_name'] ?? '');
+            $lines[] = '- Rule: eligible only at `100%`; no code overrides.';
+            $lines[] = '';
             $lines[] = '| Total checks | Passed | Failed | Score | Eligible for cascade |';
             $lines[] = '|---:|---:|---:|---:|:---:|';
             $lines[] = '| ' . ($summary['total_checks'] ?? 0) . ' | ' . ($summary['passed'] ?? 0) . ' | ' . ($summary['failed'] ?? 0) . ' | ' . number_format((float) ($summary['score_percent'] ?? 0), 2) . '% | ' . $eligible . ' |';

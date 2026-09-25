@@ -1,5 +1,6 @@
 {
   "psp_code": "P003",
+  "adapter_number": "ADP-01",
   "allowed_geos": ["DE", "NL", "BE"],
   "blocked_countries": ["none"],
   "accepted_card_brands": ["visa", "mastercard"],

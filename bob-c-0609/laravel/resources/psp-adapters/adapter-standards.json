@@ -1,0 +1,26 @@
+[
+  {
+    "adapter_number": "ADP-01",
+    "name": "Card PSP",
+    "status": "active",
+    "version": "readies.psp.normalized.v1",
+    "normalized_contract": "PspNormalizedContract",
+    "conformance_checklist": [
+      "preflight",
+      "required_fields",
+      "declared_dependencies",
+      "commercial_profile",
+      "source_secret_scan",
+      "create_payment_golden",
+      "payment_status_golden",
+      "refund_golden",
+      "webhook_golden"
+    ]
+  },
+  {"adapter_number": "ADP-02", "name": "TBD", "status": "planned", "version": null, "normalized_contract": null, "conformance_checklist": []},
+  {"adapter_number": "ADP-03", "name": "TBD", "status": "planned", "version": null, "normalized_contract": null, "conformance_checklist": []},
+  {"adapter_number": "ADP-04", "name": "TBD", "status": "planned", "version": null, "normalized_contract": null, "conformance_checklist": []},
+  {"adapter_number": "ADP-05", "name": "TBD", "status": "planned", "version": null, "normalized_contract": null, "conformance_checklist": []},
+  {"adapter_number": "ADP-06", "name": "TBD", "status": "planned", "version": null, "normalized_contract": null, "conformance_checklist": []},
+  {"adapter_number": "ADP-07", "name": "TBD", "status": "planned", "version": null, "normalized_contract": null, "conformance_checklist": []}
+]
