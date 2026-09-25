@@ -121,6 +121,21 @@ The seeded default is `Pigeon card delivery`, a platform-owned approved placehol
 
 `MediaVariantSelector` records variants (`none`, `default_animation`, or a specific media id) with configurable control-group percentage, default 0. `MediaConversionReportService` measures conversion and abandonment by variant, slot, and merchant; it does not claim uplift.
 
+## Marketing tab
+
+The BOB C Marketing tab is the admin surface for all waiting-slot marketing material: video clips, banner images, YouTube links, and adverts. Assets include a plain-language explanation, file or URL, thumbnail/preview, allowed slots, owner/advertiser, optional fee rate, status, date window, and merchant consent rules.
+
+Safety rules stay in force:
+
+- Marketing assets never render on card-entry pages.
+- Ad slots are off by default.
+- Unapproved, unregistered, or non-consented assets fall back to `pigeon_card_delivery`.
+- YouTube links must render through `youtube-nocookie.com`, without autoplay with sound.
+- Uploads are validated by type and size and must be stored outside the web root or in approved media storage.
+- Placement history is append-only: each slot/merchant/site/page activation creates a new placement row instead of overwriting old records.
+
+Marketing results have two windows: Now (today and last 24 hours) and History (daily/weekly over a selected date range). Results are split by asset, slot, merchant, and site and use only logged impression events. Empty states must be shown when there is no data.
+
 ## PSP credentials and the 0609 vault
 
 Repository inventory: this repo contains Bob/Grok `XAI_API_KEY` references for BOB C and offline test placeholders, but it does not contain a PSP vault, encrypted PSP credential store, or `psp_credentials` table. The real PSP keys are expected to live only in the 0609 Laravel host vault on the VPS.

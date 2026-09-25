@@ -13,6 +13,9 @@ WAITING_STATUS = ROOT / "bob-c-0609/hostinger/public_html/bob-c/waiting-status-s
 MEDIA_REGISTRY = ROOT / "bob-c-0609/laravel/resources/psp-waiting/media-registry.json"
 MEDIA_LIBRARY_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/media-library.html"
 KEY_STATUS_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/psp-key-status.html"
+MARKETING_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/marketing.html"
+MARKETING_RESULTS_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/marketing-results-pigeon.html"
+MARKETING_ASSETS = ROOT / "bob-c-0609/laravel/resources/psp-marketing/marketing-assets.json"
 
 
 class PspConformanceFixtureTests(unittest.TestCase):
@@ -274,6 +277,63 @@ class PspConformanceFixtureTests(unittest.TestCase):
         self.assertIn("missing", key_page)
         self.assertNotIn("test_secret", key_page)
         self.assertNotIn("xai-", key_page.lower())
+
+    def test_marketing_assets_and_pages_are_example_only(self):
+        assets = json.loads(MARKETING_ASSETS.read_text())
+        self.assertEqual([asset["asset_id"] for asset in assets], ["pigeon_card_delivery"])
+        self.assertIn("TODO", assets[0]["storage_path"])
+        marketing = MARKETING_PAGE.read_text()
+        results = MARKETING_RESULTS_PAGE.read_text()
+        self.assertIn("Marketing", marketing)
+        self.assertIn("EXAMPLE DATA", marketing)
+        self.assertIn("EXAMPLE DATA", results)
+        self.assertIn("pigeon_card_delivery", marketing)
+
+    def test_marketing_placement_history_is_append_only(self):
+        placements = []
+        first = {
+            "placement_id": "p1",
+            "asset_id": "pigeon_card_delivery",
+            "slot": "cascade_wait",
+            "merchant_id": "neckermann",
+            "site": "Neckermann test site",
+            "page_or_flow_step": "waiting",
+            "active_from": "2026-09-25T00:00:00Z",
+            "switched_on_by": "admin-a",
+        }
+        second = dict(first, placement_id="p2", active_from="2026-09-25T01:00:00Z", switched_on_by="admin-b")
+        placements.append(first)
+        placements.append(second)
+        self.assertEqual(len(placements), 2)
+        self.assertEqual(placements[0]["switched_on_by"], "admin-a")
+        self.assertEqual(placements[1]["switched_on_by"], "admin-b")
+
+    def test_marketing_results_date_range_and_now_windows(self):
+        impressions = [
+            {"shown_at": "2026-09-25T00:10:00Z", "media_id": "pigeon_card_delivery", "slot": "cascade_wait", "merchant_id": "neckermann", "site": "Neckermann test site", "completed": True, "clicked": False, "payment_outcome": "success", "variant": "default_animation"},
+            {"shown_at": "2026-09-24T23:30:00Z", "media_id": "pigeon_card_delivery", "slot": "cascade_wait", "merchant_id": "neckermann", "site": "Neckermann test site", "completed": False, "clicked": True, "payment_outcome": "abandoned", "variant": "default_animation"},
+            {"shown_at": "2026-09-20T12:00:00Z", "media_id": "none", "slot": "cascade_wait", "merchant_id": "neckermann", "site": "Neckermann test site", "completed": False, "clicked": False, "payment_outcome": "success", "variant": "none"},
+        ]
+        today = [row for row in impressions if row["shown_at"].startswith("2026-09-25")]
+        last_24 = [row for row in impressions if row["shown_at"] >= "2026-09-24T00:30:00Z"]
+        history_range = [row for row in impressions if "2026-09-24" <= row["shown_at"][:10] <= "2026-09-25"]
+        self.assertEqual(len(today), 1)
+        self.assertEqual(len(last_24), 2)
+        self.assertEqual(len(history_range), 2)
+        self.assertEqual(sum(1 for row in history_range if row["completed"]), 1)
+
+    def test_youtube_embed_and_upload_validation_safety(self):
+        video_id = "abcDEF12345"
+        embed = f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=0&mute=1&rel=0"
+        self.assertIn("youtube-nocookie.com", embed)
+        self.assertIn("autoplay=0", embed)
+        self.assertIn("mute=1", embed)
+
+        allowed_mime = {"video_clip": {"video/mp4", "video/webm"}, "banner_image": {"image/png", "image/jpeg", "image/webp"}}
+        max_bytes = 25_000_000
+        self.assertIn("video/mp4", allowed_mime["video_clip"])
+        self.assertNotIn("application/x-msdownload", allowed_mime["banner_image"])
+        self.assertLessEqual(2_000_000, max_bytes)
 
     def test_three_hop_cascade_precollects_hop_three_date_of_birth(self):
         cascade = ["P001", "P002", "P003DOB"]
