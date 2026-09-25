@@ -6,5 +6,13 @@
     "provider_name": "FBLS",
     "converter": "FblsP003Converter",
     "status": "sandbox"
+  },
+  {
+    "adapter_number": "ADP-01",
+    "provider_code": "P001",
+    "connection_code": "ADP-01 / P001",
+    "provider_name": "Clisapay",
+    "converter": null,
+    "status": "dry_run"
   }
 ]

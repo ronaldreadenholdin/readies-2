@@ -53,6 +53,18 @@ Readies has seven adapter standards, `ADP-01` through `ADP-07`.
 - A connection is eligible only when its adapter conformance checklist is exactly `100%`. There are no code overrides.
 - Failed checks generate open questions that identify whether the converter can close the gap or whether the provider must change/document something.
 
+## Per-merchant PSP order and TADDY overrides
+
+Each merchant can have its own ordered PSP connection list. `MerchantPspOrderService` suggests positions from eligibility, cost, and conformance. Cheaper eligible connections sort earlier; high-cost providers are pushed later as fallback candidates. Connections below 100% conformance are listed as `planned` only and cannot hold a live position.
+
+Users with orchestration-owner authority, including TADDY/Gerardus, can override positions. `merchant_psp_overrides` records append-only audit rows with merchant, connection, from/to positions, reason, who overrode, and when. The BOB C merchant order page shows suggested and actual positions side by side. Automatic hops remain capped at 3 before pay-by-link.
+
+## P001 Clisapay dry run
+
+`ADP-01 / P001` is registered as a dry-run Card PSP connection for Clisapay / JIXINGBAO TRADING PTE. LTD. The profile and report use only the provided facts and mark all other fields unknown or missing. The saved report is under `reports/p001-clisapay-dry-run-conformance.*`.
+
+P001 is not eligible for live. Suggested downline position is planned slot 3 if it later reaches 100%, because known cost is high (MDR 5.5% plus 0.30 USD fixed fee). Provider-owned gaps include API docs, credentials in the 0609 vault, webhook signing, decline codes, required fields, and geo/currency clarifications. Converter-owned gaps can close only after provider materials arrive.
+
 ## Adapter pattern
 
 - Converters implement `PspConverterInterface`; all PSP-specific field maps and `requiredFields()` live there.

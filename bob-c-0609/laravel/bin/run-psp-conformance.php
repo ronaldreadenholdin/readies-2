@@ -20,6 +20,8 @@ $requires = [
     '/app/Services/Psp/Credentials/VaultPspCredentialProvider.php',
     '/app/Services/Psp/Standards/AdapterStandardRegistry.php',
     '/app/Services/Psp/Standards/ProviderConnectionRegistry.php',
+    '/app/Services/Psp/Orchestration/MerchantPspOrderService.php',
+    '/app/Services/Psp/Orchestration/InMemoryMerchantPspOverrideRepository.php',
     '/app/Services/Psp/Commercial/PspCommercialProfile.php',
     '/app/Services/Psp/Commercial/PspEligibilityFilter.php',
     '/app/Services/Psp/Trusted/PersonalDataEncryptionInterface.php',

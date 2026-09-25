@@ -18,6 +18,9 @@ MARKETING_RESULTS_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/marketin
 MARKETING_ASSETS = ROOT / "bob-c-0609/laravel/resources/psp-marketing/marketing-assets.json"
 ADAPTER_STANDARDS = ROOT / "bob-c-0609/laravel/resources/psp-adapters/adapter-standards.json"
 PROVIDER_CONNECTIONS = ROOT / "bob-c-0609/laravel/resources/psp-adapters/provider-connections.json"
+P001_PROFILE = ROOT / "bob-c-0609/laravel/resources/psp-conformance/p001/commercial-profile.json"
+P001_REPORT = ROOT / "reports/p001-clisapay-dry-run-conformance.json"
+MERCHANT_PSP_ORDER_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/merchant-psp-order.html"
 
 
 class PspConformanceFixtureTests(unittest.TestCase):
@@ -121,6 +124,56 @@ class PspConformanceFixtureTests(unittest.TestCase):
         self.assertEqual(connections[0]["connection_code"], "ADP-01 / P003")
         self.assertEqual(connections[0]["adapter_number"], "ADP-01")
         self.assertEqual(connections[0]["provider_code"], "P003")
+        self.assertEqual(connections[1]["connection_code"], "ADP-01 / P001")
+        self.assertEqual(connections[1]["status"], "dry_run")
+
+    def test_merchant_psp_order_suggested_actual_and_override_audit(self):
+        connections = [
+            {"connection_code": "ADP-01 / CHEAP", "score_percent": 100.0, "eligible": True, "mdr_percent": 2.0, "mdr_fixed": 0.2},
+            {"connection_code": "ADP-01 / EXPENSIVE", "score_percent": 100.0, "eligible": True, "mdr_percent": 5.5, "mdr_fixed": 0.3},
+            {"connection_code": "ADP-01 / PLANNED", "score_percent": 96.39, "eligible": False, "mdr_percent": 1.0, "mdr_fixed": 0.1},
+        ]
+        ordered = sorted(connections, key=lambda row: (not row["eligible"], row["mdr_percent"] + row["mdr_fixed"] / 100))
+        for index, row in enumerate(ordered, start=1):
+            row["suggested_position"] = index
+            row["live_position_allowed"] = row["score_percent"] == 100.0 and row["eligible"]
+        self.assertEqual([row["connection_code"] for row in ordered], ["ADP-01 / CHEAP", "ADP-01 / EXPENSIVE", "ADP-01 / PLANNED"])
+        self.assertFalse(ordered[-1]["live_position_allowed"])
+        self.assertEqual(ordered[:2], ordered[:3 - 1])
+
+        audit = []
+        audit.append({
+            "merchant_id": "neckermann",
+            "connection_code": "ADP-01 / EXPENSIVE",
+            "from_position": 2,
+            "to_position": 1,
+            "reason": "TADDY commercial override for testing",
+            "overridden_by": "TADDY",
+        })
+        audit.append(dict(audit[0], from_position=1, to_position=2, reason="Gerardus restored cheaper-first"))
+        self.assertEqual(len(audit), 2)
+        self.assertEqual(audit[0]["overridden_by"], "TADDY")
+
+        page = MERCHANT_PSP_ORDER_PAGE.read_text()
+        self.assertIn("Suggested", page)
+        self.assertIn("Actual", page)
+        self.assertIn("ADP-01 / P001", page)
+
+    def test_p001_clisapay_dry_run_uses_only_given_facts(self):
+        profile = json.loads(P001_PROFILE.read_text())
+        report = json.loads(P001_REPORT.read_text())
+        self.assertEqual(profile["provider_name"], "Clisapay")
+        self.assertEqual(profile["legal_entity"], "JIXINGBAO TRADING PTE. LTD.")
+        self.assertEqual(profile["live_keys_status"], "missing")
+        self.assertEqual(profile["api_docs_received"], "unknown")
+        self.assertEqual(profile["processing_currencies"], "unknown")
+        self.assertIn("USA coverage has been STOPPED", profile["geo_notes"])
+        self.assertEqual(report["connection"]["connection_code"], "ADP-01 / P001")
+        self.assertFalse(report["score"]["eligible_for_live"])
+        self.assertEqual(report["suggested_downline_position"]["position"], 3)
+        owners = {row["gap_owner"] for row in report["failed_or_unknown_checks"]}
+        self.assertEqual(owners, {"provider", "converter"})
+        self.assertIn("No unknown facts were inferred.", (ROOT / "reports/p001-clisapay-dry-run-conformance.md").read_text())
 
     def test_eligibility_filter_skip_reasons(self):
         profile = json.loads((FIXTURE_ROOT / "commercial-profile.json").read_text())
