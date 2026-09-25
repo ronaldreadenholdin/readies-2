@@ -1,0 +1,6 @@
+{
+  "contract_version": "ADP-01:v1",
+  "soft": ["soft_declined", "failed_retryable"],
+  "hard": ["hard_declined", "declined"],
+  "unknown": "soft"
+}

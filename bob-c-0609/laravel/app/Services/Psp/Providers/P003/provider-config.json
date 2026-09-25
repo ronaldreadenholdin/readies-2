@@ -1,0 +1,8 @@
+{
+  "provider_code": "P003",
+  "connection_code": "ADP-01 / P003",
+  "adapter_number": "ADP-01",
+  "contract_version": "ADP-01:v1",
+  "provider_name": "FBLS",
+  "fixture_root": "resources/psp-conformance/p003"
+}

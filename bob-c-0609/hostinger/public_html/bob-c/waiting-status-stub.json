@@ -1,0 +1,29 @@
+{
+  "merchant_reference": "neckermann-test-order-1001",
+  "idempotency_key": "example-idempotency-key",
+  "state": "awaiting_failure_webhook",
+  "message": "Securing your payment...",
+  "poll_after_ms": 1500,
+  "next_redirect_url": null,
+  "result_ready": false,
+  "result_url": null,
+  "ad_slot_enabled": false,
+  "media": {
+    "media_id": "pigeon_card_delivery",
+    "title": "Pigeon card delivery",
+    "type": "animation",
+    "status": "approved",
+    "file_url": null,
+    "storage_path": "TODO: add real approved pigeon card delivery asset path"
+  },
+  "measurement": {
+    "variant": "default_animation",
+    "control_group": false,
+    "minimum_visible_seconds": 2,
+    "impression_counted": false
+  },
+  "audit": {
+    "media_id_shown": "pigeon_card_delivery",
+    "slot": "cascade_wait"
+  }
+}

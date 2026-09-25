@@ -1,0 +1,9 @@
+{
+  "payment_id": "fbls_pay_789",
+  "refund_id": "P003-REF-001",
+  "merchant_ref": "neckermann-test-order-1001",
+  "amount_cents": 4995,
+  "currency": "EUR",
+  "created_at": "2026-09-24T16:30:00Z",
+  "updated_at": "2026-09-24T16:30:01Z"
+}

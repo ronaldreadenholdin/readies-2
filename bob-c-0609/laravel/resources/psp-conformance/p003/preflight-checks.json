@@ -1,0 +1,70 @@
+[
+  {
+    "id": "P003-PF-001",
+    "name": "Auth & Connectivity",
+    "connection": "create",
+    "status": "green",
+    "expected": "green",
+    "actual": "green",
+    "field_path": {
+      "internal": "auth.endpoint",
+      "psp": "POST /payments"
+    },
+    "killer_category": "signature/encoding",
+    "why": "The recorded pre-flight fixture shows sandbox auth and connectivity as green.",
+    "code_location": "pre-flight-test.html::runFullTest",
+    "severity": "blocks cascade",
+    "suggested_fix": "Keep endpoint, auth header, and fixture evidence attached to the PSP adapter review."
+  },
+  {
+    "id": "P003-PF-002",
+    "name": "Webhook Handling",
+    "connection": "webhook",
+    "status": "flagged",
+    "expected": "green",
+    "actual": "flagged",
+    "field_path": {
+      "internal": "webhook_event",
+      "psp": "POST /webhooks/fbls"
+    },
+    "killer_category": "signature/encoding",
+    "why": "The checked-in pre-flight HTML records webhook handling as flagged, so the cascade gate must block P003 even though the offline converter fixture normalizes a signed webhook.",
+    "code_location": "pre-flight-test.html::runFullTest",
+    "severity": "blocks cascade",
+    "suggested_fix": "Capture a signed PSP webhook sample and update the pre-flight fixture only after the handler passes end-to-end."
+  },
+  {
+    "id": "P003-PF-003",
+    "name": "3DS & Geo Strategy",
+    "connection": "create",
+    "status": "green",
+    "expected": "green",
+    "actual": "green",
+    "field_path": {
+      "internal": "payment.three_ds",
+      "psp": "3DS policy"
+    },
+    "killer_category": "status enum",
+    "why": "The recorded pre-flight fixture shows 3DS and geo strategy as green.",
+    "code_location": "pre-flight-test.html::runFullTest",
+    "severity": "blocks cascade",
+    "suggested_fix": "Keep the 3DS and geo evidence with the PSP go-live packet."
+  },
+  {
+    "id": "P003-PF-004",
+    "name": "Signature Verification",
+    "connection": "webhook",
+    "status": "flagged",
+    "expected": "green",
+    "actual": "flagged",
+    "field_path": {
+      "internal": "webhook_event.signature_verified",
+      "psp": "X-FBLS-Signature"
+    },
+    "killer_category": "signature/encoding",
+    "why": "The checked-in pre-flight HTML records signature verification as flagged; this is a blocker until raw-body HMAC verification is proven with a real PSP sample.",
+    "code_location": "pre-flight-test.html::runFullTest",
+    "severity": "blocks cascade",
+    "suggested_fix": "Confirm the PSP header name, canonical payload bytes, and HMAC algorithm, then record a green pre-flight fixture."
+  }
+]

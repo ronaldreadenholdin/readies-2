@@ -1,0 +1,24 @@
+[
+  {
+    "adapter_number": "ADP-01",
+    "provider_code": "P003",
+    "connection_code": "ADP-01 / P003",
+    "provider_name": "FBLS",
+    "converter": "FblsP003Converter",
+    "adaptor_class": "App\\Services\\Psp\\Providers\\P003\\FblsP003Adaptor",
+    "fixture_class": "App\\Services\\Psp\\Providers\\P003\\FblsP003FixtureTransport",
+    "source_files": [
+      "app/Services/Psp/Providers/P003/FblsP003Adaptor.php",
+      "app/Services/Psp/Providers/P003/FblsP003Converter.php"
+    ],
+    "status": "sandbox"
+  },
+  {
+    "adapter_number": "ADP-01",
+    "provider_code": "P001",
+    "connection_code": "ADP-01 / P001",
+    "provider_name": "Clisapay",
+    "converter": null,
+    "status": "dry_run"
+  }
+]

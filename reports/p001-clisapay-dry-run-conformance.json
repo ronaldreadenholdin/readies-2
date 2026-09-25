@@ -1,0 +1,62 @@
+{
+  "run": {
+    "timestamp": "2026-09-25T01:30:00Z",
+    "mode": "dry_run_no_psp_calls",
+    "real_psp_calls": false
+  },
+  "connection": {
+    "adapter_number": "ADP-01",
+    "adapter_name": "Card PSP",
+    "provider_code": "P001",
+    "provider_name": "Clisapay",
+    "legal_entity": "JIXINGBAO TRADING PTE. LTD.",
+    "connection_code": "ADP-01 / P001",
+    "status": "planned_dry_run"
+  },
+  "known_facts": {
+    "geos": "GLOBAL recorded; July note says AE (Visa) plus 'DC' (Mastercard), unclear; USA coverage STOPPED, no date.",
+    "cards": "Visa and Mastercard, 2D and 3DS. JCB promised but not confirmed.",
+    "verticals": ["forex", "igaming", "gambling"],
+    "pricing": "MDR 5.5% (one source says 5%) plus 0.30 USD per transaction; refund 1 USD; chargeback 35 USD.",
+    "settlement": "T+7 (T+5 offered), 1% settlement fee, settled in USDT.",
+    "reserve": "10% rolling reserve for 180 days, capped at 200k.",
+    "agreement": "Signed 3 June 2026."
+  },
+  "score": {
+    "total_checks": 26,
+    "passed": 9,
+    "failed_or_unknown": 17,
+    "score_percent": 34.62,
+    "eligible_for_live": false,
+    "rule": "eligible only at 100%; no overrides"
+  },
+  "suggested_downline_position": {
+    "position": 3,
+    "status": "planned_only_until_100_percent",
+    "reason": "Known MDR 5.5% plus 0.30 USD fixed fee is high, so if P001 later reaches 100% it should be considered a later fallback slot rather than cheapest-first primary."
+  },
+  "failed_or_unknown_checks": [
+    {"check": "geo_scope", "status": "unknown_conflicting", "gap_owner": "provider", "question": "Confirm exact allowed/blocked countries, including AE, 'DC', and stopped USA coverage date."},
+    {"check": "blocked_countries", "status": "unknown", "gap_owner": "provider", "question": "Provide the blocked-country list."},
+    {"check": "jcb_acceptance", "status": "unknown", "gap_owner": "provider", "question": "Confirm whether JCB is actually supported."},
+    {"check": "three_ds_required", "status": "unknown", "gap_owner": "provider", "question": "Confirm when 3DS is required versus optional."},
+    {"check": "min_amount", "status": "unknown", "gap_owner": "provider", "question": "Provide min amount per processing currency."},
+    {"check": "max_amount", "status": "unknown", "gap_owner": "provider", "question": "Provide max amount per processing currency."},
+    {"check": "processing_currencies", "status": "unknown", "gap_owner": "provider", "question": "Confirm processing currencies."},
+    {"check": "cap_period", "status": "unknown", "gap_owner": "provider", "question": "Confirm cap period for the 200k cap."},
+    {"check": "api_docs_received", "status": "unknown", "gap_owner": "provider", "question": "Provide API documentation."},
+    {"check": "sandbox_keys_status", "status": "missing", "gap_owner": "provider", "question": "Provide sandbox credential availability in the 0609 vault; do not send secrets here."},
+    {"check": "live_keys_status", "status": "missing", "gap_owner": "provider", "question": "Provide live credential availability in the 0609 vault; do not send secrets here."},
+    {"check": "signed_webhook_sample_received", "status": "unknown", "gap_owner": "provider", "question": "Provide a signed webhook sample and signature rules."},
+    {"check": "decline_code_map_received", "status": "unknown", "gap_owner": "provider", "question": "Provide decline code map and soft/hard decline semantics."},
+    {"check": "required_fields", "status": "unknown", "gap_owner": "provider", "question": "Confirm required checkout/customer fields."},
+    {"check": "contact", "status": "unknown", "gap_owner": "provider", "question": "Provide technical/commercial contact."},
+    {"check": "converter_mapping", "status": "blocked", "gap_owner": "converter", "question": "Converter can be completed only after API docs, required fields, statuses, and webhook format are known."},
+    {"check": "normalized_golden_fixtures", "status": "blocked", "gap_owner": "converter", "question": "Golden fixtures can be created only after Clisapay API/webhook samples are available."}
+  ],
+  "notes": [
+    "No real PSP calls were made.",
+    "No Clisapay credentials are stored in this repo.",
+    "Unknown fields are intentionally not inferred."
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "media_id": "pigeon_card_delivery",
+    "title": "Pigeon card delivery",
+    "type": "animation",
+    "file_url": null,
+    "storage_path": "TODO: add real approved pigeon card delivery asset path",
+    "thumbnail_url": null,
+    "duration_seconds": 5,
+    "format": "todo",
+    "file_size": null,
+    "owner": "platform",
+    "rights_or_licence": "TODO: attach rights/licence note before production use",
+    "status": "approved",
+    "created_at": "2026-09-25T00:00:00Z",
+    "approved_by": "platform",
+    "approved_at": "2026-09-25T00:00:00Z",
+    "checksum": "TODO"
+  }
+]

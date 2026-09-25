@@ -1,0 +1,22 @@
+[
+  {
+    "asset_id": "pigeon_card_delivery",
+    "title": "Pigeon card delivery",
+    "type": "video_clip",
+    "explanation": "Default neutral waiting animation for payment redirect and cascade wait screens.",
+    "file_url": null,
+    "storage_path": "TODO: add real approved pigeon card delivery asset path",
+    "external_url": null,
+    "thumbnail_url": null,
+    "allowed_slots": ["redirect_wait", "cascade_wait", "final_status_wait"],
+    "owner": "platform",
+    "advertiser_id": null,
+    "fee_rate": null,
+    "status": "approved",
+    "starts_at": null,
+    "ends_at": null,
+    "upload_mime_type": null,
+    "file_size": null,
+    "checksum": "TODO"
+  }
+]

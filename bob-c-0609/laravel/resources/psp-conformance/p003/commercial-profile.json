@@ -1,0 +1,37 @@
+{
+  "psp_code": "P003",
+  "adapter_number": "ADP-01",
+  "allowed_geos": ["DE", "NL", "BE"],
+  "blocked_countries": ["none"],
+  "accepted_card_brands": ["visa", "mastercard"],
+  "accepted_card_types": ["credit", "debit"],
+  "three_ds_required": true,
+  "allowed_verticals": ["retail"],
+  "blocked_verticals": ["gambling", "adult"],
+  "min_amount": {
+    "EUR": "1.00"
+  },
+  "max_amount": {
+    "EUR": "500.00"
+  },
+  "processing_currencies": ["EUR"],
+  "settlement_currencies": ["EUR"],
+  "mdr_percent": "2.90",
+  "mdr_fixed": {
+    "EUR": "0.25"
+  },
+  "other_fees": ["none"],
+  "settlement_days": "T+2",
+  "rolling_reserve_percent": "0.00",
+  "rolling_reserve_days": 0,
+  "cap_amount": {
+    "EUR": "100000.00"
+  },
+  "cap_period": "monthly",
+  "api_docs_received": true,
+  "sandbox_keys_status": "received",
+  "live_keys_status": "not_requested",
+  "signed_webhook_sample_received": true,
+  "decline_code_map_received": true,
+  "agreement_signed": true
+}
