@@ -16,6 +16,12 @@
     "file_url": null,
     "storage_path": "TODO: add real approved pigeon card delivery asset path"
   },
+  "measurement": {
+    "variant": "default_animation",
+    "control_group": false,
+    "minimum_visible_seconds": 2,
+    "impression_counted": false
+  },
   "audit": {
     "media_id_shown": "pigeon_card_delivery",
     "slot": "cascade_wait"

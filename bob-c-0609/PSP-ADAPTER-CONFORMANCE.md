@@ -111,6 +111,16 @@ Every animation, video, or ad used in waiting slots must be registered in `psp_w
 
 The seeded default is `Pigeon card delivery`, a platform-owned approved placeholder with TODO asset path and TODO licence/checksum notes. Ads require explicit merchant approval and remain off by default. Waiting status responses include `audit.media_id_shown` for payment-attempt audit.
 
+## Paid impressions and conversion measurement
+
+`psp_media_impressions` records one row per actually shown clip using `impression_id`, `media_id`, advertiser/owner, merchant id, slot, payment attempt id or merchant reference, shown timestamp, visible duration, completed/clicked flags, later payment outcome, and variant. It intentionally stores no customer personal data or card data.
+
+`MediaImpressionService` counts an impression only when visible for at least the configurable minimum, default 2 seconds. It dedupes by `payment_attempt_id + slot` so refresh/back does not double count.
+
+`psp_media_fee_rates` stores configured rates only: per impression, completed view, or click; currency; amount; optional merchant revenue share. `MediaFeeStatementService` can summarize monthly/period statements by advertiser or merchant.
+
+`MediaVariantSelector` records variants (`none`, `default_animation`, or a specific media id) with configurable control-group percentage, default 0. `MediaConversionReportService` measures conversion and abandonment by variant, slot, and merchant; it does not claim uplift.
+
 ## Conversion-killer categories
 
 The gate checks and reports:

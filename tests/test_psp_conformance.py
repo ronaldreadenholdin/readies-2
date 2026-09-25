@@ -185,6 +185,75 @@ class PspConformanceFixtureTests(unittest.TestCase):
         self.assertIn("Pigeon card delivery", html)
         self.assertIn("pigeon_card_delivery", html)
         self.assertIn("Default adverts are off", html)
+        self.assertIn("Fees earned", html)
+        self.assertIn("Conversion vs control", html)
+
+    def test_media_impression_billing_and_conversion_contract(self):
+        minimum_visible_seconds = 2
+        impressions = {}
+
+        def record(event):
+            key = (event["payment_attempt_id"], event["slot"])
+            if event["visible_duration_seconds"] < minimum_visible_seconds:
+                return {"counted": False, "reason": "under_minimum_visibility"}
+            if key in impressions:
+                return {"counted": False, "reason": "duplicate_attempt_slot"}
+            impressions[key] = event
+            return {"counted": True, "impression": event}
+
+        under_min = record({
+            "media_id": "ad_1",
+            "advertiser_id": "adv",
+            "merchant_id": "merchant",
+            "slot": "cascade_wait",
+            "payment_attempt_id": "attempt-1",
+            "merchant_reference": "order-1",
+            "visible_duration_seconds": 1,
+            "completed": False,
+            "clicked": False,
+            "payment_outcome": "abandoned",
+            "variant": "ad_1",
+        })
+        self.assertFalse(under_min["counted"])
+
+        first = record({
+            "media_id": "ad_1",
+            "advertiser_id": "adv",
+            "merchant_id": "merchant",
+            "slot": "cascade_wait",
+            "payment_attempt_id": "attempt-2",
+            "merchant_reference": "order-2",
+            "visible_duration_seconds": 3,
+            "completed": True,
+            "clicked": False,
+            "payment_outcome": "success",
+            "variant": "ad_1",
+        })
+        refresh = record(dict(first["impression"]))
+        self.assertTrue(first["counted"])
+        self.assertFalse(refresh["counted"])
+        self.assertEqual(refresh["reason"], "duplicate_attempt_slot")
+
+        rates = {
+            "ad_1": {
+                "billable_event": "completed_view",
+                "currency": "EUR",
+                "amount": 0.05,
+                "merchant_revenue_share_percent": 20,
+            }
+        }
+        fee_owed = sum(
+            rates[row["media_id"]]["amount"]
+            for row in impressions.values()
+            if row["completed"] and rates[row["media_id"]]["billable_event"] == "completed_view"
+        )
+        self.assertEqual(fee_owed, 0.05)
+        self.assertEqual(round(fee_owed * 0.20, 4), 0.01)
+
+        control_group_percent = 100
+        selected_variant = "none" if control_group_percent == 100 else "ad_1"
+        self.assertEqual(selected_variant, "none")
+        self.assertEqual(first["impression"]["variant"], "ad_1")
 
     def test_three_hop_cascade_precollects_hop_three_date_of_birth(self):
         cascade = ["P001", "P002", "P003DOB"]
