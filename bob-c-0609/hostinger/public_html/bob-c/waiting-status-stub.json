@@ -7,5 +7,17 @@
   "next_redirect_url": null,
   "result_ready": false,
   "result_url": null,
-  "ad_slot_enabled": false
+  "ad_slot_enabled": false,
+  "media": {
+    "media_id": "pigeon_card_delivery",
+    "title": "Pigeon card delivery",
+    "type": "animation",
+    "status": "approved",
+    "file_url": null,
+    "storage_path": "TODO: add real approved pigeon card delivery asset path"
+  },
+  "audit": {
+    "media_id_shown": "pigeon_card_delivery",
+    "slot": "cascade_wait"
+  }
 }

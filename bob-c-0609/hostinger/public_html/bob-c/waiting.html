@@ -16,6 +16,7 @@
     .muted { color: #657089; font-size: 14px; }
     .promo[hidden] { display: none; }
     .promo { margin-top: 24px; padding-top: 18px; border-top: 1px solid #edf1f7; }
+    .media-note { margin-top: 14px; color: #64748b; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -25,6 +26,7 @@
     <h1>Securing your payment...</h1>
     <p id="progress">Please wait while we confirm the payment status.</p>
     <p class="muted">Do not close, refresh, or go back. This helps prevent duplicate payment attempts.</p>
+    <p id="media-note" class="media-note"></p>
     <div id="promo" class="promo" hidden></div>
   </section>
 </main>
@@ -58,6 +60,9 @@
       return;
     }
     document.getElementById('progress').textContent = state.message || 'Securing your payment...';
+    if (state.media && state.media.media_id) {
+      document.getElementById('media-note').dataset.mediaIdShown = state.media.media_id;
+    }
     window.setTimeout(poll, state.poll_after_ms || 1500);
   }
 

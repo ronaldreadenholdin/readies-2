@@ -103,6 +103,14 @@ Rules:
 
 The optional promo/ad slot defaults off and is only allowed on the waiting page, never in card-entry fields or iframes. The page includes a CSP note limiting loading to same-origin resources by default.
 
+## Waiting-slot media library and merchant approval
+
+Every animation, video, or ad used in waiting slots must be registered in `psp_waiting_media` with `media_id`, title, type, file URL or storage path, thumbnail, duration, format, file size, owner, rights/licence note, status, approval metadata, and checksum.
+
+`merchant_media_consent` records per-merchant approval for a `media_id` and slot (`redirect_wait`, `cascade_wait`, `final_status_wait`). `WaitingMediaResolver` only returns requested media when it is registered, approved, and merchant-approved for that slot; otherwise it falls back to `pigeon_card_delivery`.
+
+The seeded default is `Pigeon card delivery`, a platform-owned approved placeholder with TODO asset path and TODO licence/checksum notes. Ads require explicit merchant approval and remain off by default. Waiting status responses include `audit.media_id_shown` for payment-attempt audit.
+
 ## Conversion-killer categories
 
 The gate checks and reports:

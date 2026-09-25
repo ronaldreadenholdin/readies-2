@@ -10,6 +10,8 @@ PHP = shutil.which("php")
 FIXTURE_ROOT = ROOT / "bob-c-0609/laravel/resources/psp-conformance/p003"
 WAITING_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/waiting.html"
 WAITING_STATUS = ROOT / "bob-c-0609/hostinger/public_html/bob-c/waiting-status-stub.json"
+MEDIA_REGISTRY = ROOT / "bob-c-0609/laravel/resources/psp-waiting/media-registry.json"
+MEDIA_LIBRARY_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/media-library.html"
 
 
 class PspConformanceFixtureTests(unittest.TestCase):
@@ -145,10 +147,44 @@ class PspConformanceFixtureTests(unittest.TestCase):
         status = json.loads(WAITING_STATUS.read_text())
         self.assertEqual(status["message"], "Securing your payment...")
         self.assertFalse(status["ad_slot_enabled"])
+        self.assertEqual(status["audit"]["media_id_shown"], "pigeon_card_delivery")
         self.assertIn("sessionStorage.setItem('readies_payment_idempotency_key'", html)
         self.assertIn("Do not close, refresh, or go back", html)
         self.assertIn("Content-Security-Policy", html)
         self.assertNotIn("failed, trying another provider", html.lower())
+
+    def test_waiting_media_registry_and_merchant_consent_rules(self):
+        registry = {row["media_id"]: row for row in json.loads(MEDIA_REGISTRY.read_text())}
+        self.assertIn("pigeon_card_delivery", registry)
+        pigeon = registry["pigeon_card_delivery"]
+        self.assertEqual(pigeon["title"], "Pigeon card delivery")
+        self.assertEqual(pigeon["status"], "approved")
+        self.assertIn("TODO", pigeon["storage_path"])
+
+        consents = {
+            ("merchant-1", "custom_wait_clip", "cascade_wait"): {"approved": False},
+            ("merchant-1", "pigeon_card_delivery", "cascade_wait"): {"approved": True},
+        }
+
+        def resolve(media_id, slot="cascade_wait"):
+            media = registry.get(media_id)
+            consent = consents.get(("merchant-1", media_id, slot))
+            if media and media["status"] == "approved" and consent and consent["approved"]:
+                return media["media_id"]
+            return "pigeon_card_delivery"
+
+        self.assertEqual(resolve("unregistered_clip"), "pigeon_card_delivery")
+        self.assertEqual(resolve("custom_wait_clip"), "pigeon_card_delivery")
+        consents[("merchant-1", "pigeon_card_delivery", "cascade_wait")] = {"approved": False}
+        self.assertEqual(resolve("pigeon_card_delivery"), "pigeon_card_delivery")
+        self.assertFalse(json.loads(WAITING_STATUS.read_text())["ad_slot_enabled"])
+
+    def test_bob_c_media_library_page_lists_default_clip(self):
+        html = MEDIA_LIBRARY_PAGE.read_text()
+        self.assertIn("BOB C Media Library", html)
+        self.assertIn("Pigeon card delivery", html)
+        self.assertIn("pigeon_card_delivery", html)
+        self.assertIn("Default adverts are off", html)
 
     def test_three_hop_cascade_precollects_hop_three_date_of_birth(self):
         cascade = ["P001", "P002", "P003DOB"]
