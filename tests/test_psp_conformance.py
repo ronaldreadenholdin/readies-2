@@ -22,6 +22,7 @@ P001_PROFILE = ROOT / "bob-c-0609/laravel/resources/psp-conformance/p001/commerc
 P001_REPORT = ROOT / "reports/p001-clisapay-dry-run-conformance.json"
 MERCHANT_PSP_ORDER_PARTIAL = ROOT / "bob-c-0609/laravel/resources/views/psp/partials/merchant_psp_order_suggestions.blade.php"
 MERCHANT_PSP_DISAGREEMENTS_PARTIAL = ROOT / "bob-c-0609/laravel/resources/views/psp/partials/merchant_psp_disagreements.blade.php"
+MERCHANT_PSP_TRIALS_PARTIAL = ROOT / "bob-c-0609/laravel/resources/views/psp/partials/merchant_psp_trials.blade.php"
 MERCHANT_TAB_INTEGRATION = ROOT / "bob-c-0609/laravel/PSP-MERCHANT-TAB-INTEGRATION.md"
 
 
@@ -175,6 +176,43 @@ class PspConformanceFixtureTests(unittest.TestCase):
         self.assertIn("Needs Gerardus discussion", disagreement_partial)
         self.assertIn("Do not create a duplicate merchant PSP list", integration)
         self.assertIn("pending server access", integration)
+
+    def test_trial_override_rules(self):
+        def disagreement(row):
+            if row["actual_position"] == row["suggested_position"]:
+                return False
+            if row["trial_state"] == "On trial" and row["actual_position"] < row["suggested_position"]:
+                return False
+            return True
+
+        trial = {
+            "connection_code": "ADP-01 / NEW",
+            "suggested_position": 3,
+            "actual_position": 1,
+            "trial_state": "On trial",
+            "live_position_allowed": True,
+        }
+        proven = dict(trial, trial_state="Proven")
+        not_eligible_trial = dict(trial, live_position_allowed=False)
+        self.assertFalse(disagreement(trial))
+        self.assertTrue(disagreement(proven))
+        self.assertFalse(not_eligible_trial["live_position_allowed"])
+
+        config_unset = {"trial_min_transactions": None, "trial_max_days": None}
+        self.assertEqual(config_unset, {"trial_min_transactions": None, "trial_max_days": None})
+        self.assertFalse(any(value is not None for value in config_unset.values()))
+
+        row = {"trial_transactions": 50, "trial_days_elapsed": 7}
+        thresholds = {"trial_min_transactions": 50, "trial_max_days": 14}
+        ended = row["trial_transactions"] >= thresholds["trial_min_transactions"] or row["trial_days_elapsed"] >= thresholds["trial_max_days"]
+        self.assertTrue(ended)
+
+        partial = MERCHANT_PSP_TRIALS_PARTIAL.read_text()
+        integration = MERCHANT_TAB_INTEGRATION.read_text()
+        self.assertIn("New PSPs on trial", partial)
+        self.assertIn("Trial length not set, needs Gerardus", partial)
+        self.assertIn("trial_min_transactions", integration)
+        self.assertIn("Example only, not a default", integration)
 
     def test_p001_clisapay_dry_run_uses_only_given_facts(self):
         profile = json.loads(P001_PROFILE.read_text())

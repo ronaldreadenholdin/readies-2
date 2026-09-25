@@ -22,6 +22,25 @@ final class InMemoryMerchantPspOverrideRepository
         return $row;
     }
 
+    public function appendTrial(string $merchantId, string $connectionCode, string $trialState, int $trialPosition, string $trialReason, string $setBy): array
+    {
+        $row = [
+            'merchant_id' => $merchantId,
+            'connection_code' => $connectionCode,
+            'from_position' => $trialPosition,
+            'to_position' => $trialPosition,
+            'reason' => $trialReason,
+            'overridden_by' => $setBy,
+            'overridden_at' => gmdate('Y-m-d\TH:i:s\Z'),
+            'trial_state' => $trialState,
+            'trial_position' => $trialPosition,
+            'trial_reason' => $trialReason,
+        ];
+        $this->rows[] = $row;
+
+        return $row;
+    }
+
     public function all(): array
     {
         return $this->rows;

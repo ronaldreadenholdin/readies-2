@@ -17,6 +17,9 @@ return new class extends Migration
             $table->text('reason');
             $table->string('overridden_by');
             $table->timestamp('overridden_at');
+            $table->string('trial_state')->nullable();
+            $table->unsignedInteger('trial_position')->nullable();
+            $table->text('trial_reason')->nullable();
             $table->timestamps();
             $table->index(['merchant_id', 'connection_code']);
         });

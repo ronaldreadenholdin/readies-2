@@ -63,6 +63,8 @@ Users with orchestration-owner authority, including TADDY/Gerardus, can override
 
 When actual position differs from the System/CODA suggestion, `MerchantPspOrderService::disagreements()` marks the merchant/connection as `Needs Gerardus discussion` with both positions and both reasons. The disagreement view sends no email or notification.
 
+Exception for new PSPs: a new provider with no performance record may be placed higher than the stats-based suggestion as `On trial` to build a track record. Trial state is `New`, `On trial`, or `Proven`, and changes are written to the same append-only override log with who set it, when, the position, and why. Trial end config is intentionally unset by default: `trial_min_transactions=null` and `trial_max_days=null`. When both are unset, the UI says `Trial length not set, needs Gerardus` and never auto-ends. Example only, not a default: 100 transactions or 14 days. A trial never bypasses the 100% conformance rule.
+
 ## P001 Clisapay dry run
 
 `ADP-01 / P001` is registered as a dry-run Card PSP connection for Clisapay / JIXINGBAO TRADING PTE. LTD. The profile and report use only the provided facts and mark all other fields unknown or missing. The saved report is under `reports/p001-clisapay-dry-run-conformance.*`.

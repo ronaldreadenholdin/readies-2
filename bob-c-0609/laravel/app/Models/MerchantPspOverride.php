@@ -16,5 +16,8 @@ class MerchantPspOverride extends Model
         'reason',
         'overridden_by',
         'overridden_at',
+        'trial_state',
+        'trial_position',
+        'trial_reason',
     ];
 }
