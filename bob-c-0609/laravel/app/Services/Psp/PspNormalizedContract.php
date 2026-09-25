@@ -8,7 +8,7 @@ use InvalidArgumentException;
 
 final class PspNormalizedContract
 {
-    public const SCHEMA_VERSION = 'readies.psp.normalized.v1';
+    public const SCHEMA_VERSION = 'ADP-01:v1';
 
     public const OPERATIONS = [
         'create_payment',
