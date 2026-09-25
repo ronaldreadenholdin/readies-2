@@ -2,6 +2,7 @@
 <section class="card">
     <h3>New PSPs on trial</h3>
     <p class="text-muted">A new PSP may be placed higher than the stats-based suggestion to build a performance record. The 100% conformance rule still applies.</p>
+    <p class="text-muted">If trial thresholds are unset, show: Trial length not set, needs Gerardus.</p>
     <table class="table">
         <thead>
             <tr>
