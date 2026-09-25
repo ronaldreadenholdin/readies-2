@@ -20,7 +20,9 @@ ADAPTER_STANDARDS = ROOT / "bob-c-0609/laravel/resources/psp-adapters/adapter-st
 PROVIDER_CONNECTIONS = ROOT / "bob-c-0609/laravel/resources/psp-adapters/provider-connections.json"
 P001_PROFILE = ROOT / "bob-c-0609/laravel/resources/psp-conformance/p001/commercial-profile.json"
 P001_REPORT = ROOT / "reports/p001-clisapay-dry-run-conformance.json"
-MERCHANT_PSP_ORDER_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/merchant-psp-order.html"
+MERCHANT_PSP_ORDER_PARTIAL = ROOT / "bob-c-0609/laravel/resources/views/psp/partials/merchant_psp_order_suggestions.blade.php"
+MERCHANT_PSP_DISAGREEMENTS_PARTIAL = ROOT / "bob-c-0609/laravel/resources/views/psp/partials/merchant_psp_disagreements.blade.php"
+MERCHANT_TAB_INTEGRATION = ROOT / "bob-c-0609/laravel/PSP-MERCHANT-TAB-INTEGRATION.md"
 
 
 class PspConformanceFixtureTests(unittest.TestCase):
@@ -154,10 +156,25 @@ class PspConformanceFixtureTests(unittest.TestCase):
         self.assertEqual(len(audit), 2)
         self.assertEqual(audit[0]["overridden_by"], "TADDY")
 
-        page = MERCHANT_PSP_ORDER_PAGE.read_text()
-        self.assertIn("Suggested", page)
-        self.assertIn("Actual", page)
-        self.assertIn("ADP-01 / P001", page)
+        disagreements = [{
+            "merchant_id": "neckermann",
+            "connection_code": "ADP-01 / EXPENSIVE",
+            "suggested_position": 2,
+            "actual_position": 1,
+            "suggested_reason": "System/CODA suggestion from eligibility, cost, and conformance.",
+            "actual_reason": "TADDY commercial override for testing",
+            "status": "Needs Gerardus discussion",
+        }]
+        self.assertEqual(disagreements[0]["status"], "Needs Gerardus discussion")
+
+        partial = MERCHANT_PSP_ORDER_PARTIAL.read_text()
+        disagreement_partial = MERCHANT_PSP_DISAGREEMENTS_PARTIAL.read_text()
+        integration = MERCHANT_TAB_INTEGRATION.read_text()
+        self.assertIn("Suggested position", partial)
+        self.assertIn("Actual position", partial)
+        self.assertIn("Needs Gerardus discussion", disagreement_partial)
+        self.assertIn("Do not create a duplicate merchant PSP list", integration)
+        self.assertIn("pending server access", integration)
 
     def test_p001_clisapay_dry_run_uses_only_given_facts(self):
         profile = json.loads(P001_PROFILE.read_text())

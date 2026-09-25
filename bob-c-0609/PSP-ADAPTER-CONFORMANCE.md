@@ -55,9 +55,13 @@ Readies has seven adapter standards, `ADP-01` through `ADP-07`.
 
 ## Per-merchant PSP order and TADDY overrides
 
-Each merchant can have its own ordered PSP connection list. `MerchantPspOrderService` suggests positions from eligibility, cost, and conformance. Cheaper eligible connections sort earlier; high-cost providers are pushed later as fallback candidates. Connections below 100% conformance are listed as `planned` only and cannot hold a live position.
+The live 0609 host already has the merchant PSP / Payment providers tab, but that code is only on `/var/www/html/adapter` and is not present in this repo. This PR does not create a duplicate list. It provides a drop-in module for the existing tab once server access is available.
 
-Users with orchestration-owner authority, including TADDY/Gerardus, can override positions. `merchant_psp_overrides` records append-only audit rows with merchant, connection, from/to positions, reason, who overrode, and when. The BOB C merchant order page shows suggested and actual positions side by side. Automatic hops remain capped at 3 before pay-by-link.
+`MerchantPspOrderService` suggests positions from eligibility, cost, and conformance. Cheaper eligible connections sort earlier; high-cost providers are pushed later as fallback candidates. Connections below 100% conformance are listed as `planned` only and cannot hold a live position.
+
+Users with orchestration-owner authority, including TADDY/Gerardus, can override positions. `merchant_psp_overrides` records append-only audit rows with merchant, connection, from/to positions, reason, who overrode, and when. Drop-in Blade partials show suggested and actual positions side by side inside the existing merchant tab. Automatic hops remain capped at 3 before pay-by-link.
+
+When actual position differs from the System/CODA suggestion, `MerchantPspOrderService::disagreements()` marks the merchant/connection as `Needs Gerardus discussion` with both positions and both reasons. The disagreement view sends no email or notification.
 
 ## P001 Clisapay dry run
 
