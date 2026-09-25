@@ -13,7 +13,7 @@ Every adapter method returns the same normalized shape:
 
 ```json
 {
-  "schema_version": "readies.psp.normalized.v1",
+  "schema_version": "ADP-01:v1",
   "psp_code": "P003",
   "operation": "create_payment|payment_status|refund|webhook",
   "merchant_reference": "neckermann-test-order-1001",
@@ -46,7 +46,7 @@ Every adapter method returns the same normalized shape:
 
 Readies has seven adapter standards, `ADP-01` through `ADP-07`.
 
-- `ADP-01` is active and is the Card PSP standard. It uses `readies.psp.normalized.v1`.
+- `ADP-01` is active and is the Card PSP standard. It uses frozen contract version `ADP-01:v1`.
 - `ADP-02` through `ADP-07` are planned placeholders with name `TBD`; their contracts are intentionally not invented here.
 - Every provider connection is registered as `{adapter_number} / {provider_code}`, for example `ADP-01 / P003`.
 - Each connection has its own converter that maps the provider API into that adapter standard's normalized contract.

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Psp\Converters;
+namespace App\Services\Psp\Providers\P003;
 
 use App\DTO\PspPaymentRequest;
 use App\DTO\PspRefundRequest;
@@ -9,6 +9,8 @@ use App\Services\Psp\PspNormalizedContract;
 
 final class FblsP003Converter implements PspConverterInterface
 {
+    public const CONTRACT_VERSION = 'ADP-01:v1';
+
     public function pspCode(): string
     {
         return 'P003';
@@ -16,13 +18,7 @@ final class FblsP003Converter implements PspConverterInterface
 
     public function requiredFields(): array
     {
-        return [
-            'merchant_reference',
-            'amount.value',
-            'amount.currency',
-            'customer.email',
-            'billing.postal_code',
-        ];
+        return ['merchant_reference', 'amount.value', 'amount.currency', 'customer.email', 'billing.postal_code'];
     }
 
     public function createPayloadFieldMap(): array
@@ -38,10 +34,7 @@ final class FblsP003Converter implements PspConverterInterface
 
     public function toCreatePaymentPayload(PspPaymentRequest $request): array
     {
-        $amount = PspNormalizedContract::amountFromDecimal(
-            (string) $request->get('amount.value'),
-            (string) $request->get('amount.currency'),
-        );
+        $amount = PspNormalizedContract::amountFromDecimal((string) $request->get('amount.value'), (string) $request->get('amount.currency'));
 
         return [
             'merchantRef' => trim((string) $request->get('merchant_reference')),
@@ -56,10 +49,7 @@ final class FblsP003Converter implements PspConverterInterface
 
     public function toRefundPayload(PspRefundRequest $request): array
     {
-        $amount = PspNormalizedContract::amountFromDecimal(
-            (string) $request->get('amount.value'),
-            (string) $request->get('amount.currency'),
-        );
+        $amount = PspNormalizedContract::amountFromDecimal((string) $request->get('amount.value'), (string) $request->get('amount.currency'));
 
         return [
             'paymentId' => trim((string) $request->get('payment_id')),
@@ -74,22 +64,7 @@ final class FblsP003Converter implements PspConverterInterface
         $amount = PspNormalizedContract::amountFromMinorUnits((int) $payload['amount_cents'], (string) $payload['currency']);
         $status = $this->mapStatus((string) $payload['status']);
 
-        return PspNormalizedContract::blank(
-            $this->pspCode(),
-            'create_payment',
-            (string) ($payload['merchant_ref'] ?? $request->get('merchant_reference')),
-            (string) $payload['id'],
-            (string) ($payload['transaction_id'] ?? ''),
-            $status,
-            $amount->value,
-            $amount->currency,
-            $amount->minorUnits,
-            (string) $payload['created_at'],
-            (string) $payload['updated_at'],
-            $this->declineFor($status, $payload),
-            null,
-            ['cascade_eligible' => $this->cascadeEligible($status, $payload)],
-        );
+        return PspNormalizedContract::blank($this->pspCode(), 'create_payment', (string) ($payload['merchant_ref'] ?? $request->get('merchant_reference')), (string) $payload['id'], (string) ($payload['transaction_id'] ?? ''), $status, $amount->value, $amount->currency, $amount->minorUnits, (string) $payload['created_at'], (string) $payload['updated_at'], $this->declineFor($status, $payload), null, ['cascade_eligible' => $this->cascadeEligible($status, $payload)]);
     }
 
     public function normalizeStatusResponse(array $payload): array
@@ -97,44 +72,14 @@ final class FblsP003Converter implements PspConverterInterface
         $amount = PspNormalizedContract::amountFromMinorUnits((int) $payload['amount_cents'], (string) $payload['currency']);
         $status = $this->mapStatus((string) $payload['status']);
 
-        return PspNormalizedContract::blank(
-            $this->pspCode(),
-            'payment_status',
-            (string) $payload['merchant_ref'],
-            (string) $payload['id'],
-            (string) ($payload['transaction_id'] ?? ''),
-            $status,
-            $amount->value,
-            $amount->currency,
-            $amount->minorUnits,
-            (string) $payload['created_at'],
-            (string) $payload['updated_at'],
-            $this->declineFor($status, $payload),
-            null,
-            ['cascade_eligible' => $this->cascadeEligible($status, $payload)],
-        );
+        return PspNormalizedContract::blank($this->pspCode(), 'payment_status', (string) $payload['merchant_ref'], (string) $payload['id'], (string) ($payload['transaction_id'] ?? ''), $status, $amount->value, $amount->currency, $amount->minorUnits, (string) $payload['created_at'], (string) $payload['updated_at'], $this->declineFor($status, $payload), null, ['cascade_eligible' => $this->cascadeEligible($status, $payload)]);
     }
 
     public function normalizeRefundResponse(array $payload, PspRefundRequest $request): array
     {
         $amount = PspNormalizedContract::amountFromMinorUnits((int) $payload['amount_cents'], (string) $payload['currency']);
 
-        return PspNormalizedContract::blank(
-            $this->pspCode(),
-            'refund',
-            (string) ($payload['merchant_ref'] ?? $request->get('merchant_reference', 'refund')),
-            (string) $payload['payment_id'],
-            (string) ($payload['refund_id'] ?? ''),
-            'refunded',
-            $amount->value,
-            $amount->currency,
-            $amount->minorUnits,
-            (string) $payload['created_at'],
-            (string) $payload['updated_at'],
-            ['class' => 'none'],
-            null,
-            ['cascade_eligible' => false],
-        );
+        return PspNormalizedContract::blank($this->pspCode(), 'refund', (string) ($payload['merchant_ref'] ?? $request->get('merchant_reference', 'refund')), (string) $payload['payment_id'], (string) ($payload['refund_id'] ?? ''), 'refunded', $amount->value, $amount->currency, $amount->minorUnits, (string) $payload['created_at'], (string) $payload['updated_at'], ['class' => 'none'], null, ['cascade_eligible' => false]);
     }
 
     public function normalizeWebhookEvent(array $payload, bool $signatureVerified): array
@@ -185,28 +130,13 @@ final class FblsP003Converter implements PspConverterInterface
     {
         $rawStatus = strtolower((string) ($payload['status'] ?? ''));
         if (in_array($rawStatus, ['soft_declined', 'failed_retryable'], true)) {
-            return [
-                'class' => 'soft',
-                'code' => (string) ($payload['decline_code'] ?? 'SOFT_DECLINE'),
-                'message' => (string) ($payload['decline_message'] ?? 'Retryable PSP decline.'),
-                'cascade_reason' => 'soft_decline',
-            ];
+            return ['class' => 'soft', 'code' => (string) ($payload['decline_code'] ?? 'SOFT_DECLINE'), 'message' => (string) ($payload['decline_message'] ?? 'Retryable PSP decline.'), 'cascade_reason' => 'soft_decline'];
         }
         if (in_array($rawStatus, ['hard_declined', 'declined'], true)) {
-            return [
-                'class' => 'hard',
-                'code' => (string) ($payload['decline_code'] ?? 'HARD_DECLINE'),
-                'message' => (string) ($payload['decline_message'] ?? 'Non-retryable PSP decline.'),
-                'cascade_reason' => null,
-            ];
+            return ['class' => 'hard', 'code' => (string) ($payload['decline_code'] ?? 'HARD_DECLINE'), 'message' => (string) ($payload['decline_message'] ?? 'Non-retryable PSP decline.'), 'cascade_reason' => null];
         }
         if ($normalizedStatus === 'unknown') {
-            return [
-                'class' => 'soft',
-                'code' => 'UNKNOWN_STATUS',
-                'message' => 'Unknown PSP status requires sandbox review.',
-                'cascade_reason' => 'unknown_status',
-            ];
+            return ['class' => 'soft', 'code' => 'UNKNOWN_STATUS', 'message' => 'Unknown PSP status requires sandbox review.', 'cascade_reason' => 'unknown_status'];
         }
 
         return ['class' => 'none'];
@@ -214,8 +144,6 @@ final class FblsP003Converter implements PspConverterInterface
 
     private function cascadeEligible(string $normalizedStatus, array $payload): bool
     {
-        $decline = $this->declineFor($normalizedStatus, $payload);
-
-        return ($decline['class'] ?? 'none') !== 'hard';
+        return ($this->declineFor($normalizedStatus, $payload)['class'] ?? 'none') !== 'hard';
     }
 }

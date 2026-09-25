@@ -3,7 +3,7 @@
     "adapter_number": "ADP-01",
     "name": "Card PSP",
     "status": "active",
-    "version": "readies.psp.normalized.v1",
+    "version": "ADP-01:v1",
     "normalized_contract": "PspNormalizedContract",
     "conformance_checklist": [
       "preflight",

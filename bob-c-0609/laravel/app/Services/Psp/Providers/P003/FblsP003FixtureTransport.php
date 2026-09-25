@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Services\Psp\Fixtures;
+namespace App\Services\Psp\Providers\P003;
 
 use App\DTO\PspPaymentRequest;
 use App\DTO\PspRefundRequest;
+use App\Services\Psp\Contracts\PspFixtureSetInterface;
 use RuntimeException;
 
-final class FblsP003FixtureTransport
+final class FblsP003FixtureTransport implements PspFixtureSetInterface
 {
     public function __construct(private string $fixtureRoot)
     {
@@ -14,7 +15,7 @@ final class FblsP003FixtureTransport
 
     public static function default(): self
     {
-        return new self(dirname(__DIR__, 4) . '/resources/psp-conformance/p003');
+        return new self(dirname(__DIR__, 5) . '/resources/psp-conformance/p003');
     }
 
     public function __invoke(string $operation, array $payload): array
@@ -45,12 +46,14 @@ final class FblsP003FixtureTransport
     public function webhookHeaders(): array
     {
         $payload = $this->webhookPayload();
-        $secret = 'test_secret';
+        $secret = $this->webhookSecret();
 
-        return [
-            'X-Readies-Test-Secret' => $secret,
-            'X-FBLS-Signature' => hash_hmac('sha256', $payload, $secret),
-        ];
+        return ['X-FBLS-Signature' => hash_hmac('sha256', $payload, $secret)];
+    }
+
+    public function webhookSecret(): string
+    {
+        return 'test_secret';
     }
 
     public function golden(string $connection): array
@@ -72,7 +75,7 @@ final class FblsP003FixtureTransport
     {
         $decoded = json_decode($this->readRaw($relativePath), true);
         if (! is_array($decoded)) {
-            throw new RuntimeException("Fixture {$relativePath} is not a JSON object/array.");
+            throw new RuntimeException("Fixture {$relativePath} is not JSON.");
         }
 
         return $decoded;

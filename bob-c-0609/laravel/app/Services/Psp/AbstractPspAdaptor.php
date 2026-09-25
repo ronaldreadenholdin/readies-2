@@ -66,18 +66,6 @@ abstract class AbstractPspAdaptor implements PspAdaptorInterface
         return PspRefundResponse::fromNormalized($this->converter->normalizeRefundResponse($response, $request));
     }
 
-    public function verifyWebhook(array $headers, string $payload): bool
-    {
-        $secret = (string) (($this->credentials->get($this->code(), 'sandbox')['webhook_secret'] ?? null) ?: '');
-        if ($secret === '') {
-            return false;
-        }
-        $signature = (string) ($headers['X-FBLS-Signature'] ?? $headers['x-fbls-signature'] ?? '');
-        $expected = hash_hmac('sha256', $payload, $secret);
-
-        return hash_equals($expected, $signature);
-    }
-
     public function credentialStatus(string $environment): array
     {
         return $this->credentials->status($this->code(), $environment);

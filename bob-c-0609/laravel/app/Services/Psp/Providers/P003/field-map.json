@@ -1,0 +1,10 @@
+{
+  "contract_version": "ADP-01:v1",
+  "create_payment": {
+    "merchant_reference": "merchantRef",
+    "amount.value": "amountCents",
+    "amount.currency": "currency",
+    "customer.email": "customer.email",
+    "billing.postal_code": "customer.billingZip"
+  }
+}

@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PHP = shutil.which("php")
 FIXTURE_ROOT = ROOT / "bob-c-0609/laravel/resources/psp-conformance/p003"
+PROVIDERS_ROOT = ROOT / "bob-c-0609/laravel/app/Services/Psp/Providers"
 WAITING_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/waiting.html"
 WAITING_STATUS = ROOT / "bob-c-0609/hostinger/public_html/bob-c/waiting-status-stub.json"
 MEDIA_REGISTRY = ROOT / "bob-c-0609/laravel/resources/psp-waiting/media-registry.json"
@@ -70,7 +71,7 @@ class PspConformanceFixtureTests(unittest.TestCase):
         for path in sorted((FIXTURE_ROOT / "golden").glob("*.json")):
             payload = json.loads(path.read_text())
             self.assertEqual(set(payload.keys()), required)
-            self.assertEqual(payload["schema_version"], "readies.psp.normalized.v1")
+            self.assertEqual(payload["schema_version"], "ADP-01:v1")
             self.assertEqual(payload["psp_code"], "P003")
             self.assertRegex(payload["amount"]["currency"], r"^[A-Z]{3}$")
             self.assertEqual(int(round(float(payload["amount"]["value"]) * 100)), payload["amount"]["minor_units"])
@@ -117,7 +118,7 @@ class PspConformanceFixtureTests(unittest.TestCase):
         self.assertEqual([row["adapter_number"] for row in standards], [f"ADP-0{i}" for i in range(1, 8)])
         self.assertEqual(standards[0]["name"], "Card PSP")
         self.assertEqual(standards[0]["status"], "active")
-        self.assertEqual(standards[0]["version"], "readies.psp.normalized.v1")
+        self.assertEqual(standards[0]["version"], "ADP-01:v1")
         for row in standards[1:]:
             self.assertEqual(row["status"], "planned")
             self.assertEqual(row["name"], "TBD")
@@ -393,10 +394,44 @@ class PspConformanceFixtureTests(unittest.TestCase):
         self.assertNotIn("getenv('PSP_WEBHOOK_TEST_SECRET')", abstract_adaptor)
         self.assertNotIn("PSP_WEBHOOK_TEST_SECRET", abstract_adaptor)
 
-        adapter_source = (ROOT / "bob-c-0609/laravel/app/Services/Psp/Adaptors/FblsP003Adaptor.php").read_text()
-        converter_source = (ROOT / "bob-c-0609/laravel/app/Services/Psp/Converters/FblsP003Converter.php").read_text()
+        adapter_source = (PROVIDERS_ROOT / "P003/FblsP003Adaptor.php").read_text()
+        converter_source = (PROVIDERS_ROOT / "P003/FblsP003Converter.php").read_text()
         self.assertNotIn("test_secret", adapter_source)
         self.assertNotIn("test_secret", converter_source)
+
+    def test_psp_provider_folders_are_independent(self):
+        providers = [path for path in PROVIDERS_ROOT.iterdir() if path.is_dir()]
+        provider_names = {path.name for path in providers}
+        self.assertIn("P003", provider_names)
+        for provider in providers:
+            for source in provider.rglob("*"):
+                if not source.is_file():
+                    continue
+                text = source.read_text(errors="ignore")
+                for other in provider_names - {provider.name}:
+                    self.assertNotIn(f"Providers\\\\{other}", text)
+                    self.assertNotIn(f"/{other}/", text)
+        old_shared = [
+            ROOT / "bob-c-0609/laravel/app/Services/Psp/Adaptors/FblsP003Adaptor.php",
+            ROOT / "bob-c-0609/laravel/app/Services/Psp/Converters/FblsP003Converter.php",
+            ROOT / "bob-c-0609/laravel/app/Services/Psp/Fixtures/FblsP003FixtureTransport.php",
+        ]
+        self.assertFalse(any(path.exists() for path in old_shared))
+
+    def test_contract_version_guard_and_all_provider_goldens(self):
+        contract_source = (ROOT / "bob-c-0609/laravel/app/Services/Psp/PspNormalizedContract.php").read_text()
+        self.assertIn("SCHEMA_VERSION = 'ADP-01:v1'", contract_source)
+        standards = json.loads(ADAPTER_STANDARDS.read_text())
+        self.assertEqual(standards[0]["version"], "ADP-01:v1")
+        for provider in [path for path in PROVIDERS_ROOT.iterdir() if path.is_dir()]:
+            config = json.loads((provider / "provider-config.json").read_text())
+            self.assertEqual(config["contract_version"], "ADP-01:v1")
+            golden_root = ROOT / "bob-c-0609/laravel" / config["fixture_root"] / "golden"
+            goldens = sorted(golden_root.glob("*.json"))
+            self.assertGreaterEqual(len(goldens), 4)
+            for golden in goldens:
+                payload = json.loads(golden.read_text())
+                self.assertEqual(payload["schema_version"], config["contract_version"])
 
         key_page = KEY_STATUS_PAGE.read_text()
         self.assertIn("Open 0609 vault entry", key_page)

@@ -123,7 +123,7 @@ final class WebhookRuleAdaptor extends AbstractPspAdaptor
 function webhookState(string $status, array $request, int $waitedMs = 0): array
 {
     return [
-        'schema_version' => 'readies.psp.normalized.v1',
+        'schema_version' => 'ADP-01:v1',
         'status' => $status,
         'metadata' => ['waited_ms' => $waitedMs],
         'decline' => in_array($status, ['failed', 'declined'], true)

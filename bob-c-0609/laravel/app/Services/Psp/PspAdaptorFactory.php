@@ -3,9 +3,7 @@
 namespace App\Services\Psp;
 
 use App\Contracts\PspAdaptorInterface;
-use App\Services\Psp\Adaptors\FblsP003Adaptor;
 use App\Services\Psp\Credentials\FakePspCredentialProvider;
-use App\Services\Psp\Fixtures\FblsP003FixtureTransport;
 
 final class PspAdaptorFactory
 {
@@ -16,20 +14,32 @@ final class PspAdaptorFactory
     public static function withOfflineFixtures(?string $fixtureRoot = null): self
     {
         $registry = new PspAdapterRegistry();
-        $transport = $fixtureRoot === null
-            ? FblsP003FixtureTransport::default()
-            : new FblsP003FixtureTransport(rtrim($fixtureRoot, '/') . '/p003');
-        $credentials = new FakePspCredentialProvider([
-            'P003' => [
-                'sandbox' => [
-                    'status' => 'received',
-                    'values' => ['webhook_secret' => 'test_secret'],
-                    'vault_entry_link' => 'fixture://p003/sandbox',
+        $root = dirname(__DIR__, 3);
+        $connections = json_decode((string) file_get_contents($root . '/resources/psp-adapters/provider-connections.json'), true) ?: [];
+        foreach ($connections as $connection) {
+            if (($connection['status'] ?? null) !== 'sandbox') {
+                continue;
+            }
+            $adaptorClass = $connection['adaptor_class'] ?? null;
+            $fixtureClass = $connection['fixture_class'] ?? null;
+            if (! is_string($adaptorClass) || ! is_string($fixtureClass) || ! class_exists($adaptorClass) || ! class_exists($fixtureClass)) {
+                continue;
+            }
+            $providerCode = strtoupper((string) $connection['provider_code']);
+            $fixturePath = rtrim($fixtureRoot ?? ($root . '/resources/psp-conformance'), '/') . '/' . strtolower($providerCode);
+            $transport = new $fixtureClass($fixturePath);
+            $secret = method_exists($transport, 'webhookSecret') ? $transport->webhookSecret() : null;
+            $credentials = new FakePspCredentialProvider([
+                $providerCode => [
+                    'sandbox' => [
+                        'status' => $secret === null ? 'missing' : 'received',
+                        'values' => $secret === null ? [] : ['webhook_secret' => $secret],
+                        'vault_entry_link' => 'fixture://' . strtolower($providerCode) . '/sandbox',
+                    ],
                 ],
-            ],
-        ]);
-
-        $registry->register(new FblsP003Adaptor($transport, $credentials));
+            ]);
+            $registry->register(new $adaptorClass($transport, $credentials));
+        }
 
         return new self($registry);
     }

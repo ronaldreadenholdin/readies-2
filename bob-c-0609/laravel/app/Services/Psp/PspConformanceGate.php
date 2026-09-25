@@ -4,9 +4,9 @@ namespace App\Services\Psp;
 
 use App\Contracts\PspAdaptorInterface;
 use App\Services\Psp\Commercial\PspCommercialProfile;
+use App\Services\Psp\Contracts\PspFixtureSetInterface;
 use App\Services\Psp\Credentials\FakePspCredentialProvider;
 use App\Services\Psp\Credentials\PspCredentialProviderInterface;
-use App\Services\Psp\Fixtures\FblsP003FixtureTransport;
 use App\Services\Psp\Standards\AdapterStandardRegistry;
 use App\Services\Psp\Standards\ProviderConnectionRegistry;
 use RuntimeException;
@@ -29,10 +29,10 @@ final class PspConformanceGate
     {
         $pspCode = strtoupper(trim($pspCode));
         $adaptor = $this->registry->get($pspCode);
-        $fixtures = $this->fixturesFor($pspCode);
         $standards = AdapterStandardRegistry::fromJsonFile(dirname(__DIR__, 3) . '/resources/psp-adapters/adapter-standards.json');
         $connections = ProviderConnectionRegistry::fromJsonFile(dirname(__DIR__, 3) . '/resources/psp-adapters/provider-connections.json');
         $connection = $connections->forProvider($pspCode) ?? ['adapter_number' => 'ADP-01', 'provider_code' => $pspCode, 'connection_code' => 'ADP-01 / ' . $pspCode];
+        $fixtures = $this->fixturesFor($connection);
         $standard = $standards->get($connection['adapter_number']) ?? null;
 
         $allChecks = [];
@@ -72,7 +72,7 @@ final class PspConformanceGate
             }
         }
 
-        foreach ($this->checker->checkHardcodedSecrets($pspCode, $this->adapterSourceFiles($pspCode)) as $row) {
+        foreach ($this->checker->checkHardcodedSecrets($pspCode, $this->adapterSourceFiles($connection)) as $row) {
             $allChecks[] = $row;
             if (! $row['passed']) {
                 $issues[] = $row;
@@ -135,7 +135,7 @@ final class PspConformanceGate
         return $report;
     }
 
-    private function runConnections(string $pspCode, PspAdaptorInterface $adaptor, FblsP003FixtureTransport $fixtures): array
+    private function runConnections(string $pspCode, PspAdaptorInterface $adaptor, PspFixtureSetInterface $fixtures): array
     {
         $request = $fixtures->paymentRequest();
         $refundRequest = $fixtures->refundRequest();
@@ -153,7 +153,7 @@ final class PspConformanceGate
         ];
     }
 
-    private function runPreflightChecks(string $pspCode, FblsP003FixtureTransport $fixtures): array
+    private function runPreflightChecks(string $pspCode, PspFixtureSetInterface $fixtures): array
     {
         $rows = [];
         foreach ($fixtures->preflightChecks() as $check) {
@@ -181,13 +181,20 @@ final class PspConformanceGate
         return $rows;
     }
 
-    private function fixturesFor(string $pspCode): FblsP003FixtureTransport
+    private function fixturesFor(array $connection): PspFixtureSetInterface
     {
-        if ($pspCode !== 'P003') {
-            throw new RuntimeException("No offline conformance fixture is registered for {$pspCode}.");
+        $class = $connection['fixture_class'] ?? null;
+        if (! is_string($class) || ! class_exists($class)) {
+            throw new RuntimeException('No offline conformance fixture is registered for ' . ($connection['provider_code'] ?? 'unknown') . '.');
         }
 
-        return new FblsP003FixtureTransport(rtrim($this->fixtureRoot, '/') . '/p003');
+        $fixturePath = rtrim($this->fixtureRoot, '/') . '/' . strtolower((string) $connection['provider_code']);
+        $fixtures = new $class($fixturePath);
+        if (! $fixtures instanceof PspFixtureSetInterface) {
+            throw new RuntimeException("Fixture class {$class} must implement PspFixtureSetInterface.");
+        }
+
+        return $fixtures;
     }
 
     private function converterFrom(PspAdaptorInterface $adaptor): Contracts\PspConverterInterface
@@ -208,20 +215,12 @@ final class PspConformanceGate
         throw new RuntimeException('Unable to inspect PSP converter for conformance checks.');
     }
 
-    private function adapterSourceFiles(string $pspCode): array
+    private function adapterSourceFiles(array $connection): array
     {
-        if ($pspCode !== 'P003') {
-            return [];
-        }
-
-        $root = dirname(__DIR__, 2);
-        $paths = [
-            $root . '/Services/Psp/Adaptors/FblsP003Adaptor.php',
-            $root . '/Services/Psp/Converters/FblsP003Converter.php',
-        ];
-
+        $root = dirname(__DIR__, 3);
         $files = [];
-        foreach ($paths as $path) {
+        foreach ($connection['source_files'] ?? [] as $relativePath) {
+            $path = $root . '/' . ltrim((string) $relativePath, '/');
             if (is_file($path)) {
                 $files[$path] = (string) file_get_contents($path);
             }

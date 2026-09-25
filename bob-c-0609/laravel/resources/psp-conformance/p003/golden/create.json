@@ -1,5 +1,5 @@
 {
-  "schema_version": "readies.psp.normalized.v1",
+  "schema_version": "ADP-01:v1",
   "psp_code": "P003",
   "operation": "create_payment",
   "merchant_reference": "neckermann-test-order-1001",
