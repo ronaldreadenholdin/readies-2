@@ -12,6 +12,7 @@ WAITING_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/waiting.html"
 WAITING_STATUS = ROOT / "bob-c-0609/hostinger/public_html/bob-c/waiting-status-stub.json"
 MEDIA_REGISTRY = ROOT / "bob-c-0609/laravel/resources/psp-waiting/media-registry.json"
 MEDIA_LIBRARY_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/media-library.html"
+KEY_STATUS_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/psp-key-status.html"
 
 
 class PspConformanceFixtureTests(unittest.TestCase):
@@ -73,11 +74,13 @@ class PspConformanceFixtureTests(unittest.TestCase):
         required_field_checks = 5
         declared_dependency_checks = 5
         commercial_profile_checks = 26
+        security_source_checks = 2
         endpoint_checks = (10 * 3) + 11
-        total = preflight_total + required_field_checks + declared_dependency_checks + commercial_profile_checks + endpoint_checks
-        passed = total - preflight_failed
-        self.assertEqual(total, 81)
-        self.assertEqual(round((passed / total) * 100, 2), 97.53)
+        credential_missing_failures = 1
+        total = preflight_total + required_field_checks + declared_dependency_checks + commercial_profile_checks + security_source_checks + endpoint_checks
+        passed = total - preflight_failed - credential_missing_failures
+        self.assertEqual(total, 83)
+        self.assertEqual(round((passed / total) * 100, 2), 96.39)
 
     def test_commercial_profile_contract_and_open_questions(self):
         profile = json.loads((FIXTURE_ROOT / "commercial-profile.json").read_text())
@@ -255,6 +258,23 @@ class PspConformanceFixtureTests(unittest.TestCase):
         self.assertEqual(selected_variant, "none")
         self.assertEqual(first["impression"]["variant"], "ad_1")
 
+    def test_psp_credentials_are_provider_only_and_not_leaked(self):
+        abstract_adaptor = (ROOT / "bob-c-0609/laravel/app/Services/Psp/AbstractPspAdaptor.php").read_text()
+        self.assertIn("PspCredentialProviderInterface", abstract_adaptor)
+        self.assertNotIn("getenv('PSP_WEBHOOK_TEST_SECRET')", abstract_adaptor)
+        self.assertNotIn("PSP_WEBHOOK_TEST_SECRET", abstract_adaptor)
+
+        adapter_source = (ROOT / "bob-c-0609/laravel/app/Services/Psp/Adaptors/FblsP003Adaptor.php").read_text()
+        converter_source = (ROOT / "bob-c-0609/laravel/app/Services/Psp/Converters/FblsP003Converter.php").read_text()
+        self.assertNotIn("test_secret", adapter_source)
+        self.assertNotIn("test_secret", converter_source)
+
+        key_page = KEY_STATUS_PAGE.read_text()
+        self.assertIn("Open 0609 vault entry", key_page)
+        self.assertIn("missing", key_page)
+        self.assertNotIn("test_secret", key_page)
+        self.assertNotIn("xai-", key_page.lower())
+
     def test_three_hop_cascade_precollects_hop_three_date_of_birth(self):
         cascade = ["P001", "P002", "P003DOB"]
         converters = {
@@ -366,12 +386,14 @@ class PspConformanceTests(unittest.TestCase):
             report = json.loads(proc.stdout)
 
             summary = report["summary"]["P003"]
-            self.assertEqual(summary["total_checks"], 81)
-            self.assertEqual(summary["passed"], 79)
-            self.assertEqual(summary["failed"], 2)
-            self.assertEqual(summary["score_percent"], 97.53)
+            self.assertEqual(summary["total_checks"], 83)
+            self.assertEqual(summary["passed"], 80)
+            self.assertEqual(summary["failed"], 3)
+            self.assertEqual(summary["score_percent"], 96.39)
             self.assertFalse(summary["eligible_for_cascade"])
-            self.assertEqual(report["open_questions"]["P003"], [])
+            self.assertEqual(report["open_questions"]["P003"][0]["field"], "live_keys_status")
+            self.assertEqual(report["credential_status"]["P003"]["live"]["status"], "missing")
+            self.assertNotIn("test_secret", proc.stdout)
 
             issue_ids = {row["preflight_check_id"] for row in report["conversion_killers"]}
             self.assertEqual(issue_ids, {"P003-PF-002", "P003-PF-004"})

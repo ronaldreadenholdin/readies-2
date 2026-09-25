@@ -4,6 +4,8 @@ namespace App\Services\Psp;
 
 use App\Contracts\PspAdaptorInterface;
 use App\Services\Psp\Commercial\PspCommercialProfile;
+use App\Services\Psp\Credentials\FakePspCredentialProvider;
+use App\Services\Psp\Credentials\PspCredentialProviderInterface;
 use App\Services\Psp\Fixtures\FblsP003FixtureTransport;
 use RuntimeException;
 
@@ -14,8 +16,10 @@ final class PspConformanceGate
     public function __construct(
         private PspAdapterRegistry $registry,
         private string $fixtureRoot,
+        private ?PspCredentialProviderInterface $credentials = null,
         ?ConversionKillerChecker $checker = null,
     ) {
+        $this->credentials ??= new FakePspCredentialProvider();
         $this->checker = $checker ?? new ConversionKillerChecker();
     }
 
@@ -51,8 +55,18 @@ final class PspConformanceGate
             }
         }
 
-        $profile = new PspCommercialProfile($fixtures->commercialProfile());
+        $profileData = $fixtures->commercialProfile();
+        $liveCredentialStatus = $this->credentials->status($pspCode, 'live');
+        $profileData['live_keys_status'] = $this->credentials->get($pspCode, 'live') === null ? 'missing' : 'received';
+        $profile = new PspCommercialProfile($profileData);
         foreach ($this->checker->checkCommercialProfile($profile) as $row) {
+            $allChecks[] = $row;
+            if (! $row['passed']) {
+                $issues[] = $row;
+            }
+        }
+
+        foreach ($this->checker->checkHardcodedSecrets($pspCode, $this->adapterSourceFiles($pspCode)) as $row) {
             $allChecks[] = $row;
             if (! $row['passed']) {
                 $issues[] = $row;
@@ -79,6 +93,11 @@ final class PspConformanceGate
                 'mode' => 'offline-fixtures',
                 'neckermann_target_ready' => true,
                 'notes' => 'Designed to swap fixture transport for the Neckermann test merchant later; this run made no real PSP calls.',
+            ],
+            'credential_status' => [
+                $pspCode => [
+                    'live' => $liveCredentialStatus,
+                ],
             ],
             'summary' => [
                 $pspCode => [
@@ -174,5 +193,27 @@ final class PspConformanceGate
         } while ($ref !== false);
 
         throw new RuntimeException('Unable to inspect PSP converter for conformance checks.');
+    }
+
+    private function adapterSourceFiles(string $pspCode): array
+    {
+        if ($pspCode !== 'P003') {
+            return [];
+        }
+
+        $root = dirname(__DIR__, 2);
+        $paths = [
+            $root . '/Services/Psp/Adaptors/FblsP003Adaptor.php',
+            $root . '/Services/Psp/Converters/FblsP003Converter.php',
+        ];
+
+        $files = [];
+        foreach ($paths as $path) {
+            if (is_file($path)) {
+                $files[$path] = (string) file_get_contents($path);
+            }
+        }
+
+        return $files;
     }
 }

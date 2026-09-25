@@ -9,6 +9,8 @@ use App\DTO\PspRefundRequest;
 use App\DTO\PspRefundResponse;
 use App\DTO\PspWebhookResult;
 use App\Services\Psp\Contracts\PspConverterInterface;
+use App\Services\Psp\Credentials\FakePspCredentialProvider;
+use App\Services\Psp\Credentials\PspCredentialProviderInterface;
 use RuntimeException;
 
 abstract class AbstractPspAdaptor implements PspAdaptorInterface
@@ -16,7 +18,9 @@ abstract class AbstractPspAdaptor implements PspAdaptorInterface
     public function __construct(
         protected PspConverterInterface $converter,
         private mixed $transport,
+        protected ?PspCredentialProviderInterface $credentials = null,
     ) {
+        $this->credentials ??= new FakePspCredentialProvider();
     }
 
     public function code(): string
@@ -64,11 +68,19 @@ abstract class AbstractPspAdaptor implements PspAdaptorInterface
 
     public function verifyWebhook(array $headers, string $payload): bool
     {
-        $secret = (string) ($headers['X-Readies-Test-Secret'] ?? getenv('PSP_WEBHOOK_TEST_SECRET') ?: 'test_secret');
+        $secret = (string) (($this->credentials->get($this->code(), 'sandbox')['webhook_secret'] ?? null) ?: '');
+        if ($secret === '') {
+            return false;
+        }
         $signature = (string) ($headers['X-FBLS-Signature'] ?? $headers['x-fbls-signature'] ?? '');
         $expected = hash_hmac('sha256', $payload, $secret);
 
         return hash_equals($expected, $signature);
+    }
+
+    public function credentialStatus(string $environment): array
+    {
+        return $this->credentials->status($this->code(), $environment);
     }
 
     public function handleWebhook(array $headers, string $payload): PspWebhookResult

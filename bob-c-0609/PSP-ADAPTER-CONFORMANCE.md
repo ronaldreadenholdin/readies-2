@@ -121,6 +121,16 @@ The seeded default is `Pigeon card delivery`, a platform-owned approved placehol
 
 `MediaVariantSelector` records variants (`none`, `default_animation`, or a specific media id) with configurable control-group percentage, default 0. `MediaConversionReportService` measures conversion and abandonment by variant, slot, and merchant; it does not claim uplift.
 
+## PSP credentials and the 0609 vault
+
+Repository inventory: this repo contains Bob/Grok `XAI_API_KEY` references for BOB C and offline test placeholders, but it does not contain a PSP vault, encrypted PSP credential store, or `psp_credentials` table. The real PSP keys are expected to live only in the 0609 Laravel host vault on the VPS.
+
+`PspCredentialProviderInterface` is the only PSP credential access path for adapters. `VaultPspCredentialProvider` is a TODO stub for the live 0609 vault and never reads PSP secrets from config, env dumps, monday.com, or request payloads. `FakePspCredentialProvider` exists only for offline fixtures/tests.
+
+The conformance gate treats `live_keys_status` as `received` only when the credential provider resolves live credentials for that PSP. Reports expose only status metadata such as `received`, `missing`, `rotated`, `last_rotated_at`, and vault-entry links; they never print secret values.
+
+`ConversionKillerChecker::checkHardcodedSecrets()` scans adapter/converter source for key-like literals and reports `hardcoded credential` blockers. The BOB C key-status page shows PSP, environment, status, last rotation, and vault link only.
+
 ## Conversion-killer categories
 
 The gate checks and reports:
@@ -153,4 +163,4 @@ The command writes timestamped JSON and Markdown under the output directory. It 
 
 ## Current P003 result
 
-P003 passes the normalized create/status/refund/webhook golden comparisons, declared-dependency checks, and commercial-profile completeness checks. It is still not eligible for cascade because the existing pre-flight evidence has 2 flagged rows: Webhook Handling and Signature Verification. Score from the current fixture set is 79/81 = 97.53%.
+P003 passes the normalized create/status/refund/webhook golden comparisons, declared-dependency checks, source secret scan, and most commercial-profile checks. It is still not eligible for cascade because the existing pre-flight evidence has 2 flagged rows and no live credential is resolved from the 0609 vault provider. Score from the current fixture set is 80/83 = 96.39%.

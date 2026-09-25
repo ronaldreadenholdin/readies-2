@@ -130,6 +130,33 @@ final class ConversionKillerChecker
         return $results;
     }
 
+    public function checkHardcodedSecrets(string $pspCode, array $sourceFiles): array
+    {
+        $results = [];
+        foreach ($sourceFiles as $path => $contents) {
+            $matched = preg_match('/(api[_-]?key|secret|password|token)[^\n\r]{0,40}(sk_live|pk_live|[A-Za-z0-9_\-]{20,})/i', $contents) === 1
+                || preg_match('/(sk_live|pk_live|xai-|secret_)[A-Za-z0-9_\\-]+/i', $contents) === 1;
+            $results[] = $this->result(
+                $pspCode,
+                'security',
+                'security.no_hardcoded_secret.' . basename($path),
+                'No hardcoded PSP secrets',
+                $path,
+                'adapter/converter source',
+                'no key-like literals',
+                $matched ? 'key-like literal found' : 'clean',
+                'hardcoded credential',
+                ! $matched,
+                'Adapter/converter source appears to contain a key-like literal.',
+                'App\Services\Psp\ConversionKillerChecker::checkHardcodedSecrets',
+                'blocks go-live',
+                'Move the credential to the 0609 vault and access it through PspCredentialProvider.',
+            );
+        }
+
+        return $results;
+    }
+
     public function checkNormalizedOutput(string $pspCode, string $connection, array $normalized, ?array $golden = null): array
     {
         $errors = PspNormalizedContract::validate($normalized);

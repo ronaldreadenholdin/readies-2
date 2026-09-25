@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BOB C PSP Key Status</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #f4f6fb; color: #1f2937; }
+    header { background: #0f2a5f; color: #fff; padding: 24px; }
+    main { max-width: 1000px; margin: 24px auto; padding: 0 18px; }
+    .card { background: #fff; border-radius: 14px; box-shadow: 0 8px 30px rgba(15, 42, 95, 0.12); padding: 22px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { text-align: left; border-bottom: 1px solid #e5e7eb; padding: 12px; }
+    th { color: #475569; font-size: 13px; text-transform: uppercase; }
+    .missing { color: #b42318; font-weight: bold; }
+    .muted { color: #64748b; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BOB C PSP Key Status</h1>
+    <p>Status metadata only. PSP keys, passwords, and webhook secrets stay in the 0609 vault.</p>
+  </header>
+  <main>
+    <section class="card">
+      <h2>Credentials</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>PSP</th>
+            <th>Environment</th>
+            <th>Status</th>
+            <th>Last rotated</th>
+            <th>Vault entry</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>P003</td>
+            <td>live</td>
+            <td class="missing">missing</td>
+            <td class="muted">not recorded</td>
+            <td><a href="#todo-vault-entry">Open 0609 vault entry</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="muted">Never paste or display secret values on this page. monday.com is records-only and must not supply PSP secrets.</p>
+    </section>
+  </main>
+</body>
+</html>
