@@ -63,6 +63,11 @@ final class FblsP003FixtureTransport
         return $this->readJson('preflight-checks.json');
     }
 
+    public function commercialProfile(): array
+    {
+        return $this->readJson('commercial-profile.json');
+    }
+
     private function readJson(string $relativePath): array
     {
         $decoded = json_decode($this->readRaw($relativePath), true);

@@ -3,6 +3,7 @@
 namespace App\Services\Psp;
 
 use App\Contracts\PspAdaptorInterface;
+use App\Services\Psp\Commercial\PspCommercialProfile;
 use App\Services\Psp\Fixtures\FblsP003FixtureTransport;
 use RuntimeException;
 
@@ -50,6 +51,14 @@ final class PspConformanceGate
             }
         }
 
+        $profile = new PspCommercialProfile($fixtures->commercialProfile());
+        foreach ($this->checker->checkCommercialProfile($profile) as $row) {
+            $allChecks[] = $row;
+            if (! $row['passed']) {
+                $issues[] = $row;
+            }
+        }
+
         foreach ($this->runConnections($pspCode, $adaptor, $fixtures) as $connectionRows) {
             foreach ($connectionRows as $row) {
                 $allChecks[] = $row;
@@ -81,6 +90,9 @@ final class PspConformanceGate
                 ],
             ],
             'conversion_killers' => $issues,
+            'open_questions' => [
+                $pspCode => $profile->openQuestions(),
+            ],
             'checks' => $allChecks,
         ];
 

@@ -75,6 +75,34 @@ Rules:
 - After three confirmed failures, `PaymentRecoveryService` creates a secure expiring single-use pay-by-link token and builds a neutral recovery email. Sending is behind a flag that defaults off.
 - Audit rows record attempt time, webhook/status event, waited milliseconds, cascade reason, and outcome.
 
+## Commercial eligibility contract
+
+Each PSP profile uses snake_case commercial/go-live fields: `allowed_geos`, `blocked_countries`, `accepted_card_brands`, `accepted_card_types`, `three_ds_required`, `allowed_verticals`, `blocked_verticals`, `min_amount`, `max_amount`, `processing_currencies`, `settlement_currencies`, `mdr_percent`, `mdr_fixed`, `other_fees`, `settlement_days`, `rolling_reserve_percent`, `rolling_reserve_days`, `cap_amount`, `cap_period`, `api_docs_received`, `sandbox_keys_status`, `live_keys_status`, `signed_webhook_sample_received`, `decline_code_map_received`, `agreement_signed`, and `psp_code`.
+
+`PspEligibilityFilter` skips ineligible PSPs before any hop is attempted. It checks BIN country, billing country, card brand/type, merchant vertical, amount min/max, and currency. Skips are audited as `ineligible:<field>`.
+
+`PspCommercialProfile` and `ConversionKillerChecker::checkCommercialProfile()` mark any missing or unknown profile field as `commercial profile incomplete`, generate a blocker row, and add draft PSP questions to `open_questions`.
+
+## Trusted returning customer prefill
+
+`TrustedCustomerPrefillService` reads trusted customers through `TrustedCustomerRepositoryInterface` using a stable key, such as hashed email plus merchant id. The real data source is pluggable.
+
+Rules:
+
+- Prefill only when `consent_recorded` is true.
+- Store only minimum personal fields, with `trusted_since` and `last_seen`.
+- Personal data goes through `PersonalDataEncryptionInterface`; the in-memory implementation is only for offline fixtures/tests.
+- PAN, CVV, full card number, and expiry are never stored or returned.
+- Card reuse must use PSP-issued or network tokens behind `CardTokenVaultInterface`.
+- Returned audit includes `prefilled_fields[]`, `prefill_source=trusted_customer`, and values stay editable.
+- PSP data minimisation still applies through each converter's `createPayloadFieldMap()`.
+
+## Waiting page contract
+
+`hostinger/public_html/bob-c/waiting.html` is a lightweight hosted waiting page. It shows neutral text, warns customers not to close/refresh/go back, reuses an idempotency key from the URL or session storage, polls a same-origin status endpoint, and auto-continues to the next redirect/result URL.
+
+The optional promo/ad slot defaults off and is only allowed on the waiting page, never in card-entry fields or iframes. The page includes a CSP note limiting loading to same-origin resources by default.
+
 ## Conversion-killer categories
 
 The gate checks and reports:
@@ -93,6 +121,7 @@ The gate checks and reports:
 - undeclared converter dependencies that would break checkout pre-collection
 - cascaded without confirmed final failure
 - missing webhook within timeout when status is still not final
+- commercial profile incomplete
 
 Each failed issue row includes PSP code, endpoint, check id/name, internal and PSP field paths, expected and actual values, category, root cause, code location, severity, and suggested fix.
 
@@ -106,4 +135,4 @@ The command writes timestamped JSON and Markdown under the output directory. It 
 
 ## Current P003 result
 
-P003 passes the normalized create/status/refund/webhook golden comparisons and declared-dependency checks. It is still not eligible for cascade because the existing pre-flight evidence has 2 flagged rows: Webhook Handling and Signature Verification. Score from the current fixture set is 53/55 = 96.36%.
+P003 passes the normalized create/status/refund/webhook golden comparisons, declared-dependency checks, and commercial-profile completeness checks. It is still not eligible for cascade because the existing pre-flight evidence has 2 flagged rows: Webhook Handling and Signature Verification. Score from the current fixture set is 79/81 = 97.53%.

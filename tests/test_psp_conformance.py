@@ -8,6 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PHP = shutil.which("php")
 FIXTURE_ROOT = ROOT / "bob-c-0609/laravel/resources/psp-conformance/p003"
+WAITING_PAGE = ROOT / "bob-c-0609/hostinger/public_html/bob-c/waiting.html"
+WAITING_STATUS = ROOT / "bob-c-0609/hostinger/public_html/bob-c/waiting-status-stub.json"
 
 
 class PspConformanceFixtureTests(unittest.TestCase):
@@ -68,11 +70,85 @@ class PspConformanceFixtureTests(unittest.TestCase):
         preflight_failed = 2
         required_field_checks = 5
         declared_dependency_checks = 5
+        commercial_profile_checks = 26
         endpoint_checks = (10 * 3) + 11
-        total = preflight_total + required_field_checks + declared_dependency_checks + endpoint_checks
+        total = preflight_total + required_field_checks + declared_dependency_checks + commercial_profile_checks + endpoint_checks
         passed = total - preflight_failed
-        self.assertEqual(total, 55)
-        self.assertEqual(round((passed / total) * 100, 2), 96.36)
+        self.assertEqual(total, 81)
+        self.assertEqual(round((passed / total) * 100, 2), 97.53)
+
+    def test_commercial_profile_contract_and_open_questions(self):
+        profile = json.loads((FIXTURE_ROOT / "commercial-profile.json").read_text())
+        required = {
+            "allowed_geos", "blocked_countries", "accepted_card_brands", "accepted_card_types",
+            "three_ds_required", "allowed_verticals", "blocked_verticals", "min_amount", "max_amount",
+            "processing_currencies", "settlement_currencies", "mdr_percent", "mdr_fixed", "other_fees",
+            "settlement_days", "rolling_reserve_percent", "rolling_reserve_days", "cap_amount",
+            "cap_period", "api_docs_received", "sandbox_keys_status", "live_keys_status",
+            "signed_webhook_sample_received", "decline_code_map_received", "agreement_signed", "psp_code",
+        }
+        self.assertTrue(required.issubset(profile.keys()))
+        self.assertTrue(all(key == key.lower() for key in profile.keys()))
+
+        bad = dict(profile)
+        bad["mdr_percent"] = ""
+        missing = [field for field in required if bad.get(field) in (None, "", [], "unknown")]
+        open_questions = [{"field": field, "severity": "blocks go-live"} for field in missing]
+        self.assertEqual(open_questions, [{"field": "mdr_percent", "severity": "blocks go-live"}])
+
+    def test_eligibility_filter_skip_reasons(self):
+        profile = json.loads((FIXTURE_ROOT / "commercial-profile.json").read_text())
+
+        def reason(context):
+            if context["billing_country"] in profile["blocked_countries"]:
+                return "ineligible:billing_country"
+            if context["amount"] > float(profile["max_amount"][context["currency"]]):
+                return "ineligible:amount"
+            if context["currency"] not in profile["processing_currencies"]:
+                return "ineligible:currency"
+            return None
+
+        blocked = dict(profile, blocked_countries=["DE"])
+        profile_backup = profile
+        profile = blocked
+        self.assertEqual(reason({"billing_country": "DE", "amount": 10.0, "currency": "EUR"}), "ineligible:billing_country")
+        profile = profile_backup
+        self.assertEqual(reason({"billing_country": "NL", "amount": 999.0, "currency": "EUR"}), "ineligible:amount")
+        self.assertEqual(reason({"billing_country": "NL", "amount": 10.0, "currency": "USD"}), "ineligible:currency")
+
+    def test_trusted_customer_prefill_privacy_rules(self):
+        required_fields = ["billing.postal_code", "customer.date_of_birth", "card.pan"]
+        trusted = {
+            "consent_recorded": True,
+            "trusted_since": "2026-01-01T00:00:00Z",
+            "last_seen": "2026-09-24T00:00:00Z",
+            "fields": {
+                "billing.postal_code": "10115",
+                "customer.date_of_birth": "1980-01-02",
+                "card.pan": "4111111111111111",
+            },
+        }
+        forbidden = {"card.pan", "card.cvv", "card.full_number", "card.number", "card.expiry"}
+        prefill = {field: trusted["fields"][field] for field in required_fields if field in trusted["fields"] and field not in forbidden and trusted["consent_recorded"]}
+        self.assertEqual(prefill, {"billing.postal_code": "10115", "customer.date_of_birth": "1980-01-02"})
+        self.assertNotIn("card.pan", prefill)
+
+        no_consent = dict(trusted, consent_recorded=False)
+        prefill = {field: no_consent["fields"][field] for field in required_fields if field in no_consent["fields"] and no_consent["consent_recorded"]}
+        self.assertEqual(prefill, {})
+
+        non_trusted = None
+        self.assertIsNone(non_trusted)
+
+    def test_waiting_page_status_contract_and_defaults(self):
+        html = WAITING_PAGE.read_text()
+        status = json.loads(WAITING_STATUS.read_text())
+        self.assertEqual(status["message"], "Securing your payment...")
+        self.assertFalse(status["ad_slot_enabled"])
+        self.assertIn("sessionStorage.setItem('readies_payment_idempotency_key'", html)
+        self.assertIn("Do not close, refresh, or go back", html)
+        self.assertIn("Content-Security-Policy", html)
+        self.assertNotIn("failed, trying another provider", html.lower())
 
     def test_three_hop_cascade_precollects_hop_three_date_of_birth(self):
         cascade = ["P001", "P002", "P003DOB"]
@@ -185,11 +261,12 @@ class PspConformanceTests(unittest.TestCase):
             report = json.loads(proc.stdout)
 
             summary = report["summary"]["P003"]
-            self.assertEqual(summary["total_checks"], 55)
-            self.assertEqual(summary["passed"], 53)
+            self.assertEqual(summary["total_checks"], 81)
+            self.assertEqual(summary["passed"], 79)
             self.assertEqual(summary["failed"], 2)
-            self.assertEqual(summary["score_percent"], 96.36)
+            self.assertEqual(summary["score_percent"], 97.53)
             self.assertFalse(summary["eligible_for_cascade"])
+            self.assertEqual(report["open_questions"]["P003"], [])
 
             issue_ids = {row["preflight_check_id"] for row in report["conversion_killers"]}
             self.assertEqual(issue_ids, {"P003-PF-002", "P003-PF-004"})

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none';">
+  <title>Securing your payment</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #f6f8fb; color: #172033; }
+    main { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+    .card { max-width: 520px; background: #fff; border-radius: 18px; padding: 32px; box-shadow: 0 18px 60px rgba(23, 32, 51, 0.12); text-align: center; }
+    .spinner { width: 58px; height: 58px; border: 6px solid #dbe6ff; border-top-color: #2454ff; border-radius: 50%; margin: 0 auto 22px; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 { font-size: 24px; margin: 0 0 12px; }
+    p { line-height: 1.5; margin: 8px 0; }
+    .muted { color: #657089; font-size: 14px; }
+    .promo[hidden] { display: none; }
+    .promo { margin-top: 24px; padding-top: 18px; border-top: 1px solid #edf1f7; }
+  </style>
+</head>
+<body>
+<main>
+  <section class="card" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <h1>Securing your payment...</h1>
+    <p id="progress">Please wait while we confirm the payment status.</p>
+    <p class="muted">Do not close, refresh, or go back. This helps prevent duplicate payment attempts.</p>
+    <div id="promo" class="promo" hidden></div>
+  </section>
+</main>
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const statusUrl = params.get('status_url') || './waiting-status-stub.json';
+  const continueUrl = params.get('continue_url') || '/';
+  const resultUrl = params.get('result_url') || '/';
+  const adEnabled = params.get('ad_enabled') === '1';
+  const idempotencyKey = params.get('idempotency_key') || sessionStorage.getItem('readies_payment_idempotency_key') || crypto.randomUUID();
+  sessionStorage.setItem('readies_payment_idempotency_key', idempotencyKey);
+  history.pushState(null, '', window.location.href);
+  window.addEventListener('popstate', function () { history.pushState(null, '', window.location.href); });
+
+  if (adEnabled) {
+    const promo = document.getElementById('promo');
+    promo.hidden = false;
+    promo.textContent = 'Thank you for shopping with us.';
+  }
+
+  async function poll() {
+    const response = await fetch(statusUrl + (statusUrl.includes('?') ? '&' : '?') + 'idempotency_key=' + encodeURIComponent(idempotencyKey), { credentials: 'same-origin' });
+    const state = await response.json();
+    if (state.next_redirect_url) {
+      window.location.assign(state.next_redirect_url);
+      return;
+    }
+    if (state.result_ready) {
+      window.location.assign(state.result_url || resultUrl);
+      return;
+    }
+    document.getElementById('progress').textContent = state.message || 'Securing your payment...';
+    window.setTimeout(poll, state.poll_after_ms || 1500);
+  }
+
+  poll().catch(function () {
+    document.getElementById('progress').textContent = 'Still checking your payment. Please keep this page open.';
+    window.setTimeout(poll, 2500);
+  });
+})();
+</script>
+</body>
+</html>

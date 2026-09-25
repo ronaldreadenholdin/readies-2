@@ -53,7 +53,6 @@ final class PspConformanceReportWriter
             if ($issues === []) {
                 $lines[] = 'No conversion-killer issues found.';
                 $lines[] = '';
-                continue;
             }
 
             foreach ($this->groupByConnection($issues) as $connection => $rows) {
@@ -72,6 +71,18 @@ final class PspConformanceReportWriter
                 }
                 $lines[] = '';
             }
+
+            $questions = $report['open_questions'][$pspCode] ?? [];
+            $lines[] = '### Open PSP questions';
+            $lines[] = '';
+            if ($questions === []) {
+                $lines[] = 'No open commercial/go-live questions.';
+            } else {
+                foreach ($questions as $question) {
+                    $lines[] = '- `' . $question['field'] . '`: ' . $question['question'] . ' (' . $question['severity'] . ')';
+                }
+            }
+            $lines[] = '';
         }
 
         return implode("\n", $lines) . "\n";

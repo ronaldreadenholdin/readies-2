@@ -3,6 +3,7 @@
 namespace App\Services\Psp;
 
 use App\DTO\PspPaymentRequest;
+use App\Services\Psp\Commercial\PspCommercialProfile;
 use App\Services\Psp\Contracts\PspConverterInterface;
 
 final class ConversionKillerChecker
@@ -97,6 +98,32 @@ final class ConversionKillerChecker
                 'App\Services\Psp\PspWebhookDrivenCascadeOrchestrator::handleTimeout',
                 'blocks cascade',
                 'Keep the order in awaiting_final_status and investigate the missing or delayed PSP webhook.',
+            );
+        }
+
+        return $results;
+    }
+
+    public function checkCommercialProfile(PspCommercialProfile $profile): array
+    {
+        $results = [];
+        $missing = array_flip($profile->missingFields());
+        foreach (PspCommercialProfile::REQUIRED_FIELDS as $field) {
+            $results[] = $this->result(
+                $profile->pspCode(),
+                'commercial_profile',
+                "commercial_profile.{$field}",
+                'Commercial profile completeness',
+                "profile.{$field}",
+                "psp_profile.{$field}",
+                'known non-empty value',
+                isset($missing[$field]) ? 'missing_or_unknown' : 'present',
+                'commercial profile incomplete',
+                ! isset($missing[$field]),
+                "The PSP commercial/go-live profile is missing {$field}, so this PSP cannot be safely made go-live eligible.",
+                'App\Services\Psp\Commercial\PspCommercialProfile::missingFields',
+                'blocks go-live',
+                $this->commercialQuestionFor($profile, $field),
             );
         }
 
@@ -328,6 +355,17 @@ final class ConversionKillerChecker
             'severity' => $severity,
             'suggested_fix' => $suggestedFix,
         ];
+    }
+
+    private function commercialQuestionFor(PspCommercialProfile $profile, string $field): string
+    {
+        foreach ($profile->openQuestions() as $question) {
+            if (($question['field'] ?? null) === $field) {
+                return $question['question'];
+            }
+        }
+
+        return "Confirm {$field} for PSP " . $profile->pspCode() . '.';
     }
 
     private function pspFieldFor(string $internalField): string
