@@ -102,10 +102,10 @@ class PspConformanceFixtureTests(unittest.TestCase):
         def reason(context):
             if context["billing_country"] in profile["blocked_countries"]:
                 return "ineligible:billing_country"
-            if context["amount"] > float(profile["max_amount"][context["currency"]]):
-                return "ineligible:amount"
             if context["currency"] not in profile["processing_currencies"]:
                 return "ineligible:currency"
+            if context["amount"] > float(profile["max_amount"][context["currency"]]):
+                return "ineligible:amount"
             return None
 
         blocked = dict(profile, blocked_countries=["DE"])

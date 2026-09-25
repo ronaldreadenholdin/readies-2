@@ -1,7 +1,7 @@
 {
   "psp_code": "P003",
   "allowed_geos": ["DE", "NL", "BE"],
-  "blocked_countries": [],
+  "blocked_countries": ["none"],
   "accepted_card_brands": ["visa", "mastercard"],
   "accepted_card_types": ["credit", "debit"],
   "three_ds_required": true,
@@ -19,7 +19,7 @@
   "mdr_fixed": {
     "EUR": "0.25"
   },
-  "other_fees": [],
+  "other_fees": ["none"],
   "settlement_days": "T+2",
   "rolling_reserve_percent": "0.00",
   "rolling_reserve_days": 0,
