@@ -1,0 +1,6 @@
+{
+  "test_site": "Neckermann test site",
+  "test_merchant_id": null,
+  "setup_message": "Neckermann test merchant ID needs setup on the live 0609 host.",
+  "single_psp_under_test": true
+}

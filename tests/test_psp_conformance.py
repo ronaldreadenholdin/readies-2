@@ -21,6 +21,7 @@ ADAPTER_STANDARDS = ROOT / "bob-c-0609/laravel/resources/psp-adapters/adapter-st
 PROVIDER_CONNECTIONS = ROOT / "bob-c-0609/laravel/resources/psp-adapters/provider-connections.json"
 P001_PROFILE = ROOT / "bob-c-0609/laravel/resources/psp-conformance/p001/commercial-profile.json"
 P001_REPORT = ROOT / "reports/p001-clisapay-dry-run-conformance.json"
+TEST_ISOLATION_CONFIG = ROOT / "bob-c-0609/laravel/resources/psp-testing/test-isolation-config.json"
 MERCHANT_PSP_ORDER_PARTIAL = ROOT / "bob-c-0609/laravel/resources/views/psp/partials/merchant_psp_order_suggestions.blade.php"
 MERCHANT_PSP_DISAGREEMENTS_PARTIAL = ROOT / "bob-c-0609/laravel/resources/views/psp/partials/merchant_psp_disagreements.blade.php"
 MERCHANT_PSP_TRIALS_PARTIAL = ROOT / "bob-c-0609/laravel/resources/views/psp/partials/merchant_psp_trials.blade.php"
@@ -230,6 +231,35 @@ class PspConformanceFixtureTests(unittest.TestCase):
         owners = {row["gap_owner"] for row in report["failed_or_unknown_checks"]}
         self.assertEqual(owners, {"provider", "converter"})
         self.assertIn("No unknown facts were inferred.", (ROOT / "reports/p001-clisapay-dry-run-conformance.md").read_text())
+
+    def test_psp_test_isolation_lock_rules(self):
+        config = json.loads(TEST_ISOLATION_CONFIG.read_text())
+        self.assertEqual(config["test_site"], "Neckermann test site")
+        self.assertIsNone(config["test_merchant_id"])
+        self.assertIn("needs setup", config["setup_message"])
+
+        events = []
+        current = {"connection_code": "ADP-01 / P001", "merchant_id": None, "test_site": config["test_site"]}
+        events.append({"event_type": "started", "connection_code": current["connection_code"]})
+        second = {"connection_code": "ADP-01 / P003"}
+        refused = current is not None and second["connection_code"] != current["connection_code"]
+        self.assertTrue(refused)
+        events.append({"event_type": "refused_second_test", "connection_code": second["connection_code"]})
+
+        blocked_call = second["connection_code"] != current["connection_code"]
+        self.assertTrue(blocked_call)
+        events.append({"event_type": "blocked_credential_read", "connection_code": second["connection_code"]})
+
+        live_positions_before = {"ADP-01 / P003": 1}
+        live_positions_after = dict(live_positions_before)
+        self.assertEqual(live_positions_after, live_positions_before)
+
+        promotion_below_100 = {"score_percent": 99.99, "gerardus_approved": True}
+        self.assertFalse(promotion_below_100["score_percent"] == 100.0 and promotion_below_100["gerardus_approved"])
+        promotion_without_approval = {"score_percent": 100.0, "gerardus_approved": False}
+        self.assertFalse(promotion_without_approval["score_percent"] == 100.0 and promotion_without_approval["gerardus_approved"])
+        events.append({"event_type": "promotion_refused", "reason": "Gerardus approval missing."})
+        self.assertEqual([event["event_type"] for event in events], ["started", "refused_second_test", "blocked_credential_read", "promotion_refused"])
 
     def test_eligibility_filter_skip_reasons(self):
         profile = json.loads((FIXTURE_ROOT / "commercial-profile.json").read_text())

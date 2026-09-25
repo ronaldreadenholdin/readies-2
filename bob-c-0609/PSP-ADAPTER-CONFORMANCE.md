@@ -71,6 +71,18 @@ Exception for new PSPs: a new provider with no performance record may be placed 
 
 P001 is not eligible for live. Suggested downline position is planned slot 3 if it later reaches 100%, because known cost is high (MDR 5.5% plus 0.30 USD fixed fee). Provider-owned gaps include API docs, credentials in the 0609 vault, webhook signing, decline codes, required fields, and geo/currency clarifications. Converter-owned gaps can close only after provider materials arrive.
 
+## One-PSP-at-a-time test isolation
+
+PSP testing is isolated by a single global PSP-under-test slot. Start, abort, and promotion events are written to an append-only log with actor, timestamp, connection, merchant/test site, reason, and metadata.
+
+Rules:
+
+- Only one connection can be under test at a time.
+- Test harness/preflight actions and credential reads are allowed only for the connection under test.
+- Live PSPs are read-only while a test is active: no config, cascade position, mapping, or credential changes.
+- The test target is restricted to the Neckermann test site. The real merchant id is intentionally `null` in config until server setup is available.
+- Promotion requires exactly 100% conformance and explicit Gerardus approval. There is no automatic go-live.
+
 ## Adapter pattern
 
 - Converters implement `PspConverterInterface`; all PSP-specific field maps and `requiredFields()` live there.
