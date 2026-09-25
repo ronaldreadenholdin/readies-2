@@ -59,6 +59,50 @@ final class ConversionKillerChecker
         return $results;
     }
 
+    public function checkCascadeAudit(string $pspCode, array $audit): array
+    {
+        $results = [];
+        foreach ($audit as $index => $row) {
+            $event = (string) ($row['webhook_or_status_received'] ?? '');
+            $outcome = (string) ($row['outcome'] ?? '');
+            $results[] = $this->result(
+                $pspCode,
+                'cascade',
+                'cascade.confirmed_failure.' . ($index + 1),
+                'Confirmed failure before cascade',
+                'cascade.audit.' . $index . '.webhook_or_status_received',
+                'webhook/status',
+                'webhook_failed or timeout_status_failed before next hop',
+                $event,
+                'cascaded without confirmed failure',
+                ! (($outcome === 'confirmed_failure') && ! in_array($event, ['webhook_failed', 'timeout_status_failed'], true)),
+                'The cascade advanced without a failed webhook or timeout status query confirming a final failure.',
+                'App\Services\Psp\PspWebhookDrivenCascadeOrchestrator::confirmFailureAndMaybeCascade',
+                'blocks cascade',
+                'Resume cascade only from a final failed webhook or a timeout status query returning failed/declined.',
+            );
+
+            $results[] = $this->result(
+                $pspCode,
+                'cascade',
+                'cascade.webhook_timeout.' . ($index + 1),
+                'Webhook received within timeout',
+                'cascade.audit.' . $index . '.waited_ms',
+                'PSP failure webhook',
+                'failure webhook before timeout or final failed status after timeout',
+                $outcome,
+                'missing webhook within timeout',
+                $outcome !== 'awaiting_final_status',
+                'No final failure webhook arrived and the timeout status query still did not confirm failure.',
+                'App\Services\Psp\PspWebhookDrivenCascadeOrchestrator::handleTimeout',
+                'blocks cascade',
+                'Keep the order in awaiting_final_status and investigate the missing or delayed PSP webhook.',
+            );
+        }
+
+        return $results;
+    }
+
     public function checkNormalizedOutput(string $pspCode, string $connection, array $normalized, ?array $golden = null): array
     {
         $errors = PspNormalizedContract::validate($normalized);

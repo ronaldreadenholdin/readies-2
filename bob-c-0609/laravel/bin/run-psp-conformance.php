@@ -17,6 +17,11 @@ $requires = [
     '/app/Services/Psp/PspNormalizedContract.php',
     '/app/Services/Psp/ConversionKillerChecker.php',
     '/app/Services/Psp/CascadeRequirementsResolver.php',
+    '/app/Services/Psp/Recovery/PaymentRecoveryMailerInterface.php',
+    '/app/Services/Psp/Recovery/FakePaymentRecoveryMailer.php',
+    '/app/Services/Psp/Recovery/PayByLinkTokenService.php',
+    '/app/Services/Psp/Recovery/PaymentRecoveryEmailBuilder.php',
+    '/app/Services/Psp/Recovery/PaymentRecoveryService.php',
     '/app/Services/Psp/AbstractPspAdaptor.php',
     '/app/Services/Psp/Converters/FblsP003Converter.php',
     '/app/Services/Psp/Fixtures/FblsP003FixtureTransport.php',
@@ -26,6 +31,7 @@ $requires = [
     '/app/Services/Psp/PspConformanceReportWriter.php',
     '/app/Services/Psp/PspConformanceGate.php',
     '/app/Services/Psp/PspCascadeRouter.php',
+    '/app/Services/Psp/PspWebhookDrivenCascadeOrchestrator.php',
 ];
 
 foreach ($requires as $file) {

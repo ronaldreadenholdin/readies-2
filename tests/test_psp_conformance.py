@@ -119,6 +119,57 @@ class PspConformanceFixtureTests(unittest.TestCase):
         missing_before_hop_one = [field for field in union if missing_request.get(field) in (None, "")]
         self.assertEqual(missing_before_hop_one, ["customer.date_of_birth"])
 
+    def test_webhook_driven_cascade_rules_contract(self):
+        def start_state():
+            return {
+                "attempts": [{"psp_code": "P001", "outcome": "awaiting_failure_webhook"}],
+                "failed_psps": [],
+                "final_outcome": "awaiting_final_status",
+                "flags": [],
+            }
+
+        pending = start_state()
+        self.assertEqual(pending["attempts"][0]["outcome"], "awaiting_failure_webhook")
+        self.assertEqual(len(pending["attempts"]), 1)
+
+        failed_webhook = start_state()
+        failed_webhook["attempts"][0]["outcome"] = "confirmed_failure"
+        failed_webhook["attempts"].append({"psp_code": "P002", "outcome": "awaiting_failure_webhook"})
+        self.assertEqual([row["psp_code"] for row in failed_webhook["attempts"]], ["P001", "P002"])
+
+        timeout_failed = start_state()
+        timeout_failed["attempts"][0]["status_received"] = "failed"
+        timeout_failed["attempts"][0]["outcome"] = "confirmed_failure"
+        timeout_failed["attempts"].append({"psp_code": "P002", "outcome": "awaiting_failure_webhook"})
+        self.assertEqual(timeout_failed["attempts"][0]["status_received"], "failed")
+
+        timeout_pending = start_state()
+        timeout_pending["attempts"][0]["status_received"] = "pending"
+        timeout_pending["attempts"][0]["outcome"] = "awaiting_final_status"
+        self.assertEqual(len(timeout_pending["attempts"]), 1)
+        self.assertEqual(timeout_pending["attempts"][0]["outcome"], "awaiting_final_status")
+
+        three_failures = {
+            "failed_psps": ["P001", "P002", "P003"],
+            "recovery": {
+                "psp_code": "P004",
+                "email": {"body": "We could not complete the payment for order order-123."},
+                "email_sent": False,
+            },
+        }
+        self.assertNotIn(three_failures["recovery"]["psp_code"], three_failures["failed_psps"])
+        self.assertFalse(three_failures["recovery"]["email_sent"])
+        self.assertNotIn("card", three_failures["recovery"]["email"]["body"].lower())
+
+        late_success = failed_webhook
+        late_success["flags"].append({
+            "type": "late_success_possible_double_charge",
+            "merchant_reference": "order-123",
+            "idempotency_key": "order-123",
+        })
+        self.assertEqual(late_success["flags"][0]["type"], "late_success_possible_double_charge")
+        self.assertEqual(late_success["flags"][0]["merchant_reference"], late_success["flags"][0]["idempotency_key"])
+
 
 @unittest.skipIf(PHP is None, "php CLI is required for PSP conformance tests")
 class PspConformanceTests(unittest.TestCase):
@@ -181,6 +232,24 @@ class PspConformanceTests(unittest.TestCase):
         self.assertEqual([row["status"] for row in result["route"]["attempts"]], ["failed", "failed", "captured"])
         self.assertEqual(result["missing"]["missing_fields"][0]["cascade_reason"], "missing_required_field:customer.date_of_birth")
         self.assertEqual(result["undeclared"][0]["preflight_check_id"], "declared_dependency.customer.ssn")
+
+    def test_webhook_driven_cascade_php_scenarios(self):
+        proc = subprocess.run(
+            [PHP, str(ROOT / "tests/php_webhook_driven_cascade.php")],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        result = json.loads(proc.stdout)
+        self.assertEqual(result["pending"]["status"], "awaiting_failure_webhook")
+        self.assertEqual(len(result["pending"]["attempts"]), 1)
+        self.assertEqual([row["psp_code"] for row in result["failed_webhook"]["attempts"]], ["P001", "P002"])
+        self.assertEqual([row["psp_code"] for row in result["timeout_failed"]["attempts"]], ["P001", "P002"])
+        self.assertEqual(result["timeout_pending"]["final_outcome"], "awaiting_final_status")
+        self.assertEqual(result["three_failures"]["recovery"]["psp_code"], "P004")
+        self.assertFalse(result["three_failures"]["recovery"]["email_sent"])
+        self.assertEqual(result["mailer_sent"], [])
+        self.assertEqual(result["late_success"]["flags"][0]["type"], "late_success_possible_double_charge")
 
 
 if __name__ == "__main__":

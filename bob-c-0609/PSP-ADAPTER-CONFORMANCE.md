@@ -61,6 +61,20 @@ Rules:
 - If a field is still missing at a hop, `AbstractPspAdaptor` soft-skips with `missing_required_field:<field>` instead of silently stopping.
 - `ConversionKillerChecker::checkDeclaredFieldDependencies()` flags converters that map an internal field without declaring it in `requiredFields()`.
 
+## Webhook-driven cascade contract
+
+`PspWebhookDrivenCascadeOrchestrator` is event-driven: it starts one hop and then waits for a webhook or a queued timeout job to resume the cascade. It does not sleep or block inside the request.
+
+Rules:
+
+- A synchronous `pending` or `processing` response never advances to the next PSP.
+- The next hop only starts after a failed webhook or after the PSP wait timeout expires and `getPaymentStatus()` returns a final failed/declined status.
+- If timeout plus status query still returns pending or unknown, the order is marked `awaiting_final_status` and does not cascade, to avoid double-charge risk.
+- A late success webhook for an earlier hop is flagged as `late_success_possible_double_charge` with idempotency keyed by `merchant_reference`.
+- Automatic cascade attempts are capped by `max_attempts`, default `3`; hard decline still stops immediately.
+- After three confirmed failures, `PaymentRecoveryService` creates a secure expiring single-use pay-by-link token and builds a neutral recovery email. Sending is behind a flag that defaults off.
+- Audit rows record attempt time, webhook/status event, waited milliseconds, cascade reason, and outcome.
+
 ## Conversion-killer categories
 
 The gate checks and reports:
@@ -77,6 +91,8 @@ The gate checks and reports:
 - `soft/hard decline misclass`
 - exact golden normalized output drift
 - undeclared converter dependencies that would break checkout pre-collection
+- cascaded without confirmed final failure
+- missing webhook within timeout when status is still not final
 
 Each failed issue row includes PSP code, endpoint, check id/name, internal and PSP field paths, expected and actual values, category, root cause, code location, severity, and suggested fix.
 
