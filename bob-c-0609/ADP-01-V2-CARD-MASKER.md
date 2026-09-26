@@ -39,7 +39,7 @@ Required behavior:
 
 - Fully remove 3-4 digit values under key names such as `cvv`, `cvc`, `cvv2`, `securityCode`, `cardSecurityCode`, and `cvn`.
 - Matching is case-insensitive and applies to nested arrays, objects, JSON strings, query strings, and form bodies.
-- Output must not reveal length beyond a fixed replacement token.
+- Output must not reveal length beyond a fixed replacement placeholder.
 
 ### Expiry
 
@@ -63,16 +63,16 @@ The masker must recurse through:
 
 When a string cannot be parsed as JSON, query string, or form body, the masker still scans it for PAN, CVV-labelled values, expiry-labelled values, and track data.
 
-## Output tokens
+## Output placeholders
 
-Recommended tokens:
+Recommended placeholders:
 
 - PAN: keep at most first 6 and last 4, with the middle replaced by `******`.
 - CVV/CVC: `[REDACTED_CVV]`
 - Expiry: `[REDACTED_EXPIRY]`
 - Track data: `[REDACTED_TRACK]`
 
-Implementations may choose equivalent fixed tokens as long as the tests prove that no raw PAN, CVV, expiry, or track data remains.
+Implementations may choose equivalent fixed placeholders as long as the tests prove that no raw PAN, CVV, expiry, or track data remains.
 
 ## Test contract
 
